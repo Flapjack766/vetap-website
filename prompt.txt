@@ -1,0 +1,428 @@
+هذا هو برومبت واحد دقيق لتضعه في Cursor ليُنشئ موقع VETAP التعريفي كاملاً وفق طلبك. انسخه كما هو:
+
+---
+
+**PROMPT FOR CURSOR (AR): بناء موقع VETAP التعريفي الحديث مع i18n وSEO وResend**
+
+**الدور:** أنت فريق هندسي رفيع يبني موقع شركة VETAP التعريفي يقدّم خدمة إنشاء مواقع، بعرض تفاعلي للزائر، أداء فائق، وكود نظيف قابل للتوسّع، بدون قاعدة بيانات، مع i18n كامل ومفاتيح ترجمة بصيغة A1, A2, …، ودمج Resend لإرسال رسائل تチكيت للعميل وللشركة بقالب HTML مطابق للهوية.
+
+---
+
+### 1) التقنية والقيود
+
+* **الإطار:** Next.js 15 (App Router) + TypeScript.
+* **الواجهة:** Tailwind CSS + shadcn/ui + Framer Motion للموشن.
+* **الأيقونات:** lucide-react.
+* **البناء والتسليم:** SSG كافتراضي، عدم الاعتماد على أي قاعدة بيانات.
+* **i18n:** next-intl أو next-i18next مع ملفات JSON للمفاتيح. جميع المفاتيح باسماء A1..A200+ كأرقام متسلسلة تحت حرف A حصراً. لغتان على الأقل: `ar`, `en`.
+* **SEO Ultra Pro:** next-seo + sitemap + robots + OG/Meta + JSON-LD منظّم.
+* **الأمان:** CSP صارم، Security headers، منع XSS، تنظيف المدخلات.
+* **الأداء:** صور Next/Image، lazy, prefetch ذكي، ضغط وminify، قيود أداء: LCP < 1.8s على شبكة 4G، CLS ~0، TBT منخفض.
+* **الوصولية:** A11y صارم، تباين صحيح، اختصارات لوحة مفاتيح للأقسام التفاعلية.
+* **عدم وجود DB:** كل المحتوى ثابت داخل `/content` وملفات ترجمة JSON.
+
+---
+
+### 2) بنية الملفات المطلوبة (أنشئ كل الملفات بالمحتوى الكامل)
+
+```
+/app
+  /[locale]
+    /layout.tsx
+    /page.tsx
+    /services/page.tsx
+    /portfolio/page.tsx
+    /about/page.tsx
+    /contact/page.tsx
+  /api/contact/route.ts         // POST Resend + توليد تذكرة
+  /(components)
+    Header.tsx
+    Footer.tsx
+    LanguageSwitcher.tsx
+    HeroShowcase.tsx             // عرض تفاعلي للزائر
+    FeatureGrid.tsx
+    ServiceCards.tsx
+    PortfolioMasonry.tsx
+    Testimonials.tsx
+    CTA.tsx
+    ContactForm.tsx
+    LoadingBar.tsx
+  /(seo)
+    default-seo.ts
+    jsonld.ts
+  robots.ts
+  sitemap.ts
+  opengraph-image.tsx
+/content
+  ar.json
+  en.json
+/lib
+  i18n/config.ts
+  i18n/helper.ts
+  utils.ts
+  security.ts                   // CSP, headers
+  mail.ts                       // دوال Resend HTML
+  ticket.ts                     // توليد أرقام التذاكر
+/public
+  /images/* (شعارات وأصول)
+  /icons/*
+/styles
+  globals.css
+  themes.css
+/env.example
+next.config.mjs
+middleware.ts                   // locale + headers الأمنية
+package.json
+tailwind.config.ts
+postcss.config.mjs
+tsconfig.json
+.eslintrc.cjs
+.prettierrc
+```
+
+---
+
+### 3) الهوية والبصريات
+
+* ألوان: أسود/أبيض + درجات تيتانيوم. مساحات بيضاء واسعة. زوايا مدوّرة خفيفة. ظلال دقيقة.
+* الخطوط: System UI أو ما يقابلها عربياً مع fallback نظيف.
+* موشن: Framer Motion بنبضات خفيفة عند التمرير، Parallax بسيط في الـHero، زمن انتقال 180–220ms.
+* **HeroShowcase:** شاشة عرض تفاعلية تُحاكي “مصمم مواقع ذكي”:
+
+  * أسئلة سريعة للزائر (3 خطوات): نوع الموقع، الميزانية التقديرية، السرعة المطلوبة.
+  * تُحدّث بطاقة توصية فورية (Component) وتعرض CTA لحجز مكالمة أو مراسلة.
+  * لا تخزّن شيئاً. الحالة في الذاكرة فقط.
+
+---
+
+### 4) الترجمة i18n بمفاتيح A1..Nx
+
+* أنشئ `content/ar.json` و`content/en.json` مفاتيح `A1..A200` على الأقل لتغطية كل النصوص.
+* مثال (احرص على التسلسل الرقمي وعدم تكرار الأرقام):
+
+```json
+// content/en.json
+{
+  "A1": "VETAP — Elite Website Design & Engineering",
+  "A2": "We build ultra-fast, secure, SEO-optimized websites.",
+  "A3": "Services",
+  "A4": "Portfolio",
+  "A5": "About",
+  "A6": "Contact",
+  "A7": "Start your project",
+  "A8": "Interactive Demo",
+  "A9": "Answer a few questions to get a tailored plan.",
+  "A10": "Your industry",
+  "A11": "Budget range",
+  "A12": "Speed requirement",
+  "A13": "Recommended package",
+  "A14": "Get proposal",
+  "A15": "What we deliver",
+  "A16": "Lightning-fast performance",
+  "A17": "Ultra Pro SEO",
+  "A18": "Accessibility first",
+  "A19": "Security & hardening",
+  "A20": "Contact us",
+  "A21": "Full name",
+  "A22": "Email",
+  "A23": "Phone",
+  "A24": "Message",
+  "A25": "Send",
+  "A26": "We received your request. Ticket:",
+  "A27": "Check your inbox for confirmation.",
+  "A28": "Services we offer",
+  "A29": "Custom web development",
+  "A30": "Brand-grade frontend",
+  "A31": "Migration & optimization",
+  "A32": "Case studies",
+  "A33": "View details",
+  "A34": "Why VETAP",
+  "A35": "Let’s talk",
+  "A36": "All rights reserved"
+}
+// content/ar.json
+{
+  "A1": "VETAP — هندسة مواقع احترافية",
+  "A2": "نبني مواقع فائقة السرعة وآمنة ومحسّنة للسيو.",
+  "A3": "الخدمات",
+  "A4": "الأعمال",
+  "A5": "من نحن",
+  "A6": "تواصل",
+  "A7": "ابدأ مشروعك",
+  "A8": "عرض تفاعلي",
+  "A9": "أجب عن أسئلة سريعة لتحصل على خطة مخصّصة.",
+  "A10": "مجالك",
+  "A11": "نطاق الميزانية",
+  "A12": "مستوى السرعة",
+  "A13": "الباقة المقترحة",
+  "A14": "اطلب عرضاً",
+  "A15": "ماذا نقدّم",
+  "A16": "أداء خاطف",
+  "A17": "سيو احترافي صارم",
+  "A18": "وصولية أولاً",
+  "A19": "تقوية وأمان",
+  "A20": "تواصل معنا",
+  "A21": "الاسم الكامل",
+  "A22": "الإيميل",
+  "A23": "الجوال",
+  "A24": "رسالتك",
+  "A25": "إرسال",
+  "A26": "استلمنا طلبك. رقم التذكرة:",
+  "A27": "تحقق من بريدك للتأكيد.",
+  "A28": "خدماتنا",
+  "A29": "تطوير مخصص",
+  "A30": "واجهات بمستوى العلامات",
+  "A31": "ترحيل وتحسين",
+  "A32": "أعمال مختارة",
+  "A33": "عرض التفاصيل",
+  "A34": "لماذا VETAP",
+  "A35": "لنتحدث",
+  "A36": "جميع الحقوق محفوظة"
+}
+```
+
+---
+
+### 5) التوجّه المعماري
+
+* **Localization routing:** مجلد `[locale]` مع middleware لتحديد اللغة الافتراضية من Accept-Language وسقوط إلى `en`.
+* **Content sourcing:** جميع النصوص من ملفات JSON أعلاه. لا مفاتيح صريحة داخل JSX. استخدم hook مترجم.
+* **التفاعل:** HeroShowcase يقرأ/يكتب حالة عرض محليّة فقط. لا كookies ولا تخزين.
+* **CSS:** مكونات shadcn مصقولة. قواعد Tailwind في `themes.css`. دعم RTL تلقائي عند `ar`.
+
+---
+
+### 6) SEO Ultra Pro
+
+* `default-seo.ts`: عناوين، أوصاف، OG، Twitter, canonical، واللغات البديلة hreflang.
+* `sitemap.ts`: تضمين المسارات لكل لغة.
+* `robots.ts`: السماح للفهرسة، منع مسارات API.
+* `jsonld.ts`: شيفرة `Organization` + `WebSite` + `BreadcrumbList`.
+
+مثال JSON-LD (أدرجه في الصفحة الرئيسية):
+
+```ts
+export const organizationLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "VETAP",
+  "url": "https://vetaps.com",
+  "logo": "https://vetaps.com/icons/logo.png",
+  "sameAs": ["https://x.com/vetap", "https://www.linkedin.com/company/vetap"]
+};
+```
+
+---
+
+### 7) الأمان والرؤوس
+
+* في `middleware.ts` و`security.ts`: أضف CSP على الأقل:
+
+  * default-src 'self';
+  * img-src 'self' data: blob:;
+  * script-src 'self';
+  * style-src 'self' 'unsafe-inline';
+  * connect-src 'self' [https://api.resend.com](https://api.resend.com);
+  * frame-ancestors 'none';
+* أضف: X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Strict-Transport-Security.
+
+---
+
+### 8) نموذج التواصل + Resend
+
+* **سير العمل:**
+
+  1. POST `/api/contact` يستقبل `{ name, email, phone, message, locale }`.
+  2. يولّد رقم تذكرة بصيغة: `VTP-${YYYYMMDD}-${XXXX}` حيث XXXX رقم عشوائي 4 أرقام.
+  3. يرسل رسالتين عبر Resend:
+
+     * إلى العميل: “تأكيد استلام” مع رقم التذكرة وقائمة مختصرة بالبيانات.
+     * إلى بريد الشركة: إشعار داخلي شامل.
+  4. يستجيب JSON: `{ ok: true, ticket }`.
+* **البيئة:** لا تضع المفاتيح في الكود. استخدم:
+
+  ```
+  RESEND_API_KEY=
+  COMPANY_EMAIL=support@vetaps.com
+  COMPANY_NAME=VETAP
+  FROM_EMAIL=VETAP <no-reply@vetaps.com>
+  ```
+* **التحقق:** Zod للتحقق من الحقول، قيود طول، sanitize أساسي، معدل بسيط بالذاكرة لمنع الإساءة.
+
+مثال `app/api/contact/route.ts` مختصر وفعّال:
+
+```ts
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { Resend } from 'resend';
+import { renderClientEmailHTML, renderCompanyEmailHTML } from '@/lib/mail';
+import { genTicket } from '@/lib/ticket';
+
+const schema = z.object({
+  name: z.string().min(2).max(80),
+  email: z.string().email(),
+  phone: z.string().min(5).max(25).optional(),
+  message: z.string().min(10).max(2000),
+  locale: z.enum(['ar','en']).default('en')
+});
+
+const resend = new Resend(process.env.RESEND_API_KEY!);
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const data = schema.parse(body);
+    const ticket = genTicket();
+
+    // HTMLs
+    const clientHTML = renderClientEmailHTML({ ...data, ticket });
+    const companyHTML = renderCompanyEmailHTML({ ...data, ticket });
+
+    await Promise.all([
+      resend.emails.send({
+        from: process.env.FROM_EMAIL!,
+        to: data.email,
+        subject: `VETAP • ${data.locale === 'ar' ? 'تأكيد الطلب' : 'Request Confirmation'} • ${ticket}`,
+        html: clientHTML
+      }),
+      resend.emails.send({
+        from: process.env.FROM_EMAIL!,
+        to: process.env.COMPANY_EMAIL!,
+        subject: `New Contact • ${ticket}`,
+        html: companyHTML
+      })
+    ]);
+
+    return NextResponse.json({ ok: true, ticket });
+  } catch (e:any) {
+    return NextResponse.json({ ok:false, error: e.message ?? 'invalid' }, { status: 400 });
+  }
+}
+```
+
+`/lib/ticket.ts`:
+
+```ts
+export function genTicket() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  const num = String(Math.floor(1000 + Math.random()*9000));
+  return `VTP-${y}${m}${day}-${num}`;
+}
+```
+
+`/lib/mail.ts` — ابنِ HTML متوافق مع الهوية، RTL عند العربية:
+
+```ts
+type MailData = { name:string; email:string; phone?:string; message:string; ticket:string; locale?:'ar'|'en' };
+
+const baseStyles = `
+  body{margin:0;padding:0;background:#0a0a0a;color:#eee;font-family:system-ui,-apple-system,Segoe UI,Roboto}
+  .wrap{max-width:640px;margin:auto;padding:32px}
+  .card{background:#111;border:1px solid #222;border-radius:16px;padding:24px}
+  .brand{font-weight:700;font-size:18px;letter-spacing:.4px}
+  .muted{color:#bbb}
+  .chip{display:inline-block;padding:6px 10px;border:1px solid #333;border-radius:999px}
+`;
+
+export function renderClientEmailHTML(d: MailData) {
+  const arabic = d.locale === 'ar';
+  return `
+  <!doctype html><html lang="${arabic?'ar':'en'}" dir="${arabic?'rtl':'ltr'}">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>${baseStyles}</style></head>
+  <body><div class="wrap">
+    <div class="brand">VETAP</div>
+    <h1>${arabic?'تأكيد استلام طلبك':'Your request has been received'}</h1>
+    <div class="card">
+      <p>${arabic?'رقم التذكرة':'Ticket'}: <span class="chip">${d.ticket}</span></p>
+      <p class="muted">${arabic?'سنعاود الاتصال بك قريباً.':'We will get back to you shortly.'}</p>
+      <hr style="border-color:#222">
+      <p>${arabic?'الاسم:':'Name:'} ${d.name}</p>
+      <p>${arabic?'البريد:':'Email:'} ${d.email}</p>
+      ${d.phone?`<p>${arabic?'الهاتف:':'Phone:'} ${d.phone}</p>`:''}
+      <p>${arabic?'الرسالة:':'Message:'}</p>
+      <pre style="white-space:pre-wrap">${d.message}</pre>
+    </div>
+    <p class="muted">VETAP ©</p>
+  </div></body></html>`;
+}
+
+export function renderCompanyEmailHTML(d: MailData) {
+  return `
+  <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>${baseStyles}</style></head>
+  <body><div class="wrap">
+    <div class="brand">VETAP</div>
+    <h1>New Contact • ${d.ticket}</h1>
+    <div class="card">
+      <p>Name: ${d.name}</p>
+      <p>Email: ${d.email}</p>
+      ${d.phone?`<p>Phone: ${d.phone}</p>`:''}
+      <p>Message:</p>
+      <pre style="white-space:pre-wrap">${d.message}</pre>
+    </div>
+  </div></body></html>`;
+}
+```
+
+---
+
+### 9) الواجهات والأجزاء المهمة
+
+* **Header/Footer:** تبديل اللغة، روابط: خدمات، أعمال، من نحن، تواصل.
+* **FeatureGrid:** 6 ميزات أساسية. نصوصها من A16..A21.
+* **ServiceCards:** بطاقات تشرح باقات تطوير المواقع.
+* **PortfolioMasonry:** شبكة أعمال بصور WebP خفيفة.
+* **Testimonials:** 3 آراء مختصرة.
+* **CTA:** زر “ابدأ مشروعك” يمرّر إلى `#contact`.
+
+---
+
+### 10) صفحة الاتصال
+
+* حقول: الاسم A21، الإيميل A22، الهاتف A23 اختياري، الرسالة A24.
+* توست نجاح: A26 + رقم التذكرة، ثم A27.
+* معالجة الأخطاء بتوست واضح.
+* تفعيل الاتجاه RTL تلقائياً عند `ar`.
+
+---
+
+### 11) التهيئة والبناء
+
+* `env.example`:
+
+  ```
+  RESEND_API_KEY=your_resend_key
+  COMPANY_EMAIL=support@vetaps.com
+  COMPANY_NAME=VETAP
+  FROM_EMAIL="VETAP <no-reply@vetaps.com>"
+  SITE_URL=https://vetaps.com
+  ```
+* `next.config.mjs`: تفعيل الصور، i18n locales, headers من security.ts.
+* `package.json` سكربت:
+
+  * `dev`, `build`, `start`, `lint`, `typecheck`.
+* أضف اختبارات خفيفة لـutils (ticket) و i18n helper.
+
+---
+
+### 12) ما يجب على Cursor فعله الآن
+
+1. توليد جميع الملفات المذكورة أعلاه بالمحتوى الكامل الجاهز.
+2. ملء محتوى ترجمة كافٍ بـ 200 مفتاح على الأقل لكل لغة يغطي كل النصوص في الصفحات والمكونات.
+3. تركيب HeroShowcase بأسئلة قصيرة وتوصية فورية متغيّرة.
+4. إعداد SEO, sitemap, robots, OG, JSON-LD.
+5. إعداد Security headers وCSP.
+6. بناء API Resend مع قوالب HTML متطابقة بصرياً مع الهوية.
+7. ضبط RTL للعربية تلقائياً.
+8. تمرير ESLint + TypeCheck بلا أخطاء.
+9. إظهار لافتات الأداء في console أثناء dev إذا تخطّت صور أو خطوط حدود الحجم.
+
+---
+
+**الناتج النهائي:** مشروع يعمل فوراً ، بدون أي أسرار مكشوفة، مع i18n مفاتيح A1..، سرعة عالية، سيو صارم، ونموذج تواصل يرسل تأكيداً للعميل وإشعاراً للشركة مع رقم تذكرة.
+
+**انتهى البرومبت.**
