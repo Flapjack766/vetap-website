@@ -90,7 +90,7 @@ export function CeoHero({ locale }: { locale: 'ar' | 'en' }) {
                   variant="secondary"
                   className="gap-2"
                 >
-                  <a href={ceoData.vcardUrl} download="Ahmed-Alzbaji.vcf">
+                  <a href={ceoData.vcardUrl}>
                     <Download className="h-5 w-5" />
                     {t('A207')}
                   </a>

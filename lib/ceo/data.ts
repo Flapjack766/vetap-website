@@ -28,7 +28,7 @@ export const ceoData = {
     name: 'VETAP',
     url: 'https://www.vetaps.com',
   },
-  vcardUrl: '/ceo/vcard.vcf',
+  vcardUrl: '/ceo/Ahmed-Alzbaji.vcf',
   image: '/images/ceo.jpg',
 };
 
