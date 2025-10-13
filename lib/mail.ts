@@ -135,7 +135,7 @@ export function renderClientEmailHTML(d: MailData): string {
         </svg>
         ${arabic ? 'تواصل عبر واتساب' : 'Chat on WhatsApp'}
       </a>
-      <p class="muted" style="margin-top:8px">+996 553 198 577</p>
+      <p class="muted" style="margin-top:8px">+966 553 198 577</p>
     </div>
 
     <!-- What's Next -->
@@ -151,7 +151,7 @@ export function renderClientEmailHTML(d: MailData): string {
     <div class="footer">
       <p><strong>VETAP</strong> - ${arabic ? 'هندسة مواقع احترافية' : 'Elite Website Design & Engineering'}</p>
       <p class="muted">
-        📧 info@vetaps.com | 🌐 www.vetaps.com | 📱 +996 553 198 577
+        📧 info@vetaps.com | 🌐 www.vetaps.com | 📱 +966 553 198 577
       </p>
       <p class="muted" style="margin-top:12px">
         © ${new Date().getFullYear()} VETAP. ${arabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
