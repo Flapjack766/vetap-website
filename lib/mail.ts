@@ -32,7 +32,7 @@ const baseStyles = `
 
 export function renderClientEmailHTML(d: MailData): string {
   const arabic = d.locale === 'ar';
-  const whatsappLink = `https://wa.me/996553198577?text=${encodeURIComponent(
+  const whatsappLink = `https://wa.me/966553198577?text=${encodeURIComponent(
     arabic 
       ? `مرحباً، رقم تذكرتي هو: ${d.ticket}` 
       : `Hello, my ticket number is: ${d.ticket}`
