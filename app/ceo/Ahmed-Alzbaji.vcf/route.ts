@@ -10,7 +10,6 @@ const LINES = [
   'EMAIL;TYPE=INTERNET,PREF:Ahmed@vetaps.com',
   'EMAIL;TYPE=INTERNET:ceo@vetaps.com',
   'TEL;TYPE=CELL,VOICE:+966553198577',
-  'TEL;TYPE=CELL,VOICE:+905314615973',
   'URL:https://www.vetaps.com',
   'X-SOCIALPROFILE;TYPE=x:https://x.com/ahmedalzbaji',
   'X-SOCIALPROFILE;TYPE=instagram:https://instagram.com/ictfe',

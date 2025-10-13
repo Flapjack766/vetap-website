@@ -13,11 +13,9 @@ export const ceoData = {
   ],
   phones: [
     '+966553198577',
-    '+905314615973',
   ],
   whatsapp: [
     { number: '+966553198577', link: 'https://wa.me/966553198577' },
-    { number: '+905314615973', link: 'https://wa.me/905314615973' },
   ],
   social: {
     instagram: { username: 'ictfe', url: 'https://instagram.com/ictfe' },

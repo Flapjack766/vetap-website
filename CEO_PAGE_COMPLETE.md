@@ -96,7 +96,6 @@
 
 ### الجوال/واتساب:
 - +966553198577
-- +905314615973
 
 ### السوشيال ميديا:
 - **X:** https://x.com/ahmedalzbaji
@@ -120,7 +119,6 @@ TITLE:Founder & CEO
 EMAIL:Ahmed@vetaps.com
 EMAIL:ceo@vetaps.com
 TEL:+966553198577
-TEL:+905314615973
 URL:https://www.vetaps.com
 X-SOCIALPROFILE;type=twitter:https://x.com/ahmedalzbaji
 X-SOCIALPROFILE;type=instagram:https://instagram.com/ictfe

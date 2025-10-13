@@ -44,26 +44,11 @@ export function ContactIcons({ locale }: { locale: 'ar' | 'en' }) {
       copyText: ceoData.phones[0],
     },
     {
-      id: 'phone2',
-      icon: Phone,
-      label: ceoData.phones[1],
-      href: `tel:${ceoData.phones[1]}`,
-      copyText: ceoData.phones[1],
-    },
-    {
       id: 'whatsapp1',
       icon: MessageCircle,
       label: `WhatsApp ${ceoData.phones[0]}`,
       href: ceoData.whatsapp[0].link,
       copyText: ceoData.phones[0],
-      external: true,
-    },
-    {
-      id: 'whatsapp2',
-      icon: MessageCircle,
-      label: `WhatsApp ${ceoData.phones[1]}`,
-      href: ceoData.whatsapp[1].link,
-      copyText: ceoData.phones[1],
       external: true,
     },
   ];
