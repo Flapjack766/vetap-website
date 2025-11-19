@@ -114,6 +114,11 @@ export const defaultMetadata: Metadata = {
     shortcut: '/favicon.ico',
     apple: '/icons/logo.png',
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'VETAP',
+  },
   formatDetection: {
     email: false,
     address: false,
