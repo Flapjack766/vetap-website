@@ -31,7 +31,7 @@ export function ReviewCard3DViewer() {
   // حدود مخصصة لسرعة الدوران
   const MAX_AUTO_ROTATION_SPEED = 0.08;
   const MAX_THEME_SWITCH_SPEED = 0.25;
-  const MAX_DRAG_ROTATION_SPEED = 0.3;
+  const MAX_DRAG_ROTATION_SPEED = 1.2;
   
   // العودة التلقائية للوضع الأصلي
   const returnToDefaultRef = useRef(false);
@@ -262,7 +262,7 @@ export function ReviewCard3DViewer() {
     const deltaX = x - lastPosRef.current.x;
     const deltaY = y - lastPosRef.current.y;
 
-    const rotateSpeed = 0.3;
+    const rotateSpeed = 0.8;
 
     const nextX = clamp(
       targetRotationRef.current.x + deltaY * rotateSpeed,
