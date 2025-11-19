@@ -83,7 +83,7 @@ export function Card3DViewer() {
     autoRotateRef.current = false;
     returnToDefaultRef.current = false;
     
-    let currentY = renderRotationRef.current.y;
+    const currentY = renderRotationRef.current.y;
     
     // لا تطبيع هنا - السماح بالدوران المستمر
     targetRotationRef.current.y = currentY;
@@ -167,7 +167,7 @@ export function Card3DViewer() {
         while (currentNormalized > 360) currentNormalized -= 360;
         while (currentNormalized < -360) currentNormalized += 360;
         
-        let edgeNormalized = targetEdgeAngle;
+        const edgeNormalized = targetEdgeAngle;
         
         let remainingDistance = Math.abs(currentNormalized - edgeNormalized);
         if (remainingDistance > 180) {
@@ -227,7 +227,7 @@ export function Card3DViewer() {
       if (totalProgress < 1) {
         transitionAnimationRef.current = requestAnimationFrame(animateRotation);
       } else {
-        let finalY = targetRotationRef.current.y;
+        const finalY = targetRotationRef.current.y;
         // لا تطبيع هنا - السماح بالدوران المستمر
         targetRotationRef.current.y = finalY;
         
@@ -376,8 +376,8 @@ export function Card3DViewer() {
 
       const smoothFactor = 0.1;
 
-      let nextX = current.x + (target.x - current.x) * smoothFactor;
-      let nextY = current.y + (target.y - current.y) * smoothFactor;
+      const nextX = current.x + (target.x - current.x) * smoothFactor;
+      const nextY = current.y + (target.y - current.y) * smoothFactor;
 
       // لا تطبيع - السماح بالدوران المستمر
       const threshold = 0.03;

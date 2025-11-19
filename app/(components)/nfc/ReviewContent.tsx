@@ -2,13 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import Link from 'next/link';
 import { 
-  Smartphone, 
   Zap, 
   Shield, 
-  Share2, 
   CheckCircle2, 
   ArrowRight,
   Radio,
