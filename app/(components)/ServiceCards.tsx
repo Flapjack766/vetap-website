@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
-import { Code2, Palette, Wrench, ArrowRight } from 'lucide-react';
+import { Code2, Palette, Wrench, CreditCard, Star, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from './ui/button';
 
@@ -10,6 +10,8 @@ const iconMap = {
   Code2,
   Palette,
   Wrench,
+  CreditCard,
+  Star,
 };
 
 export function ServiceCards() {
@@ -17,22 +19,39 @@ export function ServiceCards() {
 
   const services = [
     {
+      icon: 'CreditCard',
+      title: t('A202'), // NFC Smart Business Card
+      description: t('A210'),
+      features: [t('A211'), t('A212'), t('A213'), t('A219')],
+      href: '/business-card',
+    },
+    {
+      icon: 'Star',
+      title: t('A203'), // NFC Google Maps Review Card
+      description: t('A214'),
+      features: [t('A215'), t('A216'), t('A217'), t('A218')],
+      href: '/review-card',
+    },
+    {
       icon: 'Code2',
       title: t('A29'), // Custom web development
       description: t('A67'),
       features: [t('A68'), t('A69'), t('A70'), t('A71')],
+      href: '/services',
     },
     {
       icon: 'Palette',
       title: t('A30'), // Brand-grade frontend
       description: t('A72'),
       features: [t('A73'), t('A74'), t('A75'), t('A63')],
+      href: '/services',
     },
     {
       icon: 'Wrench',
       title: t('A31'), // Migration & optimization
       description: t('A76'),
       features: [t('A77'), t('A78'), t('A79'), t('A71')],
+      href: '/services',
     },
   ];
 
@@ -76,7 +95,7 @@ export function ServiceCards() {
                   ))}
                 </ul>
                 <Button asChild variant="outline" className="w-full">
-                  <Link href="/services">{t('A193')}</Link>
+                  <Link href={service.href}>{t('A193')}</Link>
                 </Button>
               </motion.div>
             );

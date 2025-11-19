@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
 import { Send, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -30,6 +30,21 @@ export function ContactForm() {
   const [status, setStatus] = useState<FormStatus>('idle');
   const [ticket, setTicket] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showcaseAnswers, setShowcaseAnswers] = useState<any>(null);
+
+  // Load showcase answers from sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('vetap_showcase_answers');
+      if (saved) {
+        try {
+          setShowcaseAnswers(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to parse showcase answers:', e);
+        }
+      }
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormState({
@@ -73,6 +88,7 @@ export function ContactForm() {
         body: JSON.stringify({
           ...formState,
           locale,
+          showcaseAnswers: showcaseAnswers || undefined,
         }),
       });
 
@@ -82,6 +98,11 @@ export function ContactForm() {
         setStatus('success');
         setTicket(data.ticket);
         setFormState({ name: '', email: '', phone: '', message: '' });
+        // Clear showcase answers from sessionStorage after successful submission
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('vetap_showcase_answers');
+        }
+        setShowcaseAnswers(null);
       } else {
         setStatus('error');
         setErrorMessage(data.error || t('A131'));
