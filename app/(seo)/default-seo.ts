@@ -3,22 +3,105 @@ import { Metadata } from 'next';
 export const defaultMetadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || 'https://vetaps.com'),
   title: {
-    default: 'VETAP — Elite Website Design & Engineering',
+    default: 'VETAP — Integrated Digital Solutions',
     template: '%s | VETAP',
   },
   description:
-    'VETAP builds ultra-fast, secure, SEO-optimized websites. Professional web development with Next.js, TypeScript, and modern technologies.',
+    'Comprehensive digital solutions including websites, NFC smart cards, and modern web technologies. Professional development with Next.js, TypeScript, and cutting-edge tools.',
   keywords: [
+    // Company name variations
+    'VETAP',
+    'vetap',
+    'فيتاب',
+    'VETAP website',
+    'vetap website',
+    'VETAP solutions',
+    'vetap solutions',
+    'شركة فيتاب',
+    'VETAP company',
+    // Digital solutions
+    'integrated digital solutions',
+    'حلول رقمية متكاملة',
+    'حلول رقمية',
+    'digital solutions',
+    'comprehensive digital solutions',
+    // Web development
     'web development',
+    'تطوير مواقع',
+    'تطوير مواقع إلكترونية',
+    'برمجة مواقع',
+    'تصميم مواقع',
+    'website development',
+    'website design',
+    'custom web development',
+    'تطوير ويب مخصص',
+    'تصميم مواقع احترافي',
+    // Technologies
     'Next.js',
     'TypeScript',
     'React',
+    'modern web technologies',
+    'تقنيات ويب حديثة',
+    // SEO & Performance
     'SEO optimization',
-    'website design',
-    'VETAP',
-    'elite websites',
+    'تحسين محركات البحث',
+    'سيو',
+    'SEO',
+    'ultra-fast websites',
+    'مواقع سريعة',
     'fast websites',
+    'performance optimization',
+    'تحسين الأداء',
+    // Security
     'secure websites',
+    'مواقع آمنة',
+    'website security',
+    'أمان المواقع',
+    // NFC Cards
+    'NFC smart cards',
+    'بطاقات NFC ذكية',
+    'بطاقات NFC',
+    'NFC business cards',
+    'بطاقات أعمال NFC',
+    'NFC review cards',
+    'بطاقات تقييم NFC',
+    'smart business cards',
+    'بطاقات أعمال ذكية',
+    'Google Maps review cards',
+    'بطاقات تقييم Google Maps',
+    // Services
+    'elite websites',
+    'مواقع نخبوية',
+    'professional web development',
+    'تطوير ويب احترافي',
+    'brand-grade websites',
+    'مواقع بمستوى العلامات',
+    'website migration',
+    'ترحيل المواقع',
+    'website optimization',
+    'تحسين المواقع',
+    // Accessibility
+    'accessible websites',
+    'مواقع متاحة',
+    'accessibility',
+    'الوصولية',
+    // Arabic keywords
+    'شركة تطوير مواقع',
+    'مطور مواقع',
+    'مصمم مواقع',
+    'شركة برمجة',
+    'حلول ويب',
+    'تطوير تطبيقات ويب',
+    'تصميم وتطوير',
+    'خدمات رقمية',
+    'حلول تقنية',
+    'مواقع احترافية',
+    'مواقع عصرية',
+    'تطوير سريع',
+    'مواقع متجاوبة',
+    'responsive websites',
+    'مواقع متعددة اللغات',
+    'multilingual websites',
   ],
   authors: [{ name: 'VETAP', url: 'https://vetaps.com' }],
   creator: 'VETAP',
@@ -41,9 +124,9 @@ export const defaultMetadata: Metadata = {
     locale: 'en_US',
     url: 'https://vetaps.com',
     siteName: 'VETAP',
-    title: 'VETAP — Elite Website Design & Engineering',
+    title: 'VETAP — Integrated Digital Solutions',
     description:
-      'We build ultra-fast, secure, SEO-optimized websites. Professional web development with Next.js and TypeScript.',
+      'Comprehensive digital solutions including websites, NFC smart cards, and modern web technologies. Professional development with Next.js and TypeScript.',
     images: [
       {
         url: '/images/og-image.png',
@@ -55,9 +138,9 @@ export const defaultMetadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'VETAP — Elite Website Design & Engineering',
+    title: 'VETAP — Integrated Digital Solutions',
     description:
-      'We build ultra-fast, secure, SEO-optimized websites. Professional web development with Next.js and TypeScript.',
+      'Comprehensive digital solutions including websites, NFC smart cards, and modern web technologies. Professional development with Next.js and TypeScript.',
     images: ['/images/og-image.png'],
     creator: '@vetap',
   },
@@ -90,19 +173,19 @@ export function getLocalizedMetadata(locale: string): Metadata {
   return {
     ...defaultMetadata,
     title: {
-      default: isArabic ? 'VETAP — هندسة مواقع نخبوية' : 'VETAP — Elite Website Design & Engineering',
+      default: isArabic ? 'VETAP — حلول رقمية متكاملة' : 'VETAP — Integrated Digital Solutions',
       template: isArabic ? '%s | VETAP' : '%s | VETAP',
     },
     description: isArabic
-      ? 'VETAP نبني مواقع فائقة السرعة وآمنة ومحسّنة للسيو. تطوير ويب احترافي مع Next.js و TypeScript.'
-      : 'VETAP builds ultra-fast, secure, SEO-optimized websites. Professional web development with Next.js, TypeScript, and modern technologies.',
+      ? 'حلول رقمية شاملة تشمل المواقع الإلكترونية، بطاقات NFC الذكية، وتقنيات الويب الحديثة. تطوير احترافي مع Next.js و TypeScript وأدوات متطورة.'
+      : 'Comprehensive digital solutions including websites, NFC smart cards, and modern web technologies. Professional development with Next.js, TypeScript, and cutting-edge tools.',
     openGraph: {
       ...defaultMetadata.openGraph,
       locale: isArabic ? 'ar_SA' : 'en_US',
-      title: isArabic ? 'VETAP — هندسة مواقع نخبوية' : 'VETAP — Elite Website Design & Engineering',
+      title: isArabic ? 'VETAP — حلول رقمية متكاملة' : 'VETAP — Integrated Digital Solutions',
       description: isArabic
-        ? 'نبني مواقع فائقة السرعة وآمنة ومحسّنة للسيو. تطوير ويب احترافي مع Next.js و TypeScript.'
-        : 'We build ultra-fast, secure, SEO-optimized websites. Professional web development with Next.js and TypeScript.',
+        ? 'حلول رقمية شاملة تشمل المواقع الإلكترونية، بطاقات NFC الذكية، وتقنيات الويب الحديثة. تطوير احترافي مع Next.js و TypeScript وأدوات متطورة.'
+        : 'Comprehensive digital solutions including websites, NFC smart cards, and modern web technologies. Professional development with Next.js and TypeScript.',
     },
   };
 }
