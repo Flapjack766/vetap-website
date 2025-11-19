@@ -184,6 +184,11 @@ export function getLocalizedMetadata(locale: string): Metadata {
     description: isArabic
       ? 'حلول رقمية شاملة تشمل المواقع الإلكترونية، بطاقات NFC الذكية، وتقنيات الويب الحديثة. تطوير احترافي مع Next.js و TypeScript وأدوات متطورة.'
       : 'Comprehensive digital solutions including websites, NFC smart cards, and modern web technologies. Professional development with Next.js, TypeScript, and cutting-edge tools.',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'VETAP',
+    },
     openGraph: {
       ...defaultMetadata.openGraph,
       locale: isArabic ? 'ar_SA' : 'en_US',
