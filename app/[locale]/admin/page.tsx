@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { unstable_noStore as noStore } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { AdminDashboard } from '@/app/(components)/admin/AdminDashboard';
+
+export const dynamic = 'force-dynamic';
 
 // Simple admin check: user_id must be in this list
 // TODO: Replace with actual admin user IDs or implement role-based system
@@ -21,6 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default async function AdminPage({ params }: { params: Promise<{ locale: string }> }) {
+  noStore(); // Prevent caching
   const { locale } = await params;
   const supabase = await createClient();
 

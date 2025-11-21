@@ -1,7 +1,10 @@
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import { unstable_noStore as noStore } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { DashboardContent } from '@/app/(components)/dashboard/DashboardContent';
+
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -13,6 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
+  noStore(); // Prevent caching
   const { locale } = await params;
   const supabase = await createClient();
 
