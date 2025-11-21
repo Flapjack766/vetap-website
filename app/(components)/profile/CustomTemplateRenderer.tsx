@@ -48,8 +48,9 @@ export function CustomTemplateRenderer({ templateCode, profile, locale }: Custom
       // Note: uploaded_images يتم تمريرها من custom_template إذا كانت موجودة
       if (profile.uploaded_images) {
         Object.entries(profile.uploaded_images).forEach(([key, url]) => {
-          processedCode = processedCode.replace(new RegExp(`\\{\\{uploaded_images\\.${key}\\}\\}`, 'g'), url || '');
-          processedCode = processedCode.replace(new RegExp(`\\{\\{images\\.${key}\\}\\}`, 'g'), url || '');
+          const urlString = typeof url === 'string' ? url : '';
+          processedCode = processedCode.replace(new RegExp(`\\{\\{uploaded_images\\.${key}\\}\\}`, 'g'), urlString);
+          processedCode = processedCode.replace(new RegExp(`\\{\\{images\\.${key}\\}\\}`, 'g'), urlString);
         });
       }
 

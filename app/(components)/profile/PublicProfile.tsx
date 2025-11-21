@@ -25,6 +25,8 @@ interface Profile {
   template_id: number;
   username_random: string;
   username_custom: string | null;
+  custom_template_id: string | null;
+  uploaded_images: Record<string, string> | null;
 }
 
 interface PublicProfileProps {

@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
       .eq('id', request_id);
 
     // Update request status to approved
-    const { data: updatedRequest, error: requestError } = await supabase
+    const { data: updatedRequest, error: updateRequestError } = await supabase
       .from('username_requests')
       .update({
         status: 'approved',
@@ -174,9 +174,9 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (requestError) {
-      console.error('Error updating request:', requestError);
-      console.error('Request error details:', JSON.stringify(requestError, null, 2));
+    if (updateRequestError) {
+      console.error('Error updating request:', updateRequestError);
+      console.error('Request error details:', JSON.stringify(updateRequestError, null, 2));
       // Profile was updated, but request update failed
       // Return success but log the error
       console.warn('Profile updated but request status update failed');
@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
         {
           success: true,
           message: 'Username approved successfully, but request status update failed',
-          warning: requestError.message,
+          warning: updateRequestError.message,
           expires_at: expiresAt.toISOString(),
         },
         { status: 200 }

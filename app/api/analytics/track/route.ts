@@ -14,7 +14,7 @@ function getClientIP(req: NextRequest): string {
     return realIP;
   }
   
-  return req.ip || 'unknown';
+  return 'unknown';
 }
 
 // Parse user agent to extract device, browser, OS

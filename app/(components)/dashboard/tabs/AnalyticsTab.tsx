@@ -102,26 +102,25 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
       setStats(calculatedStats);
 
       // Calculate daily stats from page views
-      const dailyStatsMap = new Map<string, DailyStat>();
+      const dailyStatsMap = new Map<string, {
+        date: string;
+        total_views: number;
+        unique_visitors_set: Set<string>;
+        unique_ips_set: Set<string>;
+      }>();
       pageViewEvents?.forEach(event => {
         const date = new Date(event.created_at).toISOString().split('T')[0];
         const existing = dailyStatsMap.get(date) || {
           date,
           total_views: 0,
-          unique_visitors: 0,
-          unique_ips: 0,
+          unique_visitors_set: new Set<string>(),
+          unique_ips_set: new Set<string>(),
         };
         existing.total_views++;
         if (event.session_id) {
-          if (!existing.unique_visitors_set) {
-            existing.unique_visitors_set = new Set();
-          }
           existing.unique_visitors_set.add(event.session_id);
         }
         if (event.ip_address) {
-          if (!existing.unique_ips_set) {
-            existing.unique_ips_set = new Set();
-          }
           existing.unique_ips_set.add(event.ip_address);
         }
         dailyStatsMap.set(date, existing);
@@ -191,7 +190,13 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
       setTopCountries(countriesArray);
 
       // Calculate device breakdown from page views
-      const deviceMap = new Map<string, { visit_count: number; unique_visitors: Set<string> }>();
+      const deviceMap = new Map<string, {
+        visit_count: number;
+        unique_visitors: Set<string>;
+        device_type: string;
+        browser: string;
+        os: string;
+      }>();
       pageViewEvents?.forEach(event => {
         const key = `${event.device_type || 'unknown'}-${event.browser || 'unknown'}-${event.os || 'unknown'}`;
         const existing = deviceMap.get(key) || {
