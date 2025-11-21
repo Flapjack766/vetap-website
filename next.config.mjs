@@ -40,10 +40,10 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "img-src 'self' data: blob:",
+              "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "connect-src 'self' https://api.resend.com",
+              "connect-src 'self' https://api.resend.com https://*.supabase.co https://*.supabase.in",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

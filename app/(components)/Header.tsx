@@ -1,17 +1,68 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useTranslations } from 'next-intl';
-import { Menu, X } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
+import { usePathname, useRouter } from 'next/navigation';
+import { Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { Button } from './ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { createClient } from '@/lib/supabase/client';
 
 export function Header() {
   const t = useTranslations();
+  const locale = useLocale();
+  const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    // Check authentication status
+    const checkUser = async () => {
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Error checking user:', error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push(`/${locale}`);
+      router.refresh();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const navItems = [
     { href: '/services', label: t('A3') }, // Services
@@ -51,9 +102,37 @@ export function Header() {
             </Link>
           ))}
           <LanguageSwitcher />
-          <Button asChild size="sm">
-            <Link href="/contact">{t('A7')}</Link>
-          </Button>
+          {!loading && (
+            <>
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <User className="h-4 w-4" />
+                      {t('HEADER1')}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/${locale}/dashboard`} className="flex items-center gap-2 cursor-pointer">
+                        <LayoutDashboard className="h-4 w-4" />
+                        {t('HEADER2')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      {t('HEADER3')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button asChild size="sm">
+                  <Link href={`/${locale}/signup`}>{t('HEADER4')}</Link>
+                </Button>
+              )}
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -90,12 +169,38 @@ export function Header() {
                   {item.label}
                 </Link>
               ))}
-              <div className="pt-2">
-                <Button asChild className="w-full">
-                  <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>
-                    {t('A7')}
-                  </Link>
-                </Button>
+              <div className="pt-2 space-y-2">
+                {!loading && (
+                  <>
+                    {user ? (
+                      <>
+                        <Button asChild variant="outline" className="w-full">
+                          <Link href={`/${locale}/dashboard`} onClick={() => setMobileMenuOpen(false)}>
+                            <LayoutDashboard className="h-4 w-4 mr-2" />
+                            {t('HEADER2')}
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          className="w-full"
+                          onClick={() => {
+                            handleSignOut();
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          {t('HEADER3')}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button asChild className="w-full">
+                        <Link href={`/${locale}/signup`} onClick={() => setMobileMenuOpen(false)}>
+                          {t('HEADER4')}
+                        </Link>
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

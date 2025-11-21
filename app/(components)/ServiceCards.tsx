@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
-import { Code2, Palette, Wrench, CreditCard, Star, ArrowRight } from 'lucide-react';
+import { Code2, Palette, Wrench, CreditCard, Star, ArrowRight, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from './ui/button';
 
@@ -12,6 +12,7 @@ const iconMap = {
   Wrench,
   CreditCard,
   Star,
+  UserCircle,
 };
 
 export function ServiceCards() {
@@ -31,6 +32,13 @@ export function ServiceCards() {
       description: t('A214'),
       features: [t('A215'), t('A216'), t('A217'), t('A218')],
       href: '/review-card',
+    },
+    {
+      icon: 'UserCircle',
+      title: t('SERVICE1'), // Business Profile Page
+      description: t('SERVICE2'),
+      features: [t('SERVICE3'), t('SERVICE4'), t('SERVICE5'), t('SERVICE6')],
+      href: '/services',
     },
     {
       icon: 'Code2',

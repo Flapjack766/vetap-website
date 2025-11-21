@@ -1,0 +1,159 @@
+{
+  "moh": {
+    "ar": {
+      "name": "djkty",
+      "rank": "Captain",
+      "fleet": "A320 Family / B737",
+      "employer": "Turkish Airlines — Captain",
+      "about": "uyyyy",
+      "safety": [
+        "yyyyy",
+        "yyy",
+        "yyy",
+        "yyy"
+      ],
+      "certs": [
+        "yyy",
+        "yyy",
+        "Recurrent yy",
+        "yyy"
+      ],
+      "aircraftHours": {
+        "types": [
+          "dytjt",
+          "ydtj"
+        ],
+        "total": "djyt",
+        "currentType": "~3000+",
+        "ifr": "~6000+",
+        "vfr": "~2000+"
+      },
+      "timeline": [
+        {
+          "year": "2025",
+          "desc": "dyjty"
+        },
+        {
+          "year": "2018",
+          "desc": "First Officer — Narrow-body"
+        }
+      ],
+      "contacts": {
+        "email": "captain@example.com",
+        "whatsapp": "",
+        "linkedin": "",
+        "website": "https://vetaps.com"
+      },
+      "disclaimer": "صفحة شخصية لكابتن يعمل لدى الخطوط الجوية التركية. لا توجد تابعية أو اعتماد رسمي.",
+      "base": "Istanbul Airport",
+      "languages": [
+        "العربية",
+        "الإنجليزية",
+        "التركية"
+      ],
+      "photoUrl": "/images/ceo.jpg"
+    },
+    "en": {
+      "name": "Capt. Mohammed …",
+      "rank": "Captain",
+      "fleet": "A320 Family / B737",
+      "employer": "Turkish Airlines — Captain",
+      "about": "Two professional lines focused on safety and operational precision.",
+      "safety": [
+        "SOP adherence",
+        "CRM",
+        "Threat & Error Management"
+      ],
+      "certs": [
+        "ATPL",
+        "Type Ratings",
+        "Recurrent Training"
+      ],
+      "aircraftHours": {
+        "types": [
+          "A320 Family",
+          "B737"
+        ],
+        "total": "~8000+",
+        "currentType": "~3000+",
+        "ifr": "~6000+",
+        "vfr": "~2000+"
+      },
+      "timeline": [
+        {
+          "year": "2025",
+          "desc": "Captain — Turkish Airlines"
+        },
+        {
+          "year": "2018",
+          "desc": "First Officer — Narrow-body"
+        }
+      ],
+      "contacts": {
+        "email": "captain@example.com",
+        "whatsapp": "",
+        "linkedin": "",
+        "website": "https://vetaps.com"
+      },
+      "disclaimer": "Personal page for a captain employed by Turkish Airlines. No affiliation or official endorsement.",
+      "base": "Istanbul Airport",
+      "languages": [
+        "Arabic",
+        "English",
+        "Turkish"
+      ],
+      "photoUrl": "/images/ceo.jpg"
+    },
+    "tr": {
+      "name": "Kpt. Mehmet …",
+      "rank": "Kaptan",
+      "fleet": "A320 Ailesi / B737",
+      "employer": "Turkish Airlines — Captain",
+      "about": "Güvenlik ve operasyonel hassasiyete odaklı iki satır.",
+      "safety": [
+        "SOP uyumu",
+        "CRM",
+        "Tehdit & Hata Yönetimi"
+      ],
+      "certs": [
+        "ATPL",
+        "Tip Yetkileri",
+        "Periyodik Eğitim"
+      ],
+      "aircraftHours": {
+        "types": [
+          "A320 Ailesi",
+          "B737"
+        ],
+        "total": "~8000+",
+        "currentType": "~3000+",
+        "ifr": "~6000+",
+        "vfr": "~2000+"
+      },
+      "timeline": [
+        {
+          "year": "2025",
+          "desc": "Kaptan — Turkish Airlines"
+        },
+        {
+          "year": "2018",
+          "desc": "Yardımcı Pilot — Dar gövde"
+        }
+      ],
+      "contacts": {
+        "email": "captain@example.com",
+        "whatsapp": "",
+        "linkedin": "",
+        "website": "https://vetaps.com"
+      },
+      "disclaimer": "Türk Hava Yolları'nda çalışan bir kaptanın kişisel sayfası. Herhangi bir resmî ilişki veya onay yoktur.",
+      "base": "İstanbul Havalimanı",
+      "languages": [
+        "Arapça",
+        "İngilizce",
+        "Türkçe"
+      ],
+      "photoUrl": "/images/ceo.jpg"
+    }
+  }
+}

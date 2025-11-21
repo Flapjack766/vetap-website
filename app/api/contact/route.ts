@@ -12,6 +12,13 @@ const schema = z.object({
   phone: z.string().min(5).max(25).optional().or(z.literal('')),
   message: z.string().min(10).max(2000),
   locale: z.enum(['ar', 'en']).default('en'),
+  showcaseAnswers: z.object({
+    industry: z.string().optional(),
+    industryOther: z.string().optional(),
+    services: z.array(z.string()).optional(),
+    budget: z.string().optional(),
+    speed: z.string().optional(),
+  }).optional(),
 });
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
@@ -49,6 +56,7 @@ export async function POST(req: NextRequest) {
       message: data.message,
       ticket,
       locale: data.locale,
+      showcaseAnswers: data.showcaseAnswers,
     };
 
     // Generate HTML emails

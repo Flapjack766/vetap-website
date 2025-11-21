@@ -21,7 +21,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
       />
       <HeroShowcase />
-      <FeatureGrid />
+      {/* <FeatureGrid /> */} {/* مخفي مؤقتاً */}
       <ServiceCards />
       {/* <PortfolioMasonry /> */} {/* مخفي مؤقتاً - لإظهاره: احذف التعليق */}
       {/* <Testimonials /> */} {/* مخفي مؤقتاً - لإظهاره: احذف التعليق */}

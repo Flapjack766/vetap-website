@@ -5,6 +5,13 @@ type MailData = {
   message: string;
   ticket: string;
   locale?: 'ar' | 'en';
+  showcaseAnswers?: {
+    industry?: string;
+    industryOther?: string;
+    services?: string[];
+    budget?: string;
+    speed?: string;
+  };
 };
 
 const baseStyles = `
@@ -238,6 +245,61 @@ export function renderCompanyEmailHTML(d: MailData): string {
       <p><strong>💬 Message:</strong></p>
       <pre>${d.message}</pre>
     </div>
+
+    ${d.showcaseAnswers ? `
+    <!-- Showcase Answers -->
+    <div class="card">
+      <h2>📊 Interactive Showcase Answers</h2>
+      <p class="muted" style="margin-bottom:16px">Client selections from the interactive questionnaire:</p>
+      
+      ${d.showcaseAnswers.industry ? `
+      <div class="info-row">
+        <div class="info-label">Industry:</div>
+        <div class="info-value">${d.showcaseAnswers.industry === 'ecommerce' ? 'E-Commerce' : 
+          d.showcaseAnswers.industry === 'corporate' ? 'Corporate' : 
+          d.showcaseAnswers.industry === 'portfolio' ? 'Portfolio' : 
+          d.showcaseAnswers.industry === 'saas' ? 'SaaS' : 
+          d.showcaseAnswers.industry === 'other' ? `Other${d.showcaseAnswers.industryOther ? `: ${d.showcaseAnswers.industryOther}` : ''}` : 
+          d.showcaseAnswers.industry}</div>
+      </div>
+      ` : ''}
+      
+      ${d.showcaseAnswers.services && d.showcaseAnswers.services.length > 0 ? `
+      <div class="info-row">
+        <div class="info-label">Services:</div>
+        <div class="info-value">
+          ${d.showcaseAnswers.services.map((s: string) => 
+            s === 'websites' ? '• Websites & Pages' : 
+            s === 'nfc-business-card' ? '• NFC Business Card' : 
+            s === 'nfc-google-maps' ? '• NFC Google Maps Review Card' : 
+            s
+          ).join('<br>')}
+        </div>
+      </div>
+      ` : ''}
+      
+      ${d.showcaseAnswers.budget ? `
+      <div class="info-row">
+        <div class="info-label">Budget:</div>
+        <div class="info-value">${d.showcaseAnswers.budget === 'under-5k' ? 'Under $5,000' : 
+          d.showcaseAnswers.budget === '5k-15k' ? '$5,000 - $15,000' : 
+          d.showcaseAnswers.budget === '15k-50k' ? '$15,000 - $50,000' : 
+          d.showcaseAnswers.budget === '50k+' ? '$50,000+' : 
+          d.showcaseAnswers.budget}</div>
+      </div>
+      ` : ''}
+      
+      ${d.showcaseAnswers.speed ? `
+      <div class="info-row">
+        <div class="info-label">Speed Requirement:</div>
+        <div class="info-value">${d.showcaseAnswers.speed === 'standard' ? 'Standard (4-6 weeks)' : 
+          d.showcaseAnswers.speed === 'fast' ? 'Fast (2-3 weeks)' : 
+          d.showcaseAnswers.speed === 'express' ? 'Express (1 week)' : 
+          d.showcaseAnswers.speed}</div>
+      </div>
+      ` : ''}
+    </div>
+    ` : ''}
 
     <!-- Quick Actions -->
     <div class="card" style="text-align:center">
