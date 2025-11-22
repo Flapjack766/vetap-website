@@ -67,11 +67,31 @@ export function TemplateRequestsTab({ locale }: TemplateRequestsTabProps) {
 
       const requestsWithUsers = await Promise.all(
         (requestsData || []).map(async (request) => {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('display_name, email')
-            .eq('id', request.profile_id)
-            .maybeSingle();
+          // Get profile by profile_id (if provided) or fallback to user_id
+          let profileData = null;
+          if (request.profile_id) {
+            const { data } = await supabase
+              .from('profiles')
+              .select('display_name, email')
+              .eq('id', request.profile_id)
+              .eq('is_deleted', false)
+              .maybeSingle();
+            profileData = data;
+          }
+          
+          // If no profile found by profile_id, try to get by user_id
+          if (!profileData && request.user_id) {
+            const { data } = await supabase
+              .from('profiles')
+              .select('display_name, email')
+              .eq('user_id', request.user_id)
+              .eq('is_deleted', false)
+              .order('is_primary', { ascending: false })
+              .order('created_at', { ascending: true })
+              .limit(1)
+              .maybeSingle();
+            profileData = data;
+          }
 
           return {
             ...request,

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UsernameRequestsTab } from './tabs/UsernameRequestsTab';
 import { TemplateRequestsTab } from './tabs/TemplateRequestsTab';
+import { UsersTab } from './tabs/UsersTab';
 
 interface AdminDashboardProps {
   locale: string;
@@ -20,14 +21,19 @@ export function AdminDashboard({ locale }: AdminDashboardProps) {
       </div>
 
       <Tabs defaultValue="username-requests" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="username-requests">
-            {t('ADMIN3')}
-          </TabsTrigger>
-          <TabsTrigger value="template-requests">
-            {t('TEMPLATE44')}
-          </TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto">
+          <TabsList className="w-full min-w-max inline-flex md:w-auto md:grid md:grid-cols-3">
+            <TabsTrigger value="username-requests" className="whitespace-nowrap flex-shrink-0">
+              {t('ADMIN3')}
+            </TabsTrigger>
+            <TabsTrigger value="template-requests" className="whitespace-nowrap flex-shrink-0">
+              {t('TEMPLATE44')}
+            </TabsTrigger>
+            <TabsTrigger value="users" className="whitespace-nowrap flex-shrink-0">
+              {t('ADMIN46')}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="username-requests" className="space-y-4">
           <UsernameRequestsTab locale={locale} />
@@ -35,6 +41,10 @@ export function AdminDashboard({ locale }: AdminDashboardProps) {
 
         <TabsContent value="template-requests" className="space-y-4">
           <TemplateRequestsTab locale={locale} />
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-4">
+          <UsersTab locale={locale} />
         </TabsContent>
       </Tabs>
     </div>

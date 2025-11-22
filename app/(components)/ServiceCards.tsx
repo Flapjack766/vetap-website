@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { Code2, Palette, Wrench, CreditCard, Star, ArrowRight, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from './ui/button';
+import { Card3DViewerMini } from './nfc/Card3DViewerMini';
+import { ReviewCard3DViewerMini } from './nfc/ReviewCard3DViewerMini';
 
 const iconMap = {
   Code2,
@@ -38,7 +40,7 @@ export function ServiceCards() {
       title: t('SERVICE1'), // Business Profile Page
       description: t('SERVICE2'),
       features: [t('SERVICE3'), t('SERVICE4'), t('SERVICE5'), t('SERVICE6')],
-      href: '/services',
+      href: '/Business-Profile',
     },
     {
       icon: 'Code2',
@@ -80,6 +82,9 @@ export function ServiceCards() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {services.map((service, index) => {
             const Icon = iconMap[service.icon as keyof typeof iconMap];
+            const isNFCCard = service.title === t('A202'); // NFC Smart Business Card
+            const isReviewCard = service.title === t('A203'); // NFC Google Maps Review Card
+            
             return (
               <motion.div
                 key={service.title}
@@ -87,14 +92,16 @@ export function ServiceCards() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="vetap-card flex flex-col"
+                className={`vetap-card flex flex-col ${isReviewCard ? '!p-3' : ''}`}
               >
-                <div className="mb-4 inline-flex rounded-lg bg-primary p-3 text-primary-foreground">
-                  <Icon className="h-6 w-6" />
+                <div className="mb-4">
+                  <div className="inline-flex rounded-lg bg-primary p-3 text-primary-foreground">
+                    <Icon className="h-6 w-6" />
+                  </div>
                 </div>
-                <h3 className="mb-2 text-xl font-semibold">{service.title}</h3>
-                <p className="mb-4 text-muted-foreground">{service.description}</p>
-                <ul className="mb-6 flex-1 space-y-2">
+                <h3 className={`text-xl font-semibold ${isNFCCard ? 'mb-0.5' : isReviewCard ? '-mb-1' : 'mb-2'}`}>{service.title}</h3>
+                <p className={`text-muted-foreground ${isNFCCard ? 'mb-1.5' : isReviewCard ? 'mb-0.5' : 'mb-4'}`}>{service.description}</p>
+                <ul className={`flex-1 space-y-1.5 ${isNFCCard ? 'mb-3' : isReviewCard ? 'mb-2' : 'mb-6'}`}>
                   {service.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2 text-sm">
                       <ArrowRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
@@ -102,6 +109,20 @@ export function ServiceCards() {
                     </li>
                   ))}
                 </ul>
+                {(isNFCCard || isReviewCard) && (
+                  <div className={`mb-4 flex justify-center ${isNFCCard ? 'w-full' : 'w-full'}`}>
+                    {isNFCCard && (
+                      <div className="w-40">
+                        <Card3DViewerMini className="h-full" />
+                      </div>
+                    )}
+                    {isReviewCard && (
+                      <div className="w-32">
+                        <ReviewCard3DViewerMini className="h-full" />
+                      </div>
+                    )}
+                  </div>
+                )}
                 <Button asChild variant="outline" className="w-full">
                   <Link href={service.href}>{t('A193')}</Link>
                 </Button>

@@ -386,14 +386,16 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
       </div>
 
       {/* Detailed Analytics */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">{t('ANALYTICS15')}</TabsTrigger>
-          <TabsTrigger value="links">{t('ANALYTICS37')}</TabsTrigger>
-          <TabsTrigger value="devices">{t('ANALYTICS16')}</TabsTrigger>
-          <TabsTrigger value="sources">{t('ANALYTICS17')}</TabsTrigger>
-          <TabsTrigger value="locations">{t('ANALYTICS18')}</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="overview" className="space-y-4 w-full">
+        <div className="w-full overflow-x-auto">
+          <TabsList className="w-full min-w-max inline-flex md:w-auto md:grid md:grid-cols-5">
+            <TabsTrigger value="overview" className="whitespace-nowrap flex-shrink-0">{t('ANALYTICS15')}</TabsTrigger>
+            <TabsTrigger value="links" className="whitespace-nowrap flex-shrink-0">{t('ANALYTICS37')}</TabsTrigger>
+            <TabsTrigger value="devices" className="whitespace-nowrap flex-shrink-0">{t('ANALYTICS16')}</TabsTrigger>
+            <TabsTrigger value="sources" className="whitespace-nowrap flex-shrink-0">{t('ANALYTICS17')}</TabsTrigger>
+            <TabsTrigger value="locations" className="whitespace-nowrap flex-shrink-0">{t('ANALYTICS18')}</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">

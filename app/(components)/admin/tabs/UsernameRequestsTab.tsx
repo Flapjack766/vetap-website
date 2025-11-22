@@ -57,17 +57,34 @@ export function UsernameRequestsTab({ locale }: UsernameRequestsTabProps) {
       // For now, we'll fetch from profiles table which has email
       const requestsWithUsers = await Promise.all(
         (requestsData || []).map(async (request) => {
+          // Get primary profile or first profile for the user
           const { data: profileData } = await supabase
             .from('profiles')
             .select('display_name, email')
             .eq('user_id', request.user_id)
+            .eq('is_deleted', false)
+            .order('is_primary', { ascending: false })
+            .order('created_at', { ascending: true })
+            .limit(1)
             .maybeSingle();
+
+          // If no profile found, try to get any profile (in case RLS is blocking)
+          let finalProfileData = profileData;
+          if (!profileData) {
+            const { data: anyProfile } = await supabase
+              .from('profiles')
+              .select('display_name, email')
+              .eq('user_id', request.user_id)
+              .limit(1)
+              .maybeSingle();
+            finalProfileData = anyProfile;
+          }
 
           return {
             ...request,
             user: {
-              email: profileData?.email || 'Unknown',
-              profile: profileData || undefined,
+              email: finalProfileData?.email || 'Unknown',
+              profile: finalProfileData || undefined,
             },
           };
         })

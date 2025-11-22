@@ -44,9 +44,9 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="mx-auto max-w-6xl">
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <div className="container mx-auto px-4 py-8 md:py-12 max-w-full">
+        <div className="mx-auto max-w-6xl w-full">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-start justify-between">
@@ -76,7 +76,7 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
 
           {/* Tabs */}
           <Tabs defaultValue="profile" className="w-full">
-            <div className="overflow-x-auto mb-8 -mx-4 px-4">
+            <div className="mb-8 w-full overflow-x-auto">
               <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-3 lg:grid-cols-6">
                 <TabsTrigger value="profile" className="whitespace-nowrap flex-shrink-0">{t('DASH3')}</TabsTrigger>
                 <TabsTrigger value="links" className="whitespace-nowrap flex-shrink-0">{t('DASH4')}</TabsTrigger>

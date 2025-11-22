@@ -35,15 +35,15 @@ export default async function LocaleLayout({
   const direction = getDirection(locale as 'ar' | 'en');
 
   return (
-    <html lang={locale} dir={direction} className="dark">
-      <body>
+    <html lang={locale} dir={direction} className="dark overflow-x-hidden">
+      <body className="overflow-x-hidden">
         <NextIntlClientProvider messages={messages}>
           <LoadingBar />
           <a href="#main-content" className="skip-to-content">
             Skip to content
           </a>
           <Header />
-          <main id="main-content">{children}</main>
+          <main id="main-content" className="overflow-x-hidden">{children}</main>
           <Footer />
         </NextIntlClientProvider>
       </body>
