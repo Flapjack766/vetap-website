@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getGeolocationFromIP } from '@/lib/analytics/geolocation';
 
 // Get client IP address
 function getClientIP(req: NextRequest): string {
@@ -49,17 +50,22 @@ function parseUserAgent(userAgent: string) {
   return { deviceType, browser, os };
 }
 
-// Get country from IP (simplified - in production, use a geolocation service)
-async function getCountryFromIP(ip: string): Promise<{ country: string | null; city: string | null }> {
-  // For now, return null - can be enhanced with a geolocation API
-  // In production, use services like MaxMind GeoIP2, ipapi.co, or ip-api.com
-  return { country: null, city: null };
-}
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { profile_id, event_type = 'page_view', page_path, session_id, link_url, link_type } = body;
+    const { 
+      profile_id, 
+      event_type = 'page_view', 
+      event_category,
+      event_label,
+      event_value,
+      page_path, 
+      session_id, 
+      link_url, 
+      link_type,
+      metadata: clientMetadata,
+    } = body;
 
     if (!profile_id) {
       return NextResponse.json(
@@ -79,17 +85,70 @@ export async function POST(req: NextRequest) {
     // Parse user agent
     const { deviceType, browser, os } = parseUserAgent(userAgent);
     
-    // Get country (simplified - can be enhanced)
-    const { country, city } = await getCountryFromIP(ip);
+    // Get geolocation from IP using geolocation service
+    const geolocation = await getGeolocationFromIP(ip);
+    const country = geolocation.country;
+    const city = geolocation.city;
 
     // Extract screen dimensions from body if available
     const screenWidth = body.screen_width || null;
     const screenHeight = body.screen_height || null;
 
-    // Prepare metadata for link_click events
-    const metadata = event_type === 'link_click' && link_url 
-      ? { link_url, link_type: link_type || 'unknown' }
-      : null;
+    // Prepare metadata - merge client metadata with server-side data
+    const metadata: Record<string, any> = {
+      ...(clientMetadata || {}),
+    };
+    
+    // Add link-specific metadata
+    if (event_type === 'link_click' && link_url) {
+      metadata.link_url = link_url;
+      metadata.link_type = link_type || 'unknown';
+    }
+
+    // Update or create session
+    if (session_id) {
+      const { data: existingSession } = await supabase
+        .from('analytics_sessions')
+        .select('id, page_views, events_count')
+        .eq('id', session_id)
+        .single();
+
+      if (existingSession) {
+        // Update session
+        await supabase
+          .from('analytics_sessions')
+          .update({
+            page_views: event_type === 'page_view' ? (existingSession.page_views || 0) + 1 : existingSession.page_views,
+            events_count: (existingSession.events_count || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', session_id);
+      } else {
+        // Create new session
+        const urlParams = new URLSearchParams(req.url.split('?')[1] || '');
+        await supabase
+          .from('analytics_sessions')
+          .insert({
+            id: session_id,
+            profile_id,
+            start_time: new Date().toISOString(),
+            page_views: event_type === 'page_view' ? 1 : 0,
+            events_count: 1,
+            referrer: referrer || null,
+            utm_source: urlParams.get('utm_source') || null,
+            utm_medium: urlParams.get('utm_medium') || null,
+            utm_campaign: urlParams.get('utm_campaign') || null,
+            utm_term: urlParams.get('utm_term') || null,
+            utm_content: urlParams.get('utm_content') || null,
+            country,
+            city,
+            device_type: deviceType,
+            browser,
+            os,
+            ip_address: ip !== 'unknown' ? ip : null,
+          });
+      }
+    }
 
     // Insert analytics event
     const { error: insertError } = await supabase
@@ -97,6 +156,9 @@ export async function POST(req: NextRequest) {
       .insert({
         profile_id,
         event_type,
+        event_category: event_category || null,
+        event_label: event_label || null,
+        event_value: event_value || null,
         page_path: page_path || '/',
         referrer: referrer || null,
         user_agent: userAgent,
@@ -110,8 +172,32 @@ export async function POST(req: NextRequest) {
         screen_height: screenHeight,
         language,
         session_id: session_id || null,
-        metadata,
+        metadata: Object.keys(metadata).length > 0 ? metadata : null,
       });
+
+    // Track in user journey if session exists
+    if (session_id) {
+      const { data: journeyData } = await supabase
+        .from('analytics_user_journey')
+        .select('step_number')
+        .eq('session_id', session_id)
+        .order('step_number', { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextStep = (journeyData?.step_number || 0) + 1;
+      
+      await supabase
+        .from('analytics_user_journey')
+        .insert({
+          profile_id,
+          session_id,
+          step_number: nextStep,
+          page_path: page_path || '/',
+          event_type,
+          event_data: metadata,
+        });
+    }
 
     if (insertError) {
       console.error('Error inserting analytics event:', insertError);

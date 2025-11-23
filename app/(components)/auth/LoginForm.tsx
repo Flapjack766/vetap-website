@@ -50,6 +50,37 @@ export function LoginForm({ locale }: LoginFormProps) {
         return;
       }
 
+      // Get user data to link account
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Get user's profiles
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('is_deleted', false)
+          .limit(1);
+
+        // Link account to visitor analytics
+        try {
+          const sessionId = sessionStorage.getItem('analytics_session_id');
+          await fetch('/api/analytics/link-account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: user.id,
+              profile_id: profiles?.[0]?.id,
+              session_id: sessionId || undefined,
+              action: 'login',
+            }),
+          });
+        } catch (err) {
+          // Silently fail - analytics linking shouldn't block login
+          console.error('Error linking account to analytics:', err);
+        }
+      }
+
       // Redirect to dashboard
       router.push(`/${locale}/dashboard`);
       router.refresh();

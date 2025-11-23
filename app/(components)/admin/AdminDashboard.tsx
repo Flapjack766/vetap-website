@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UsernameRequestsTab } from './tabs/UsernameRequestsTab';
 import { TemplateRequestsTab } from './tabs/TemplateRequestsTab';
 import { UsersTab } from './tabs/UsersTab';
+import { VisitorsTab } from './tabs/VisitorsTab';
 
 interface AdminDashboardProps {
   locale: string;
@@ -22,7 +23,7 @@ export function AdminDashboard({ locale }: AdminDashboardProps) {
 
       <Tabs defaultValue="username-requests" className="space-y-6">
         <div className="w-full">
-          <TabsList className="w-full min-w-max inline-flex md:w-auto md:grid md:grid-cols-3">
+          <TabsList className="w-full min-w-max inline-flex md:w-auto md:grid md:grid-cols-4">
             <TabsTrigger value="username-requests" className="whitespace-nowrap flex-shrink-0">
               {t('ADMIN3')}
             </TabsTrigger>
@@ -31,6 +32,9 @@ export function AdminDashboard({ locale }: AdminDashboardProps) {
             </TabsTrigger>
             <TabsTrigger value="users" className="whitespace-nowrap flex-shrink-0">
               {t('ADMIN46')}
+            </TabsTrigger>
+            <TabsTrigger value="visitors" className="whitespace-nowrap flex-shrink-0">
+              {locale === 'ar' ? 'الزوار' : 'Visitors'}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -45,6 +49,10 @@ export function AdminDashboard({ locale }: AdminDashboardProps) {
 
         <TabsContent value="users" className="space-y-4">
           <UsersTab locale={locale} />
+        </TabsContent>
+
+        <TabsContent value="visitors" className="space-y-4">
+          <VisitorsTab locale={locale} />
         </TabsContent>
       </Tabs>
     </div>

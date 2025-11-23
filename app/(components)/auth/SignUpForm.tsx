@@ -201,6 +201,26 @@ export function SignUpForm({ locale }: SignUpFormProps) {
             })
             .select();
 
+          // Link account to visitor analytics
+          if (profileData && profileData[0]) {
+            try {
+              const sessionId = sessionStorage.getItem('analytics_session_id');
+              await fetch('/api/analytics/link-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  user_id: authData.user.id,
+                  profile_id: profileData[0].id,
+                  session_id: sessionId || undefined,
+                  action: 'signup',
+                }),
+              });
+            } catch (err) {
+              // Silently fail - analytics linking shouldn't block signup
+              console.error('Error linking account to analytics:', err);
+            }
+          }
+
           // Helper function to check if error is actually meaningful
           const isRealError = (error: any): boolean => {
             if (!error) return false;

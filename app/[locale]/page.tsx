@@ -5,7 +5,7 @@ import { ServiceCards } from '@/app/(components)/ServiceCards';
 // import { PortfolioMasonry } from '@/app/(components)/PortfolioMasonry'; // مخفي مؤقتاً
 // import { Testimonials } from '@/app/(components)/Testimonials'; // مخفي مؤقتاً
 import { CTA } from '@/app/(components)/CTA';
-import { organizationLd, websiteLd } from '@/app/(seo)/jsonld';
+import { getOrganizationLd, getWebsiteLd, getBreadcrumbLd } from '@/app/(seo)/jsonld';
 
 // Revalidate home page every 5 minutes
 export const revalidate = 300;
@@ -13,6 +13,15 @@ export const revalidate = 300;
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const siteUrl = process.env.SITE_URL || 'https://vetaps.com';
+  const isArabic = locale === 'ar';
+  
+  const organizationLd = getOrganizationLd(locale as 'ar' | 'en');
+  const websiteLd = getWebsiteLd(locale as 'ar' | 'en');
+  const breadcrumbLd = getBreadcrumbLd([
+    { name: isArabic ? 'الرئيسية' : 'Home', item: `${siteUrl}/${locale}` },
+  ], locale as 'ar' | 'en');
+  
   return (
     <>
       <script
@@ -22,6 +31,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <HeroShowcase />
       {/* <FeatureGrid /> */} {/* مخفي مؤقتاً */}

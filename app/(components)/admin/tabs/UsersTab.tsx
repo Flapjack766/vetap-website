@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Users, MapPin, Globe, Mail, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Loader2, Users, MapPin, Globe, Mail, Calendar, User, Phone, Link as LinkIcon, Image as ImageIcon, FileText, Clock, CheckCircle, XCircle, AtSign, Network, Activity, Shield } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -18,6 +19,41 @@ interface UserProfile {
   is_primary: boolean;
   country?: string;
   city?: string | null;
+}
+
+interface FullUserProfile {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  headline: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  email: string | null;
+  location: string | null;
+  links: any;
+  template_id: number | null;
+  username_random: string | null;
+  username_custom: string | null;
+  username_type: string | null;
+  custom_username_expires_at: string | null;
+  custom_username_expired: boolean | null;
+  profile_name: string | null;
+  is_primary: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+  country?: string;
+  city?: string | null;
+  // Additional data
+  authEmail?: string | null;
+  allProfiles?: any[];
+  usernameRequests?: any[];
+  templateRequests?: any[];
+  ipAddresses?: { ip: string; created_at: string; country?: string; city?: string }[];
+  lastIp?: string;
+  lastLogin?: string;
+  totalLogins?: number;
 }
 
 interface UsersTabProps {
@@ -35,6 +71,9 @@ export function UsersTab({ locale }: UsersTabProps) {
     countries: new Set<string>(),
     cities: new Set<string>(),
   });
+  const [selectedUser, setSelectedUser] = useState<FullUserProfile | null>(null);
+  const [userDetailsOpen, setUserDetailsOpen] = useState(false);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   // Helper function to parse location string
   const parseLocation = (location: string | null) => {
@@ -264,6 +303,139 @@ export function UsersTab({ locale }: UsersTabProps) {
     });
   };
 
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString(locale === 'ar' ? 'ar-SA' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const fetchUserDetails = async (userId: string, profileId: string) => {
+    try {
+      setLoadingDetails(true);
+      
+      // Fetch full profile details
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', profileId)
+        .single();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // Fetch auth user email (the email used for login)
+      // Note: auth.admin is only available on server-side, so we'll use the email from the first profile
+      // In a real scenario, you'd want to create an API route to fetch this
+      let authEmail: string | null = null;
+      try {
+        // Try to get from profiles first (usually the email in profiles matches auth email)
+        const { data: primaryProfile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('user_id', userId)
+          .eq('is_primary', true)
+          .limit(1)
+          .maybeSingle();
+        authEmail = primaryProfile?.email || profileData.email || null;
+      } catch (err) {
+        // Fallback to profile email
+        authEmail = profileData.email || null;
+      }
+
+      // Fetch all profiles for this user
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false });
+
+      // Fetch all username requests for this user
+      const { data: usernameRequests } = await supabase
+        .from('username_requests')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      // Fetch all template requests for this user
+      const { data: templateRequests } = await supabase
+        .from('custom_template_requests')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      // Fetch IP addresses from analytics_events
+      const { data: analyticsData } = await supabase
+        .from('analytics_events')
+        .select('ip_address, country, city, created_at')
+        .eq('profile_id', profileId)
+        .not('ip_address', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      // Get unique IPs with their first occurrence
+      const uniqueIPs = new Map<string, { ip: string; created_at: string; country?: string; city?: string }>();
+      if (analyticsData) {
+        analyticsData.forEach((event: any) => {
+          if (event.ip_address && !uniqueIPs.has(event.ip_address)) {
+            uniqueIPs.set(event.ip_address, {
+              ip: event.ip_address,
+              created_at: event.created_at,
+              country: event.country || undefined,
+              city: event.city || undefined,
+            });
+          }
+        });
+      }
+
+      const ipAddresses = Array.from(uniqueIPs.values()).sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      // Get last IP (most recent)
+      const lastIp = ipAddresses.length > 0 ? ipAddresses[0].ip : undefined;
+      const lastLogin = ipAddresses.length > 0 ? ipAddresses[0].created_at : undefined;
+      const totalLogins = analyticsData?.length || 0;
+
+      // Fetch location from analytics if available
+      const { data: locationData } = await supabase
+        .from('analytics_events')
+        .select('country, city')
+        .eq('profile_id', profileId)
+        .not('country', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const fullProfile: FullUserProfile = {
+        ...profileData,
+        country: locationData?.country || undefined,
+        city: locationData?.city || undefined,
+        authEmail,
+        allProfiles: allProfiles || [],
+        usernameRequests: usernameRequests || [],
+        templateRequests: templateRequests || [],
+        ipAddresses,
+        lastIp,
+        lastLogin,
+        totalLogins,
+      };
+
+      setSelectedUser(fullProfile);
+      setUserDetailsOpen(true);
+    } catch (err: any) {
+      console.error('Error fetching user details:', err);
+      setError(err.message || 'Failed to load user details');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -369,7 +541,11 @@ export function UsersTab({ locale }: UsersTabProps) {
                       const username = user.username_custom || user.username_random || '-';
                       
                       return (
-                        <tr key={user.id} className="border-b hover:bg-muted/50">
+                        <tr 
+                          key={user.id} 
+                          className="border-b hover:bg-muted/50 cursor-pointer"
+                          onClick={() => fetchUserDetails(user.user_id, user.id)}
+                        >
                           <td className="p-3">
                             <div className="font-medium">
                               {user.display_name || t('ADMIN15')}
@@ -422,6 +598,538 @@ export function UsersTab({ locale }: UsersTabProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* User Details Dialog */}
+      <Dialog open={userDetailsOpen} onOpenChange={setUserDetailsOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              {selectedUser?.display_name || t('ADMIN15')}
+            </DialogTitle>
+            <DialogDescription>
+              {locale === 'ar' ? 'جميع معلومات المستخدم' : 'Complete user information'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingDetails ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : selectedUser ? (
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{locale === 'ar' ? 'المعلومات الأساسية' : 'Basic Information'}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'معرف البروفايل' : 'Profile ID'}</label>
+                      <p className="text-sm font-mono">{selectedUser.id}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'معرف المستخدم' : 'User ID'}</label>
+                      <p className="text-sm font-mono">{selectedUser.user_id}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        {locale === 'ar' ? 'البريد الإلكتروني (البروفايل)' : 'Email (Profile)'}
+                      </label>
+                      <p className="text-sm">{selectedUser.email || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        {locale === 'ar' ? 'البريد الإلكتروني (تسجيل الدخول)' : 'Email (Login/Auth)'}
+                      </label>
+                      <p className="text-sm font-semibold text-primary">{selectedUser.authEmail || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        {locale === 'ar' ? 'الاسم المعروض' : 'Display Name'}
+                      </label>
+                      <p className="text-sm">{selectedUser.display_name || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'اسم البروفايل' : 'Profile Name'}</label>
+                      <p className="text-sm">{selectedUser.profile_name || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'العنوان' : 'Headline'}</label>
+                      <p className="text-sm">{selectedUser.headline || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        {locale === 'ar' ? 'الوصف' : 'Bio'}
+                      </label>
+                      <p className="text-sm whitespace-pre-wrap">{selectedUser.bio || '-'}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{locale === 'ar' ? 'معلومات الاتصال' : 'Contact Information'}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        {locale === 'ar' ? 'الهاتف' : 'Phone'}
+                      </label>
+                      <p className="text-sm">{selectedUser.phone || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        {locale === 'ar' ? 'الموقع' : 'Location'}
+                      </label>
+                      <p className="text-sm">{selectedUser.location || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        {locale === 'ar' ? 'الدولة' : 'Country'}
+                      </label>
+                      <p className="text-sm">{selectedUser.country || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        {locale === 'ar' ? 'المدينة' : 'City'}
+                      </label>
+                      <p className="text-sm">{selectedUser.city || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" />
+                        {locale === 'ar' ? 'رابط الصورة' : 'Avatar URL'}
+                      </label>
+                      {selectedUser.avatar_url ? (
+                        <div className="space-y-2">
+                          <img 
+                            src={selectedUser.avatar_url} 
+                            alt="Avatar" 
+                            className="w-20 h-20 rounded-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                          <p className="text-xs font-mono break-all">{selectedUser.avatar_url}</p>
+                        </div>
+                      ) : (
+                        <p className="text-sm">-</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Username Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{locale === 'ar' ? 'معلومات اسم المستخدم' : 'Username Information'}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'اسم المستخدم العشوائي' : 'Random Username'}</label>
+                      <p className="text-sm font-mono">{selectedUser.username_random || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'اسم المستخدم المخصص' : 'Custom Username'}</label>
+                      <p className="text-sm font-mono">{selectedUser.username_custom || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'نوع اسم المستخدم' : 'Username Type'}</label>
+                      <p className="text-sm">{selectedUser.username_type || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        {selectedUser.custom_username_expired ? (
+                          <XCircle className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        )}
+                        {locale === 'ar' ? 'حالة اسم المستخدم المخصص' : 'Custom Username Status'}
+                      </label>
+                      <p className="text-sm">
+                        {selectedUser.custom_username_expired 
+                          ? (locale === 'ar' ? 'منتهي الصلاحية' : 'Expired')
+                          : selectedUser.username_custom 
+                            ? (locale === 'ar' ? 'نشط' : 'Active')
+                            : '-'
+                        }
+                      </p>
+                    </div>
+                    {selectedUser.custom_username_expires_at && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          {locale === 'ar' ? 'تاريخ انتهاء الصلاحية' : 'Expires At'}
+                        </label>
+                        <p className="text-sm">{formatDateTime(selectedUser.custom_username_expires_at)}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Links */}
+              {selectedUser.links && typeof selectedUser.links === 'object' && Object.keys(selectedUser.links).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <LinkIcon className="h-5 w-5" />
+                      {locale === 'ar' ? 'الروابط' : 'Links'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {Object.entries(selectedUser.links as Record<string, any>).map(([key, value]) => (
+                        <div key={key} className="flex items-center justify-between p-2 bg-muted rounded">
+                          <span className="text-sm font-medium">{key}</span>
+                          <a 
+                            href={value?.url || value} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline"
+                          >
+                            {value?.url || value}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* All Emails */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    {locale === 'ar' ? 'جميع الإيميلات' : 'All Email Addresses'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {selectedUser.authEmail && (
+                      <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold">{selectedUser.authEmail}</p>
+                            <p className="text-xs text-muted-foreground">{locale === 'ar' ? 'إيميل تسجيل الدخول (الأصلي)' : 'Login Email (Primary)'}</p>
+                          </div>
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        </div>
+                      </div>
+                    )}
+                    {selectedUser.allProfiles && selectedUser.allProfiles.length > 0 && (
+                      <>
+                        {selectedUser.allProfiles
+                          .filter(p => p.email && p.email !== selectedUser.authEmail)
+                          .map((profile, idx) => (
+                            <div key={idx} className="p-3 bg-muted rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm">{profile.email}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {locale === 'ar' ? 'بروفايل:' : 'Profile:'} {profile.profile_name || profile.id}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        {selectedUser.allProfiles.filter(p => p.email && p.email !== selectedUser.authEmail).length === 0 && (
+                          <p className="text-sm text-muted-foreground">{locale === 'ar' ? 'لا توجد إيميلات إضافية' : 'No additional emails'}</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* All Profiles */}
+              {selectedUser.allProfiles && selectedUser.allProfiles.length > 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      {locale === 'ar' ? 'جميع البروفايلات' : 'All Profiles'} ({selectedUser.allProfiles.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {selectedUser.allProfiles.map((profile, idx) => (
+                        <div key={idx} className="p-3 bg-muted rounded-lg border">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium">{profile.profile_name || `Profile ${idx + 1}`}</p>
+                                {profile.is_primary && (
+                                  <span className="px-2 py-0.5 text-xs bg-primary text-primary-foreground rounded">
+                                    {locale === 'ar' ? 'أساسي' : 'Primary'}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground font-mono">{profile.id}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {locale === 'ar' ? 'تم الإنشاء:' : 'Created:'} {formatDate(profile.created_at)}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-muted-foreground">
+                                {profile.username_custom || profile.username_random || '-'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Username Requests */}
+              {selectedUser.usernameRequests && selectedUser.usernameRequests.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <AtSign className="h-5 w-5" />
+                      {locale === 'ar' ? 'طلبات اسم المستخدم' : 'Username Requests'} ({selectedUser.usernameRequests.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {selectedUser.usernameRequests.map((request: any, idx: number) => (
+                        <div key={idx} className="p-3 bg-muted rounded-lg border">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <code className="text-sm font-mono">{request.username}</code>
+                              <span className={`px-2 py-0.5 text-xs rounded ${
+                                request.status === 'approved' ? 'bg-green-500/20 text-green-700 dark:text-green-400' :
+                                request.status === 'rejected' ? 'bg-red-500/20 text-red-700 dark:text-red-400' :
+                                'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                              }`}>
+                                {request.status === 'approved' ? (locale === 'ar' ? 'موافق' : 'Approved') :
+                                 request.status === 'rejected' ? (locale === 'ar' ? 'مرفوض' : 'Rejected') :
+                                 (locale === 'ar' ? 'قيد الانتظار' : 'Pending')}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                            <div>
+                              <span>{locale === 'ar' ? 'المدة:' : 'Period:'}</span> {request.period || '-'}
+                            </div>
+                            <div>
+                              <span>{locale === 'ar' ? 'تاريخ الطلب:' : 'Requested:'}</span> {formatDate(request.created_at)}
+                            </div>
+                            {request.start_date && (
+                              <div>
+                                <span>{locale === 'ar' ? 'تاريخ البدء:' : 'Start Date:'}</span> {formatDate(request.start_date)}
+                              </div>
+                            )}
+                            {request.expires_at && (
+                              <div>
+                                <span>{locale === 'ar' ? 'تاريخ الانتهاء:' : 'Expires:'}</span> {formatDate(request.expires_at)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Template Requests */}
+              {selectedUser.templateRequests && selectedUser.templateRequests.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      {locale === 'ar' ? 'طلبات القوالب' : 'Template Requests'} ({selectedUser.templateRequests.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {selectedUser.templateRequests.map((request: any, idx: number) => (
+                        <div key={idx} className="p-3 bg-muted rounded-lg border">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <p className="text-sm font-medium">{request.title || (locale === 'ar' ? 'طلب قالب' : 'Template Request')}</p>
+                              <span className={`px-2 py-0.5 text-xs rounded ${
+                                request.status === 'approved' ? 'bg-green-500/20 text-green-700 dark:text-green-400' :
+                                request.status === 'rejected' ? 'bg-red-500/20 text-red-700 dark:text-red-400' :
+                                'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                              }`}>
+                                {request.status === 'approved' ? (locale === 'ar' ? 'موافق' : 'Approved') :
+                                 request.status === 'rejected' ? (locale === 'ar' ? 'مرفوض' : 'Rejected') :
+                                 (locale === 'ar' ? 'قيد الانتظار' : 'Pending')}
+                              </span>
+                            </div>
+                          </div>
+                          {request.description && (
+                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{request.description}</p>
+                          )}
+                          <div className="text-xs text-muted-foreground">
+                            <span>{locale === 'ar' ? 'تاريخ الطلب:' : 'Requested:'}</span> {formatDate(request.created_at)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* IP Addresses */}
+              {selectedUser.ipAddresses && selectedUser.ipAddresses.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Network className="h-5 w-5" />
+                      {locale === 'ar' ? 'عناوين IP' : 'IP Addresses'} ({selectedUser.ipAddresses.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {selectedUser.lastIp && (
+                        <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold font-mono">{selectedUser.lastIp}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {locale === 'ar' ? 'آخر IP' : 'Last IP'}
+                                {selectedUser.lastLogin && ` • ${formatDateTime(selectedUser.lastLogin)}`}
+                              </p>
+                            </div>
+                            <Activity className="h-5 w-5 text-primary" />
+                          </div>
+                        </div>
+                      )}
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {selectedUser.ipAddresses.slice(0, 20).map((ipData, idx) => (
+                          <div key={idx} className="p-2 bg-muted rounded border">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <p className="text-sm font-mono">{ipData.ip}</p>
+                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                  {ipData.country && (
+                                    <span className="flex items-center gap-1">
+                                      <Globe className="h-3 w-3" />
+                                      {ipData.country}
+                                    </span>
+                                  )}
+                                  {ipData.city && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {ipData.city}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right text-xs text-muted-foreground">
+                                {formatDateTime(ipData.created_at)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {selectedUser.ipAddresses.length > 20 && (
+                          <p className="text-xs text-muted-foreground text-center">
+                            {locale === 'ar' ? `و ${selectedUser.ipAddresses.length - 20} عنوان IP آخر` : `And ${selectedUser.ipAddresses.length - 20} more IP addresses`}
+                          </p>
+                        )}
+                      </div>
+                      {selectedUser.totalLogins !== undefined && (
+                        <div className="mt-3 p-2 bg-muted rounded text-center">
+                          <p className="text-sm">
+                            <span className="font-semibold">{selectedUser.totalLogins}</span> {locale === 'ar' ? 'زيارة إجمالية' : 'total visits'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Additional Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{locale === 'ar' ? 'معلومات إضافية' : 'Additional Information'}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'معرف القالب' : 'Template ID'}</label>
+                      <p className="text-sm">{selectedUser.template_id || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        {selectedUser.is_primary ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        {locale === 'ar' ? 'البروفايل الأساسي' : 'Primary Profile'}
+                      </label>
+                      <p className="text-sm">{selectedUser.is_primary ? (locale === 'ar' ? 'نعم' : 'Yes') : (locale === 'ar' ? 'لا' : 'No')}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        {selectedUser.is_deleted ? (
+                          <XCircle className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        )}
+                        {locale === 'ar' ? 'محذوف' : 'Deleted'}
+                      </label>
+                      <p className="text-sm">{selectedUser.is_deleted ? (locale === 'ar' ? 'نعم' : 'Yes') : (locale === 'ar' ? 'لا' : 'No')}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        {locale === 'ar' ? 'تاريخ الإنشاء' : 'Created At'}
+                      </label>
+                      <p className="text-sm">{formatDateTime(selectedUser.created_at)}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        {locale === 'ar' ? 'آخر تحديث' : 'Last Updated'}
+                      </label>
+                      <p className="text-sm">{formatDateTime(selectedUser.updated_at)}</p>
+                    </div>
+                    {selectedUser.totalLogins !== undefined && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Activity className="h-4 w-4" />
+                          {locale === 'ar' ? 'إجمالي الزيارات' : 'Total Visits'}
+                        </label>
+                        <p className="text-sm font-semibold">{selectedUser.totalLogins}</p>
+                      </div>
+                    )}
+                    {selectedUser.lastLogin && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Activity className="h-4 w-4" />
+                          {locale === 'ar' ? 'آخر دخول' : 'Last Login'}
+                        </label>
+                        <p className="text-sm">{formatDateTime(selectedUser.lastLogin)}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

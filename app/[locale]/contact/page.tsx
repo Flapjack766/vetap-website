@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { ContactForm } from '@/app/(components)/ContactForm';
 import { Mail, MapPin, Phone } from 'lucide-react';
+import { getContactPageLd, getOrganizationLd, getBreadcrumbLd } from '@/app/(seo)/jsonld';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -16,8 +17,30 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function ContactPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const siteUrl = process.env.SITE_URL || 'https://vetaps.com';
+  const isArabic = locale === 'ar';
+  
+  const contactPageLd = getContactPageLd(locale as 'ar' | 'en');
+  const organizationLd = getOrganizationLd(locale as 'ar' | 'en');
+  const breadcrumbLd = getBreadcrumbLd([
+    { name: isArabic ? 'الرئيسية' : 'Home', item: `${siteUrl}/${locale}` },
+    { name: isArabic ? 'اتصل بنا' : 'Contact', item: `${siteUrl}/${locale}/contact` },
+  ], locale as 'ar' | 'en');
+  
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(contactPageLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
       <section className="vetap-section">
         <div className="vetap-container">
           <div className="mx-auto max-w-3xl text-center">
