@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
-import { getOrganizationLd, getBreadcrumbLd, getFAQPageLd } from '@/app/(seo)/jsonld';
+import { getOrganizationLd, getBreadcrumbLd, getFAQPageLd, getSupportPageLd } from '@/app/(seo)/jsonld';
 import { SupportContent } from '@/app/(components)/support/SupportContent';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -96,9 +96,14 @@ export default async function SupportPage({ params }: { params: Promise<{ locale
   ];
   
   const faqLd = getFAQPageLd(faqs, locale as 'ar' | 'en');
+  const supportLd = getSupportPageLd(locale as 'ar' | 'en');
   
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(supportLd) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}

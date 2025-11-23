@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
-import { getOrganizationLd, getBreadcrumbLd } from '@/app/(seo)/jsonld';
+import { getOrganizationLd, getBreadcrumbLd, getBlogPageLd } from '@/app/(seo)/jsonld';
 import { BlogContent } from '@/app/(components)/blog/BlogContent';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -44,20 +44,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
     { name: isArabic ? 'الرئيسية' : 'Home', item: `${siteUrl}/${locale}` },
     { name: isArabic ? 'المدونة' : 'Blog', item: `${siteUrl}/${locale}/blog` },
   ], locale as 'ar' | 'en');
-  
-  const blogPageLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Blog',
-    name: isArabic ? 'مدونة VETAP' : 'VETAP Blog',
-    description: isArabic
-      ? 'مقالات احترافية عن تطوير المواقع، تقنيات NFC، SEO، وأفضل الممارسات في التطوير الرقمي'
-      : 'Professional articles on web development, NFC technology, SEO, and digital development best practices',
-    url: `${siteUrl}/${locale}/blog`,
-    publisher: {
-      '@id': `${siteUrl}/#organization`,
-    },
-    inLanguage: locale,
-  };
+  const blogPageLd = getBlogPageLd(locale as 'ar' | 'en');
   
   return (
     <>

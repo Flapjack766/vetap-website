@@ -51,17 +51,9 @@ export function getOrganizationLd(locale: 'ar' | 'en' = 'en') {
       },
     ],
     sameAs: [
-      'https://x.com/vetap',
-      'https://www.linkedin.com/company/vetap',
-      'https://www.instagram.com/vetap',
+      'https://x.com/vetap_official',
+      'https://www.linkedin.com/in/vetap',
     ],
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.9',
-      reviewCount: '100+',
-      bestRating: '5',
-      worstRating: '1',
-    },
     areaServed: {
       '@type': 'Country',
       name: 'Worldwide',
@@ -84,14 +76,6 @@ export function getWebsiteLd(locale: 'ar' | 'en' = 'en') {
     inLanguage: [locale, locale === 'ar' ? 'en' : 'ar'],
     publisher: {
       '@id': `${siteUrl}/#organization`,
-    },
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${siteUrl}/search?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
     },
   };
 }
@@ -288,7 +272,7 @@ export function getPersonLd(locale: 'ar' | 'en' = 'en') {
       '@id': `${siteUrl}/#organization`,
     },
     email: 'Ahmed@vetaps.com',
-    telephone: '+966553198577',
+    telephone: '+905346146038',
     image: `${siteUrl}/images/ceo.jpg`,
     sameAs: [
       'https://x.com/ahmedalzbaji',
@@ -318,6 +302,249 @@ export function getFAQPageLd(faqs: { question: string; answer: string }[], local
         text: faq.answer,
       },
     })),
+  };
+}
+
+// Blog Page Schema - Enhanced
+export function getBlogPageLd(locale: 'ar' | 'en' = 'en') {
+  const isArabic = locale === 'ar';
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    '@id': `${siteUrl}/${locale}/blog#blog`,
+    name: isArabic ? 'مدونة VETAP' : 'VETAP Blog',
+    description: isArabic
+      ? 'مقالات احترافية عن تطوير المواقع، تقنيات NFC، SEO، وأفضل الممارسات في التطوير الرقمي من خبراء VETAP'
+      : 'Professional articles on web development, NFC technology, SEO, and digital development best practices from VETAP experts',
+    url: `${siteUrl}/${locale}/blog`,
+    publisher: {
+      '@id': `${siteUrl}/#organization`,
+    },
+    inLanguage: locale,
+    about: {
+      '@type': 'Thing',
+      name: isArabic ? 'تطوير المواقع والتقنيات الرقمية' : 'Web Development and Digital Technologies',
+    },
+    keywords: isArabic
+      ? 'تطوير المواقع، Next.js، React، NFC، SEO، تقنيات الويب، برمجة، تطوير تطبيقات'
+      : 'web development, Next.js, React, NFC, SEO, web technologies, programming, app development',
+  };
+}
+
+// Blog Posting Schema - Enhanced with comprehensive metadata
+export function getBlogPostingLd(
+  postId: number,
+  title: string,
+  excerpt: string,
+  datePublished: string,
+  dateModified: string,
+  authorName: string = 'VETAP Team',
+  locale: 'ar' | 'en' = 'en'
+) {
+  const isArabic = locale === 'ar';
+  const postUrl = `${siteUrl}/${locale}/blog/${postId}`;
+  
+  // Determine article category based on postId
+  let articleSection = '';
+  let keywords = '';
+  
+  if (postId === 1) {
+    articleSection = isArabic ? 'تطوير الويب' : 'Web Development';
+    keywords = isArabic
+      ? 'Next.js 15، React Server Components، Partial Prerendering، تطوير الويب، JavaScript'
+      : 'Next.js 15, React Server Components, Partial Prerendering, Web Development, JavaScript';
+  } else if (postId === 2) {
+    articleSection = isArabic ? 'تقنية NFC' : 'NFC Technology';
+    keywords = isArabic
+      ? 'بطاقات NFC، Near Field Communication، بطاقات أعمال ذكية، تقنية لاسلكية'
+      : 'NFC cards, Near Field Communication, smart business cards, wireless technology';
+  } else if (postId === 3) {
+    articleSection = isArabic ? 'تحسين محركات البحث' : 'SEO';
+    keywords = isArabic
+      ? 'SEO، تحسين محركات البحث، Structured Data، Core Web Vitals، تحسين الموقع'
+      : 'SEO, search engine optimization, Structured Data, Core Web Vitals, website optimization';
+  } else if (postId === 4) {
+    articleSection = isArabic ? 'أمان المواقع' : 'Website Security';
+    keywords = isArabic
+      ? 'أمان المواقع، Row Level Security، CSP، التشفير، حماية البيانات'
+      : 'website security, Row Level Security, CSP, encryption, data protection';
+  } else if (postId === 5) {
+    articleSection = isArabic ? 'TypeScript' : 'TypeScript';
+    keywords = isArabic
+      ? 'TypeScript، JavaScript، برمجة، تطوير الويب، Type Safety'
+      : 'TypeScript, JavaScript, programming, web development, type safety';
+  } else if (postId === 6) {
+    articleSection = isArabic ? 'أداء المواقع' : 'Website Performance';
+    keywords = isArabic
+      ? 'أداء المواقع، تحسين الأداء، Core Web Vitals، سرعة التحميل، تحسين الصور'
+      : 'website performance, performance optimization, Core Web Vitals, load speed, image optimization';
+  }
+  
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': `${postUrl}#blogposting`,
+    headline: title,
+    description: excerpt,
+    url: postUrl,
+    datePublished: datePublished,
+    dateModified: dateModified,
+    author: {
+      '@type': 'Organization',
+      '@id': `${siteUrl}/#organization`,
+      name: authorName,
+    },
+    publisher: {
+      '@id': `${siteUrl}/#organization`,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': postUrl,
+    },
+    articleSection: articleSection,
+    keywords: keywords,
+    inLanguage: locale,
+    about: {
+      '@type': 'Thing',
+      name: articleSection,
+    },
+    isPartOf: {
+      '@id': `${siteUrl}/${locale}/blog#blog`,
+    },
+  };
+}
+
+// Documentation Page Schema - Enhanced as TechArticle/HowTo
+export function getDocumentationPageLd(locale: 'ar' | 'en' = 'en') {
+  const isArabic = locale === 'ar';
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    '@id': `${siteUrl}/${locale}/documentation#techarticle`,
+    headline: isArabic ? 'توثيق خدمات VETAP' : 'VETAP Services Documentation',
+    description: isArabic
+      ? 'دليل شامل لاستخدام جميع خدمات ومنتجات VETAP: بطاقات NFC الذكية، تطوير المواقع، وأدوات الأعمال الرقمية'
+      : 'Complete guide to using all VETAP services and products: NFC smart cards, web development, and digital business tools',
+    url: `${siteUrl}/${locale}/documentation`,
+    author: {
+      '@id': `${siteUrl}/#organization`,
+    },
+    publisher: {
+      '@id': `${siteUrl}/#organization`,
+    },
+    dateModified: new Date().toISOString().split('T')[0],
+    inLanguage: locale,
+    about: [
+      {
+        '@type': 'Thing',
+        name: isArabic ? 'بطاقات NFC الذكية' : 'NFC Smart Cards',
+      },
+      {
+        '@type': 'Thing',
+        name: isArabic ? 'تطوير المواقع' : 'Web Development',
+      },
+      {
+        '@type': 'Thing',
+        name: isArabic ? 'أدوات الأعمال الرقمية' : 'Digital Business Tools',
+      },
+    ],
+    keywords: isArabic
+      ? 'توثيق، دليل، بطاقات NFC، تطوير المواقع، أدوات رقمية، VETAP'
+      : 'documentation, guide, NFC cards, web development, digital tools, VETAP',
+  };
+}
+
+// Support Page Schema - Enhanced with Service and FAQPage
+export function getSupportPageLd(locale: 'ar' | 'en' = 'en') {
+  const isArabic = locale === 'ar';
+  return {
+    '@context': 'https://schema.org',
+    '@type': ['WebPage', 'Service'],
+    '@id': `${siteUrl}/${locale}/support#support`,
+    name: isArabic ? 'مركز الدعم - VETAP' : 'Support Center - VETAP',
+    description: isArabic
+      ? 'احصل على المساعدة والدعم الفني من فريق VETAP. الأسئلة الشائعة، أدلة الاستخدام، وطرق التواصل'
+      : 'Get help and technical support from VETAP team. FAQs, usage guides, and contact methods',
+    url: `${siteUrl}/${locale}/support`,
+    provider: {
+      '@id': `${siteUrl}/#organization`,
+    },
+    serviceType: isArabic ? 'دعم فني' : 'Technical Support',
+    areaServed: {
+      '@type': 'Country',
+      name: 'Worldwide',
+    },
+    availableChannel: {
+      '@type': 'ServiceChannel',
+      serviceUrl: `${siteUrl}/${locale}/support`,
+      serviceType: isArabic ? 'دعم عبر الإنترنت' : 'Online Support',
+      availableLanguage: ['English', 'Arabic', 'العربية'],
+    },
+    inLanguage: locale,
+    about: {
+      '@type': 'Thing',
+      name: isArabic ? 'الدعم الفني والمساعدة' : 'Technical Support and Help',
+    },
+  };
+}
+
+// Privacy Policy Page Schema
+export function getPrivacyPolicyPageLd(locale: 'ar' | 'en' = 'en') {
+  const isArabic = locale === 'ar';
+  return {
+    '@context': 'https://schema.org',
+    '@type': ['WebPage', 'PrivacyPolicy'],
+    '@id': `${siteUrl}/${locale}/privacy#privacypolicy`,
+    name: isArabic ? 'سياسة الخصوصية - VETAP' : 'Privacy Policy - VETAP',
+    description: isArabic
+      ? 'تعرف على كيفية جمع واستخدام وحماية بياناتك الشخصية في VETAP. نحن ملتزمون بحماية خصوصيتك'
+      : 'Learn how we collect, use, and protect your personal data at VETAP. We are committed to protecting your privacy',
+    url: `${siteUrl}/${locale}/privacy`,
+    publisher: {
+      '@id': `${siteUrl}/#organization`,
+    },
+    dateModified: new Date().toISOString().split('T')[0],
+    inLanguage: locale,
+    about: {
+      '@type': 'Thing',
+      name: isArabic ? 'الخصوصية وحماية البيانات' : 'Privacy and Data Protection',
+    },
+    keywords: isArabic
+      ? 'سياسة الخصوصية، حماية البيانات، الخصوصية، GDPR، حماية المعلومات'
+      : 'privacy policy, data protection, privacy, GDPR, information security',
+    mainEntity: {
+      '@id': `${siteUrl}/#organization`,
+    },
+  };
+}
+
+// Terms of Service Page Schema
+export function getTermsOfServicePageLd(locale: 'ar' | 'en' = 'en') {
+  const isArabic = locale === 'ar';
+  return {
+    '@context': 'https://schema.org',
+    '@type': ['WebPage', 'TermsOfService'],
+    '@id': `${siteUrl}/${locale}/terms#termsofservice`,
+    name: isArabic ? 'شروط الخدمة - VETAP' : 'Terms of Service - VETAP',
+    description: isArabic
+      ? 'اقرأ شروط الخدمة الخاصة بـ VETAP. القواعد والأحكام التي تحكم استخدامك لخدماتنا'
+      : 'Read VETAP terms of service. Rules and regulations that govern your use of our services',
+    url: `${siteUrl}/${locale}/terms`,
+    publisher: {
+      '@id': `${siteUrl}/#organization`,
+    },
+    dateModified: new Date().toISOString().split('T')[0],
+    inLanguage: locale,
+    about: {
+      '@type': 'Thing',
+      name: isArabic ? 'شروط الخدمة والأحكام' : 'Terms of Service and Conditions',
+    },
+    keywords: isArabic
+      ? 'شروط الخدمة، الأحكام، القواعد، اتفاقية الاستخدام، الشروط والأحكام'
+      : 'terms of service, terms and conditions, rules, user agreement, legal terms',
+    mainEntity: {
+      '@id': `${siteUrl}/#organization`,
+    },
   };
 }
 

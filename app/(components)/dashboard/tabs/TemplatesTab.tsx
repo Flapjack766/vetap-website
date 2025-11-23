@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { getPositionClass, getDirection } from '@/lib/utils/rtl';
 
 // Dynamically import template components for live preview
 const Template1Profile = dynamic(() => import('@/app/(components)/profile/templates/Template1Profile').then(mod => ({ default: mod.Template1Profile })), { ssr: false });
@@ -65,6 +66,8 @@ export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious, on
   const t = useTranslations();
   const router = useRouter();
   const supabase = createClient();
+  const isRTL = locale === 'ar';
+  const dir = getDirection(locale);
 
   const [selectedTemplate, setSelectedTemplate] = useState<number>(profile.template_id || 1);
   const [selectedCustomTemplateId, setSelectedCustomTemplateId] = useState<string | null>(
@@ -298,10 +301,10 @@ export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious, on
   };
 
   return (
-    <Card>
+    <Card dir="ltr">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={isRTL ? 'text-right' : 'text-left'}>
             <CardTitle>{t('DASH5')}</CardTitle>
             <CardDescription>{t('DASH26')}</CardDescription>
           </div>
@@ -313,9 +316,9 @@ export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious, on
                 onNavigateToTab('link');
               }
             }}
-            className="gap-2"
+            className={`gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
           >
-            <Palette className="h-4 w-4" />
+            <Palette className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
             {t('DASH72')}
           </Button>
         </div>
@@ -366,10 +369,10 @@ export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious, on
                 onMouseLeave={() => setHoveredTemplate(null)}
               >
                 <div className="aspect-video bg-muted flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute top-2 right-2 z-10">
+                  <div className={`absolute top-2 ${getPositionClass(locale, 'right-2', 'left-2')} z-10`}>
                     <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
                   </div>
-                  {(hoveredTemplate === customTemplate.id || clickedTemplate === customTemplate.id) && mounted ? (
+                  {mounted && (hoveredTemplate === customTemplate.id || clickedTemplate === customTemplate.id) ? (
                     <div className="w-full h-full overflow-hidden">
                       {getTemplatePreview(customTemplate.id, customTemplate)}
                     </div>
@@ -449,7 +452,7 @@ export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious, on
             >
               {/* Live Preview */}
               <div className={`aspect-video bg-muted flex overflow-hidden ${template.id === 2 ? 'items-start justify-center' : 'items-center justify-center'}`}>
-                {(hoveredTemplate === template.id || clickedTemplate === template.id) && mounted ? (
+                {mounted && (hoveredTemplate === template.id || clickedTemplate === template.id) ? (
                   <div className="w-full h-full overflow-hidden">
                     {getTemplatePreview(template.id)}
                   </div>
@@ -508,7 +511,7 @@ export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious, on
                 onClick={() => onPrevious()}
                 className="flex-1"
               >
-                  {t('NAV_PREV')}
+                {t('NAV_PREV')}
               </Button>
             )}
             {onNext && (

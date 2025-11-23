@@ -6,10 +6,41 @@ import { getAboutPageLd, getOrganizationLd, getBreadcrumbLd } from '@/app/(seo)/
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale });
+  const siteUrl = process.env.SITE_URL || 'https://vetaps.com';
+  const isArabic = locale === 'ar';
   
   return {
-    title: t('ABOUT80'),
+    title: isArabic ? `${t('ABOUT80')} - VETAP` : `${t('ABOUT80')} - VETAP`,
     description: t('ABOUT81'),
+    openGraph: {
+      title: isArabic ? `${t('ABOUT80')} - VETAP` : `${t('ABOUT80')} - VETAP`,
+      description: t('ABOUT81'),
+      url: `${siteUrl}/${locale}/about`,
+      siteName: 'VETAP',
+      locale: locale,
+      type: 'website',
+      images: [
+        {
+          url: `${siteUrl}/images/og-image.png`,
+          width: 1200,
+          height: 630,
+          alt: isArabic ? 'من نحن - VETAP' : 'About VETAP',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: isArabic ? `${t('ABOUT80')} - VETAP` : `${t('ABOUT80')} - VETAP`,
+      description: t('ABOUT81'),
+      images: [`${siteUrl}/images/og-image.png`],
+    },
+    alternates: {
+      canonical: `${siteUrl}/${locale}/about`,
+      languages: {
+        'ar': `${siteUrl}/ar/about`,
+        'en': `${siteUrl}/en/about`,
+      },
+    },
   };
 }
 

@@ -16,10 +16,31 @@ const ADMIN_USER_IDS = [
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale });
+  const siteUrl = process.env.SITE_URL || 'https://vetaps.com';
+  const isArabic = locale === 'ar';
 
   return {
-    title: t('ADMIN1'),
+    title: isArabic ? `${t('ADMIN1')} - VETAP` : `${t('ADMIN1')} - VETAP`,
     description: t('ADMIN2'),
+    robots: {
+      index: false,
+      follow: false,
+    },
+    openGraph: {
+      title: isArabic ? `${t('ADMIN1')} - VETAP` : `${t('ADMIN1')} - VETAP`,
+      description: t('ADMIN2'),
+      url: `${siteUrl}/${locale}/admin`,
+      siteName: 'VETAP',
+      locale: locale,
+      type: 'website',
+    },
+    alternates: {
+      canonical: `${siteUrl}/${locale}/admin`,
+      languages: {
+        'ar': `${siteUrl}/ar/admin`,
+        'en': `${siteUrl}/en/admin`,
+      },
+    },
   };
 }
 

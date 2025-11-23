@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/toaster';
 import dynamic from 'next/dynamic';
+import { getMarginClass, getPositionClass, getDirection } from '@/lib/utils/rtl';
 
 // Dynamically import template components for live preview
 const Template1Profile = dynamic(() => import('@/app/(components)/profile/templates/Template1Profile').then(mod => ({ default: mod.Template1Profile })), { ssr: false });
@@ -35,6 +36,8 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
   const supabase = createClient();
   const { success: showSuccess, error: showError } = useToast();
   const [copied, setCopied] = useState(false);
+  const isRTL = locale === 'ar';
+  const dir = getDirection(locale);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [requestedUsername, setRequestedUsername] = useState('');
   const [periodType, setPeriodType] = useState<'week' | 'month' | 'year'>('month');
@@ -436,9 +439,9 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       {/* Toggle Preview Button */}
-      <div className="flex justify-end">
+      <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'}`}>
         <Button
           type="button"
           variant="outline"
@@ -450,17 +453,17 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
         </Button>
       </div>
 
-      <div className={showPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : ''}>
+      <div className={showPreview ? `grid grid-cols-1 lg:grid-cols-2 gap-6 ${isRTL ? 'lg:grid-flow-col-dense' : ''}` : ''}>
     <div className="space-y-6">
       {/* Random Username */}
       <Card>
-        <CardHeader>
+        <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
           <CardTitle>{t('DASH29')}</CardTitle>
           <CardDescription>{t('DASH30')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
-            <code className="flex-1 text-sm font-mono">{activeUrl}</code>
+          <div className={`flex items-center gap-2 p-4 bg-muted rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <code className="flex-1 text-sm font-mono" dir="ltr">{activeUrl}</code>
             <Button
               variant="ghost"
               size="icon"
@@ -470,15 +473,15 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
               <Copy className={`h-4 w-4 ${copied ? 'text-green-500' : ''}`} />
             </Button>
           </div>
-          <div className="flex gap-2">
+          <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <Button variant="outline" asChild className="flex-1">
               <Link href={activeUrl} target="_blank">
-                <ExternalLink className="h-4 w-4 mr-2" />
+                <ExternalLink className={`h-4 w-4 ${getMarginClass(locale, 'mr-2', 'ml-2')}`} />
                 {t('DASH31')}
               </Link>
             </Button>
             <Button variant="outline" onClick={handleCopy} className="flex-1">
-              <Copy className="h-4 w-4 mr-2" />
+              <Copy className={`h-4 w-4 ${getMarginClass(locale, 'mr-2', 'ml-2')}`} />
               {copied ? t('DASH32') : t('DASH33')}
             </Button>
           </div>
@@ -487,7 +490,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
 
       {/* Custom Username Status */}
       <Card id="custom-username-section">
-        <CardHeader>
+        <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
           <CardTitle>{t('DASH34')}</CardTitle>
           <CardDescription>{t('DASH35')}</CardDescription>
         </CardHeader>
@@ -495,14 +498,14 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
           {isCustomActive ? (
             <div className="space-y-4">
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <div className="flex items-start gap-3">
+                <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
                     <Calendar className="h-5 w-5 text-green-500" />
                   </div>
-                  <div className="flex-1">
+                  <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                     <h3 className="font-semibold mb-1">{t('DASH36')}</h3>
                     <p className="text-sm text-muted-foreground mb-2">
-                      {t('DASH37')}: <code className="px-2 py-1 bg-muted rounded text-sm">{profile.username_custom}</code>
+                      {t('DASH37')}: <code className="px-2 py-1 bg-muted rounded text-sm" dir="ltr">{profile.username_custom}</code>
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {t('DASH38')}: {formatDate(profile.custom_username_expires_at)}
@@ -513,9 +516,9 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
             </div>
           ) : profile.username_custom && new Date(profile.custom_username_expires_at) <= new Date() ? (
             <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-              <div className="flex items-start gap-3">
+              <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
+                <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                   <h3 className="font-semibold mb-1">{t('DASH39')}</h3>
                   <p className="text-sm text-muted-foreground">
                     {t('DASH40')}
@@ -526,11 +529,11 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
           ) : (
             <div className="space-y-4">
               <div className="p-4 bg-muted rounded-lg">
-                <div className="flex items-start gap-3">
+                <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <div className="h-10 w-10 rounded-full bg-muted-foreground/20 flex items-center justify-center flex-shrink-0">
                     <AlertCircle className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <div className="flex-1">
+                  <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                     <h3 className="font-semibold mb-1">{t('DASH41')}</h3>
                     <p className="text-sm text-muted-foreground mb-4">
                       {t('DASH42')}
@@ -545,7 +548,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
               {/* Request Form */}
               {showRequestForm && (
                 <Card>
-                  <CardHeader>
+                  <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
                     <CardTitle>{t('USERNAME5')}</CardTitle>
                     <CardDescription>{t('USERNAME6')}</CardDescription>
                   </CardHeader>
@@ -564,9 +567,9 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       )}
 
                       <div className="space-y-2">
-                        <Label htmlFor="username">{t('USERNAME8')}</Label>
-                        <div className="flex gap-2">
-                          <span className="flex items-center px-3 py-2 bg-muted rounded-md border border-input text-sm text-muted-foreground">
+                        <Label htmlFor="username" className={isRTL ? 'text-right' : 'text-left'}>{t('USERNAME8')}</Label>
+                        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <span className="flex items-center px-3 py-2 bg-muted rounded-md border border-input text-sm text-muted-foreground" dir="ltr">
                             {siteUrl}/{locale}/p/
                           </span>
                           <Input
@@ -582,6 +585,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                             className="flex-1"
                             maxLength={30}
                             disabled={requestLoading}
+                            dir="ltr"
                           />
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -590,13 +594,14 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="period">{t('USERNAME10')}</Label>
+                        <Label htmlFor="period" className={isRTL ? 'text-right' : 'text-left'}>{t('USERNAME10')}</Label>
                         <select
                           id="period"
                           value={periodType}
                           onChange={(e) => setPeriodType(e.target.value as 'week' | 'month' | 'year')}
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           disabled={requestLoading}
+                          dir={dir}
                         >
                           <option value="week">{t('USERNAME11')}</option>
                           <option value="month">{t('USERNAME12')}</option>
@@ -604,7 +609,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                         </select>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                         <Button
                           type="submit"
                           disabled={requestLoading || !requestedUsername.trim()}
@@ -612,7 +617,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                         >
                           {requestLoading ? (
                             <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              <Loader2 className={`h-4 w-4 ${getMarginClass(locale, 'mr-2', 'ml-2')} animate-spin`} />
                               {t('USERNAME14')}
                             </>
                           ) : (
@@ -640,7 +645,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
               {/* Pending Requests */}
               {pendingRequests.length > 0 && (
                 <Card>
-                  <CardHeader>
+                  <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
                     <CardTitle>{t('USERNAME17')}</CardTitle>
                     <CardDescription>{t('USERNAME18')}</CardDescription>
                   </CardHeader>
@@ -649,11 +654,11 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       {pendingRequests.map((request) => (
                         <div
                           key={request.id}
-                          className="p-3 bg-muted rounded-lg flex items-center justify-between"
+                          className={`p-3 bg-muted rounded-lg flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}
                         >
-                          <div>
+                          <div className={isRTL ? 'text-right' : 'text-left'}>
                             <p className="font-medium">
-                              <code className="px-2 py-1 bg-background rounded text-sm">
+                              <code className="px-2 py-1 bg-background rounded text-sm" dir="ltr">
                                 {request.requested_username}
                               </code>
                             </p>
@@ -680,8 +685,8 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
 
       {/* Custom Template Request */}
       <Card id="custom-template-section">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
+          <CardTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <Palette className="h-5 w-5" />
             {t('TEMPLATE3')}
           </CardTitle>
@@ -689,11 +694,11 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="p-4 bg-muted rounded-lg">
-            <div className="flex items-start gap-3">
+            <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <Palette className="h-5 w-5 text-primary" />
               </div>
-              <div className="flex-1">
+              <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                 <h3 className="font-semibold mb-1">{t('TEMPLATE5')}</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   {t('TEMPLATE6')}
@@ -708,7 +713,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
           {/* Template Request Form */}
           {showTemplateRequestForm && (
             <Card>
-              <CardHeader>
+              <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
                 <CardTitle>{t('TEMPLATE8')}</CardTitle>
                 <CardDescription>{t('TEMPLATE9')}</CardDescription>
               </CardHeader>
@@ -727,7 +732,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="request_title">{t('TEMPLATE11')} *</Label>
+                    <Label htmlFor="request_title" className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE11')} *</Label>
                     <Input
                       id="request_title"
                       type="text"
@@ -739,11 +744,12 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       placeholder={t('TEMPLATE12')}
                       disabled={templateRequestLoading}
                       required
+                      dir={dir}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="description">{t('TEMPLATE13')} *</Label>
+                    <Label htmlFor="description" className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE13')} *</Label>
                     <Textarea
                       id="description"
                       value={templateFormData.description}
@@ -755,13 +761,14 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       rows={4}
                       disabled={templateRequestLoading}
                       required
+                      dir={dir}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label>{t('TEMPLATE60')}</Label>
+                    <Label className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE60')}</Label>
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className={`flex items-center gap-2 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
                         <input
                           type="radio"
                           name="data_source"
@@ -773,7 +780,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                         />
                         <span>{t('TEMPLATE61')}</span>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className={`flex items-center gap-2 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
                         <input
                           type="radio"
                           name="data_source"
@@ -791,10 +798,10 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                   {templateFormData.data_source === 'build_from_scratch' && (
                     <>
                       <div className="space-y-2">
-                        <Label>{t('TEMPLATE63')}</Label>
+                        <Label className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE63')}</Label>
                         <div className="grid grid-cols-2 gap-2 p-3 border rounded-lg">
                           {['display_name', 'headline', 'bio', 'email', 'phone', 'location', 'avatar', 'links'].map((field) => (
-                            <label key={field} className="flex items-center gap-2 cursor-pointer">
+                            <label key={field} className={`flex items-center gap-2 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
                               <input
                                 type="checkbox"
                                 checked={templateFormData.required_fields.includes(field)}
@@ -821,7 +828,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>{t('TEMPLATE72')}</Label>
+                        <Label className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE72')}</Label>
                         <div className="grid grid-cols-2 gap-4">
                           {['banner', 'background', 'logo', 'icon'].map((imageType) => (
                             <div key={imageType} className="space-y-2">
@@ -833,7 +840,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                                     type="button"
                                     variant="destructive"
                                     size="sm"
-                                    className="absolute top-2 right-2"
+                                    className={`absolute top-2 ${getPositionClass(locale, 'right-2', 'left-2')}`}
                                     onClick={() => {
                                       const newImages = { ...uploadedImages };
                                       delete newImages[imageType];
@@ -874,7 +881,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="color_scheme">{t('TEMPLATE15')}</Label>
+                    <Label htmlFor="color_scheme" className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE15')}</Label>
                     <Input
                       id="color_scheme"
                       type="text"
@@ -882,17 +889,19 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       onChange={(e) => setTemplateFormData({ ...templateFormData, color_scheme: e.target.value })}
                       placeholder={t('TEMPLATE16')}
                       disabled={templateRequestLoading}
+                      dir={dir}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="layout_preference">{t('TEMPLATE17')}</Label>
+                    <Label htmlFor="layout_preference" className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE17')}</Label>
                     <select
                       id="layout_preference"
                       value={templateFormData.layout_preference}
                       onChange={(e) => setTemplateFormData({ ...templateFormData, layout_preference: e.target.value })}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={templateRequestLoading}
+                      dir={dir}
                     >
                       <option value="">{t('TEMPLATE18')}</option>
                       <option value="minimal">{t('TEMPLATE19')}</option>
@@ -904,7 +913,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="special_features">{t('TEMPLATE24')}</Label>
+                    <Label htmlFor="special_features" className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE24')}</Label>
                     <Textarea
                       id="special_features"
                       value={templateFormData.special_features}
@@ -912,11 +921,12 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       placeholder={t('TEMPLATE25')}
                       rows={3}
                       disabled={templateRequestLoading}
+                      dir={dir}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="reference_urls">{t('TEMPLATE26')}</Label>
+                    <Label htmlFor="reference_urls" className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE26')}</Label>
                     <Input
                       id="reference_urls"
                       type="text"
@@ -924,11 +934,12 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       onChange={(e) => setTemplateFormData({ ...templateFormData, reference_urls: e.target.value })}
                       placeholder={t('TEMPLATE27')}
                       disabled={templateRequestLoading}
+                      dir="ltr"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="additional_notes">{t('TEMPLATE28')}</Label>
+                    <Label htmlFor="additional_notes" className={isRTL ? 'text-right' : 'text-left'}>{t('TEMPLATE28')}</Label>
                     <Textarea
                       id="additional_notes"
                       value={templateFormData.additional_notes}
@@ -936,10 +947,11 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       placeholder={t('TEMPLATE29')}
                       rows={3}
                       disabled={templateRequestLoading}
+                      dir={dir}
                     />
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <Button
                       type="submit"
                       disabled={templateRequestLoading || !templateFormData.request_title.trim() || !templateFormData.description.trim()}
@@ -947,7 +959,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                     >
                       {templateRequestLoading ? (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className={`h-4 w-4 ${getMarginClass(locale, 'mr-2', 'ml-2')} animate-spin`} />
                           {t('TEMPLATE30')}
                         </>
                       ) : (
@@ -987,7 +999,7 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
           {/* Pending Template Requests */}
           {pendingTemplateRequests.length > 0 && (
             <Card>
-              <CardHeader>
+              <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
                 <CardTitle>{t('TEMPLATE33')}</CardTitle>
                 <CardDescription>{t('TEMPLATE34')}</CardDescription>
               </CardHeader>
@@ -998,8 +1010,8 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                       key={request.id}
                       className="p-3 bg-muted rounded-lg"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
+                      <div className={`flex items-start justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                           <p className="font-medium mb-1">{request.request_title}</p>
                           <p className="text-sm text-muted-foreground line-clamp-2">{request.description}</p>
                           <p className="text-xs text-muted-foreground mt-2">
@@ -1023,13 +1035,13 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
         {/* Live Preview Section */}
         {showPreview && (
           <Card className="sticky top-4 h-fit max-h-[calc(100vh-2rem)] overflow-hidden">
-            <CardHeader>
+            <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
               <CardTitle>{t('DASH_PREVIEW') || 'Live Preview'}</CardTitle>
               <CardDescription>{t('DASH_PREVIEW_DESC') || 'See how your profile looks in real-time'}</CardDescription>
             </CardHeader>
             <CardContent className="p-0 overflow-hidden">
               <div className="overflow-y-auto overflow-x-hidden max-h-[calc(100vh-12rem)] w-full">
-                <div className="scale-75 origin-top-left w-[133.33%] h-[133.33%] overflow-x-hidden" style={{ maxWidth: '100%' }}>
+                <div className={`scale-75 ${isRTL ? 'origin-top-right' : 'origin-top-left'} w-[133.33%] h-[133.33%] overflow-x-hidden`} style={{ maxWidth: '100%' }}>
                   {mounted && getTemplatePreview()}
                 </div>
               </div>

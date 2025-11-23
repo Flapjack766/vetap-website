@@ -17,6 +17,7 @@ import {
 import { Input } from '@/app/(components)/ui/input';
 import { Label } from '@/app/(components)/ui/label';
 import { useRouter } from 'next/navigation';
+import { getMarginClass, getDirection } from '@/lib/utils/rtl';
 
 interface ProfileSelectorProps {
   currentProfile: any;
@@ -31,6 +32,8 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange, onNav
   const supabase = createClient();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const isRTL = locale === 'ar';
+  const dir = getDirection(locale);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -128,17 +131,16 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange, onNav
   const canCreateRandom = randomCount < 3;
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6" dir={dir}>
       <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold">{t('DASH1')}</h3>
+        <div className={`flex items-center justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={isRTL ? 'text-right' : 'text-left'}>
             <p className="text-sm text-muted-foreground">
               {profiles.length} {profiles.length === 1 ? 'profile' : 'profiles'}
             </p>
           </div>
           
-          <div className="flex gap-2">
+          <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
                 <Button 
@@ -151,8 +153,8 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange, onNav
                   {t('DASH56') || 'New Profile'}
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
+              <DialogContent dir={dir}>
+                <DialogHeader className={isRTL ? 'text-right' : 'text-left'}>
                   <DialogTitle>{t('DASH57') || 'Create New Profile'}</DialogTitle>
                   <DialogDescription>
                     {t('DASH58') || 'Create a new random profile. You can have up to 3 random profiles.'}
@@ -160,24 +162,25 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange, onNav
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="profile-name">{t('DASH59') || 'Profile Name'}</Label>
+                    <Label htmlFor="profile-name" className={isRTL ? 'text-right' : 'text-left'}>{t('DASH59') || 'Profile Name'}</Label>
                     <Input
                       id="profile-name"
                       value={newProfileName}
                       onChange={(e) => setNewProfileName(e.target.value)}
                       placeholder={t('DASH64') || 'e.g., Personal, Business, Portfolio'}
                       className="mt-1"
+                      dir={dir}
                     />
                   </div>
                   {createError && (
-                    <div className="text-sm text-destructive">{createError}</div>
+                    <div className={`text-sm text-destructive ${isRTL ? 'text-right' : 'text-left'}`}>{createError}</div>
                   )}
                   {!canCreateRandom && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className={`text-sm text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
                       {t('DASH65') || 'You have reached the maximum limit of 3 random profiles. Request a custom username for more profiles.'}
                     </div>
                   )}
-                  <div className="flex justify-end gap-2">
+                  <div className={`flex ${isRTL ? 'justify-start flex-row-reverse' : 'justify-end'} gap-2`}>
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -194,7 +197,7 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange, onNav
                     >
                       {creating ? (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className={`h-4 w-4 ${getMarginClass(locale, 'mr-2', 'ml-2')} animate-spin`} />
                           {t('DASH67') || 'Creating...'}
                         </>
                       ) : (
@@ -235,17 +238,17 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange, onNav
                   isSelected
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'
-                }`}
+                } ${isRTL ? 'flex-row-reverse' : ''}`}
                 onClick={() => handleProfileSelect(profile)}
               >
-                <div className="flex items-center gap-3 flex-1">
+                <div className={`flex items-center gap-3 flex-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <div className={`p-2 rounded-full ${
                     isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted'
                   }`}>
                     <User className="h-4 w-4" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                  <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <h4 className="font-medium truncate">
                         {profile.profile_name || profile.display_name || `Profile ${profile.id.slice(0, 8)}`}
                       </h4>
@@ -258,7 +261,7 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange, onNav
                         <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="text-sm text-muted-foreground truncate" dir="ltr">
                       /p/{username}
                     </p>
                   </div>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Eye, Users, Globe, Monitor, Smartphone, Tablet, TrendingUp, Calendar, MapPin, MousePointerClick, Download, Mail, ExternalLink } from 'lucide-react';
 import { Button } from '@/app/(components)/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getMarginClass, getTextAlignClass, getDirection } from '@/lib/utils/rtl';
 
 interface AnalyticsTabProps {
   profile: any;
@@ -46,6 +47,8 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
   const t = useTranslations();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
+  const isRTL = locale === 'ar';
+  const dir = getDirection(locale);
   const [stats, setStats] = useState<AnalyticsStats | null>(null);
   const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
   const [topReferrers, setTopReferrers] = useState<TopReferrer[]>([]);
@@ -295,12 +298,12 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
       {/* Time Range Selector & Export */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
+          <div className={`flex items-center justify-between flex-wrap gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={isRTL ? 'text-right' : 'text-left'}>
               <CardTitle>{t('ANALYTICS1')}</CardTitle>
               <CardDescription>{t('ANALYTICS2')}</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value as any)}
@@ -316,9 +319,9 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
                 size="sm"
                 onClick={() => handleExport('csv')}
                 disabled={exporting}
-                className="gap-2"
+                className={`gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
               >
-                <Download className="h-4 w-4" />
+                <Download className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                 {t('ANALYTICS36')}
               </Button>
               <Button
@@ -326,9 +329,9 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
                 size="sm"
                 onClick={() => handleExport('json')}
                 disabled={exporting}
-                className="gap-2"
+                className={`gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
               >
-                <Download className="h-4 w-4" />
+                <Download className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                 JSON
               </Button>
             </div>
@@ -339,8 +342,8 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
       {/* Overview Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('ANALYTICS7')}</CardTitle>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <CardTitle className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('ANALYTICS7')}</CardTitle>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -350,33 +353,33 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('ANALYTICS9')}</CardTitle>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <CardTitle className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('ANALYTICS9')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className={isRTL ? 'text-right' : 'text-left'}>
             <div className="text-2xl font-bold">{formatNumber(stats?.uniqueVisitors || 0)}</div>
             <p className="text-xs text-muted-foreground">{t('ANALYTICS10')}</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('ANALYTICS11')}</CardTitle>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <CardTitle className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('ANALYTICS11')}</CardTitle>
             <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className={isRTL ? 'text-right' : 'text-left'}>
             <div className="text-2xl font-bold">{formatNumber(stats?.countriesCount || 0)}</div>
             <p className="text-xs text-muted-foreground">{t('ANALYTICS12')}</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('ANALYTICS13')}</CardTitle>
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <CardTitle className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('ANALYTICS13')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className={isRTL ? 'text-right' : 'text-left'}>
             <div className="text-2xl font-bold">
               {stats?.totalViews ? ((stats.uniqueVisitors / stats.totalViews) * 100).toFixed(1) : 0}%
             </div>
@@ -386,7 +389,7 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
       </div>
 
       {/* Detailed Analytics */}
-      <Tabs defaultValue="overview" className="space-y-4 w-full">
+      <Tabs defaultValue="overview" className="space-y-4 w-full" dir={dir}>
         <div className="w-full">
           <TabsList className="w-full min-w-max inline-flex md:w-auto md:grid md:grid-cols-5">
             <TabsTrigger value="overview" className="whitespace-nowrap flex-shrink-0">{t('ANALYTICS15')}</TabsTrigger>
@@ -401,7 +404,7 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
         <TabsContent value="overview" className="space-y-4">
           {/* Daily Views Chart */}
           <Card>
-            <CardHeader>
+            <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
               <CardTitle>{t('ANALYTICS19')}</CardTitle>
               <CardDescription>{t('ANALYTICS20')}</CardDescription>
             </CardHeader>
@@ -418,7 +421,7 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
                     
                     return (
                       <div key={stat.date} className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className={`flex items-center justify-between text-sm ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <span className="font-medium">{formatDate(stat.date)}</span>
                           <span className="text-muted-foreground">
                             {formatNumber(stat.total_views)} {t('ANALYTICS22')}
@@ -440,34 +443,34 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
 
           {/* Device Breakdown Summary */}
           <Card>
-            <CardHeader>
+            <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
               <CardTitle>{t('ANALYTICS23')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                <div className={`flex items-center gap-4 p-4 bg-muted rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <div className="p-3 bg-primary/10 rounded-lg">
                     <Smartphone className="h-6 w-6 text-primary" />
                   </div>
-                  <div>
+                  <div className={isRTL ? 'text-right' : 'text-left'}>
                     <div className="text-2xl font-bold">{formatNumber(stats?.mobileViews || 0)}</div>
                     <p className="text-sm text-muted-foreground">{t('ANALYTICS24')}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                <div className={`flex items-center gap-4 p-4 bg-muted rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <div className="p-3 bg-primary/10 rounded-lg">
                     <Monitor className="h-6 w-6 text-primary" />
                   </div>
-                  <div>
+                  <div className={isRTL ? 'text-right' : 'text-left'}>
                     <div className="text-2xl font-bold">{formatNumber(stats?.desktopViews || 0)}</div>
                     <p className="text-sm text-muted-foreground">{t('ANALYTICS25')}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                <div className={`flex items-center gap-4 p-4 bg-muted rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <div className="p-3 bg-primary/10 rounded-lg">
                     <Tablet className="h-6 w-6 text-primary" />
                   </div>
-                  <div>
+                  <div className={isRTL ? 'text-right' : 'text-left'}>
                     <div className="text-2xl font-bold">{formatNumber(stats?.tabletViews || 0)}</div>
                     <p className="text-sm text-muted-foreground">{t('ANALYTICS26')}</p>
                   </div>
@@ -480,7 +483,7 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
         {/* Links Tab */}
         <TabsContent value="links" className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
               <CardTitle>{t('ANALYTICS38')}</CardTitle>
               <CardDescription>{t('ANALYTICS39')}</CardDescription>
             </CardHeader>
@@ -505,17 +508,17 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
                     
                     return (
                       <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className={`flex items-center gap-3 flex-1 min-w-0 ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <ExternalLink className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                            <div className="min-w-0 flex-1">
+                            <div className={`min-w-0 flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                               <p className="font-medium truncate">{domain}</p>
                               <p className="text-sm text-muted-foreground">
                                 {link.link_type} • {formatNumber(link.unique_visitors)} {t('ANALYTICS9')}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0 ml-4">
+                          <div className={`${getTextAlignClass(locale, 'text-right', 'text-left')} flex-shrink-0 ${getMarginClass(locale, 'ml-4', 'mr-4')}`}>
                             <p className="font-bold">{formatNumber(link.click_count)}</p>
                             <p className="text-sm text-muted-foreground">{percentage.toFixed(1)}%</p>
                           </div>
@@ -555,8 +558,8 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
                     
                     return (
                       <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div>
+                        <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className={isRTL ? 'text-right' : 'text-left'}>
                             <p className="font-medium">
                               {device.device_type} • {device.browser} • {device.os}
                             </p>
@@ -564,7 +567,7 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
                               {formatNumber(device.unique_visitors)} {t('ANALYTICS9')}
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className={getTextAlignClass(locale, 'text-right', 'text-left')}>
                             <p className="font-bold">{formatNumber(device.visit_count)}</p>
                             <p className="text-sm text-muted-foreground">{percentage.toFixed(1)}%</p>
                           </div>
@@ -587,7 +590,7 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
         {/* Sources Tab */}
         <TabsContent value="sources" className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
               <CardTitle>{t('ANALYTICS29')}</CardTitle>
               <CardDescription>{t('ANALYTICS30')}</CardDescription>
             </CardHeader>
@@ -605,14 +608,14 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
                     
                     return (
                       <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div>
+                        <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className={isRTL ? 'text-right' : 'text-left'}>
                             <p className="font-medium">{domain}</p>
                             <p className="text-sm text-muted-foreground">
                               {formatNumber(referrer.unique_visitors)} {t('ANALYTICS9')}
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className={getTextAlignClass(locale, 'text-right', 'text-left')}>
                             <p className="font-bold">{formatNumber(referrer.visit_count)}</p>
                             <p className="text-sm text-muted-foreground">{percentage.toFixed(1)}%</p>
                           </div>
@@ -635,7 +638,7 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
         {/* Locations Tab */}
         <TabsContent value="locations" className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
               <CardTitle>{t('ANALYTICS32')}</CardTitle>
               <CardDescription>{t('ANALYTICS33')}</CardDescription>
             </CardHeader>
@@ -652,17 +655,17 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
                     
                     return (
                       <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
+                        <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <MapPin className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <div className={isRTL ? 'text-right' : 'text-left'}>
                               <p className="font-medium">{country.country || t('ANALYTICS34')}</p>
                               <p className="text-sm text-muted-foreground">
                                 {formatNumber(country.unique_visitors)} {t('ANALYTICS9')}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className={getTextAlignClass(locale, 'text-right', 'text-left')}>
                             <p className="font-bold">{formatNumber(country.visit_count)}</p>
                             <p className="text-sm text-muted-foreground">{percentage.toFixed(1)}%</p>
                           </div>

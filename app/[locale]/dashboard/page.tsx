@@ -10,9 +10,35 @@ export const dynamic = 'force-dynamic'; // Keep dynamic for auth checks
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale });
+  const siteUrl = process.env.SITE_URL || 'https://vetaps.com';
+  const isArabic = locale === 'ar';
   
   return {
-    title: t('DASH1'),
+    title: isArabic ? `${t('DASH1')} - VETAP` : `${t('DASH1')} - VETAP`,
+    description: isArabic 
+      ? 'إدارة بروفايلاتك الرقمية وبطاقات NFC الذكية من لوحة التحكم في VETAP'
+      : 'Manage your digital profiles and NFC smart cards from your VETAP dashboard',
+    robots: {
+      index: false,
+      follow: false,
+    },
+    openGraph: {
+      title: isArabic ? `${t('DASH1')} - VETAP` : `${t('DASH1')} - VETAP`,
+      description: isArabic 
+        ? 'لوحة تحكم VETAP'
+        : 'VETAP Dashboard',
+      url: `${siteUrl}/${locale}/dashboard`,
+      siteName: 'VETAP',
+      locale: locale,
+      type: 'website',
+    },
+    alternates: {
+      canonical: `${siteUrl}/${locale}/dashboard`,
+      languages: {
+        'ar': `${siteUrl}/ar/dashboard`,
+        'en': `${siteUrl}/en/dashboard`,
+      },
+    },
   };
 }
 

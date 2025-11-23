@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
-import { getOrganizationLd, getBreadcrumbLd } from '@/app/(seo)/jsonld';
+import { getOrganizationLd, getBreadcrumbLd, getDocumentationPageLd } from '@/app/(seo)/jsonld';
 import { DocumentationContent } from '@/app/(components)/documentation/DocumentationContent';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -43,24 +43,7 @@ export default async function DocumentationPage({ params }: { params: Promise<{ 
     { name: isArabic ? 'الرئيسية' : 'Home', item: `${siteUrl}/${locale}` },
     { name: isArabic ? 'التوثيق' : 'Documentation', item: `${siteUrl}/${locale}/documentation` },
   ], locale as 'ar' | 'en');
-  
-  const documentationLd = {
-    '@context': 'https://schema.org',
-    '@type': 'TechArticle',
-    headline: isArabic ? 'توثيق خدمات VETAP' : 'VETAP Services Documentation',
-    description: isArabic
-      ? 'دليل شامل لاستخدام جميع خدمات ومنتجات VETAP'
-      : 'Complete guide to using all VETAP services and products',
-    author: {
-      '@id': `${siteUrl}/#organization`,
-    },
-    publisher: {
-      '@id': `${siteUrl}/#organization`,
-    },
-    datePublished: '2024-01-01',
-    dateModified: new Date().toISOString().split('T')[0],
-    inLanguage: locale,
-  };
+  const documentationLd = getDocumentationPageLd(locale as 'ar' | 'en');
   
   return (
     <>

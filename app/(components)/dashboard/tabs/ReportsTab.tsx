@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/app/(components)/ui/button';
 import { Loader2, Mail, CheckCircle2, XCircle } from 'lucide-react';
+import { getMarginClass, getDirection } from '@/lib/utils/rtl';
 
 interface ReportsTabProps {
   profile: any;
@@ -16,6 +17,8 @@ export function ReportsTab({ profile, locale }: ReportsTabProps) {
   const t = useTranslations();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
+  const isRTL = locale === 'ar';
+  const dir = getDirection(locale);
   const [saving, setSaving] = useState(false);
   const [reportSettings, setReportSettings] = useState({
     enabled: false,
@@ -112,10 +115,10 @@ export function ReportsTab({ profile, locale }: ReportsTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
+          <CardTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <Mail className="h-5 w-5" />
             {t('REPORTS3')}
           </CardTitle>
@@ -148,23 +151,25 @@ export function ReportsTab({ profile, locale }: ReportsTabProps) {
 
           {/* Email */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t('REPORTS7')}</label>
+            <label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('REPORTS7')}</label>
             <input
               type="email"
               value={reportSettings.email}
               onChange={(e) => setReportSettings({ ...reportSettings, email: e.target.value })}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               placeholder={t('REPORTS8')}
+              dir={dir}
             />
           </div>
 
           {/* Frequency */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t('REPORTS9')}</label>
+            <label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('REPORTS9')}</label>
             <select
               value={reportSettings.frequency}
               onChange={(e) => setReportSettings({ ...reportSettings, frequency: e.target.value as any })}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              dir={dir}
             >
               <option value="daily">{t('REPORTS10')}</option>
               <option value="weekly">{t('REPORTS11')}</option>
@@ -174,7 +179,7 @@ export function ReportsTab({ profile, locale }: ReportsTabProps) {
 
           {/* Last Sent */}
           {lastSent && (
-            <div className="p-4 bg-muted rounded-lg">
+            <div className={`p-4 bg-muted rounded-lg ${isRTL ? 'text-right' : 'text-left'}`}>
               <p className="text-sm text-muted-foreground">{t('REPORTS13')}</p>
               <p className="font-medium">{formatDate(lastSent)}</p>
             </div>
@@ -188,7 +193,7 @@ export function ReportsTab({ profile, locale }: ReportsTabProps) {
           >
             {saving ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={`h-4 w-4 ${getMarginClass(locale, 'mr-2', 'ml-2')} animate-spin`} />
                 {t('REPORTS14')}
               </>
             ) : (

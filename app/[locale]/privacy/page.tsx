@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
-import { getOrganizationLd, getBreadcrumbLd } from '@/app/(seo)/jsonld';
+import { getOrganizationLd, getBreadcrumbLd, getPrivacyPolicyPageLd } from '@/app/(seo)/jsonld';
 import { PrivacyContent } from '@/app/(components)/privacy/PrivacyContent';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -43,9 +43,14 @@ export default async function PrivacyPage({ params }: { params: Promise<{ locale
     { name: isArabic ? 'الرئيسية' : 'Home', item: `${siteUrl}/${locale}` },
     { name: isArabic ? 'سياسة الخصوصية' : 'Privacy Policy', item: `${siteUrl}/${locale}/privacy` },
   ], locale as 'ar' | 'en');
+  const privacyLd = getPrivacyPolicyPageLd(locale as 'ar' | 'en');
   
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(privacyLd) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}

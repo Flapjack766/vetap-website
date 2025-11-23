@@ -14,6 +14,7 @@ import { Button } from '@/app/(components)/ui/button';
 import { Shield } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { ProfileSelector } from './ProfileSelector';
+import { getDirection } from '@/lib/utils/rtl';
 
 interface DashboardContentProps {
   profile: any;
@@ -79,14 +80,17 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
     }
   }, [activeTab, activeSection]);
 
+  const isRTL = locale === 'ar';
+  const dir = getDirection(locale);
+
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden" dir={dir}>
       <div className="container mx-auto px-4 py-8 md:py-12 max-w-full">
         <div className="mx-auto max-w-6xl w-full">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-start justify-between">
-              <div>
+          <div className="flex items-start justify-between">
+              <div className={isRTL ? 'text-right' : 'text-left'}>
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('DASH1')}</h1>
                 <p className="text-muted-foreground">{t('DASH2')}</p>
               </div>
@@ -94,7 +98,7 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/${locale}/admin`)}
-                  className="gap-2"
+                  className={`gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
                 >
                   <Shield className="h-4 w-4" />
                   {t('DASH53')}

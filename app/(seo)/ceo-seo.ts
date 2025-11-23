@@ -19,6 +19,9 @@ export function getCeoMetadata(locale: 'ar' | 'en'): Metadata {
     openGraph: {
       title,
       description,
+      url: `${siteUrl}/${locale}/ceo`,
+      siteName: 'VETAP',
+      locale: locale === 'ar' ? 'ar_SA' : 'en_US',
       type: 'profile',
       images: [
         {
@@ -30,10 +33,17 @@ export function getCeoMetadata(locale: 'ar' | 'en'): Metadata {
       ],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description,
       images: [`${siteUrl}/images/ceo.jpg`],
+    },
+    alternates: {
+      canonical: `${siteUrl}/${locale}/ceo`,
+      languages: {
+        'ar': `${siteUrl}/ar/ceo`,
+        'en': `${siteUrl}/en/ceo`,
+      },
     },
   };
 }

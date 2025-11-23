@@ -1,7 +1,7 @@
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { getOrganizationLd, getBreadcrumbLd, getFAQPageLd } from '@/app/(seo)/jsonld';
+import { getOrganizationLd, getBreadcrumbLd, getFAQPageLd, getBlogPostingLd } from '@/app/(seo)/jsonld';
 import { BlogPostContent } from '@/app/(components)/blog/BlogPostContent';
 import { promises as fs } from 'fs';
 import { join } from 'path';
@@ -25,12 +25,26 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: `${t(titleKey)} - VETAP Blog`,
     description: t(excerptKey),
     openGraph: {
-      title: t(titleKey),
+      title: `${t(titleKey)} - VETAP Blog`,
       description: t(excerptKey),
       url: `${siteUrl}/${locale}/blog/${id}`,
       siteName: 'VETAP',
       locale: locale,
       type: 'article',
+      images: [
+        {
+          url: `${siteUrl}/images/og-image.png`,
+          width: 1200,
+          height: 630,
+          alt: t(titleKey),
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${t(titleKey)} - VETAP Blog`,
+      description: t(excerptKey),
+      images: [`${siteUrl}/images/og-image.png`],
     },
     alternates: {
       canonical: `${siteUrl}/${locale}/blog/${id}`,
@@ -220,6 +234,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
   // Get translations for Posts 1-6 (with markdown content)
   // Read directly from JSON to avoid next-intl parsing issues with Markdown
   let postContent = null;
+  let postTitle = '';
+  let postExcerpt = '';
+  
+  // Publication date for all blog posts (today's date)
+  const postDates: Record<number, { published: string; modified: string }> = {
+    1: { published: '2025-11-23', modified: '2025-11-23' },
+    2: { published: '2025-11-23', modified: '2025-11-23' },
+    3: { published: '2025-11-23', modified: '2025-11-23' },
+    4: { published: '2025-11-23', modified: '2025-11-23' },
+    5: { published: '2025-11-23', modified: '2025-11-23' },
+    6: { published: '2025-11-23', modified: '2025-11-23' },
+  };
+  
   if (postId >= 1 && postId <= 6) {
     try {
       const contentPath = join(process.cwd(), 'content', `${locale}.json`);
@@ -227,9 +254,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
       const contentJson = JSON.parse(contentFile);
       
       if (postId === 1) {
+        postTitle = contentJson.BLOG_POST1_TITLE || t('BLOG_POST1_TITLE');
+        postExcerpt = contentJson.BLOG_POST1_EXCERPT || t('BLOG_POST1_EXCERPT');
         postContent = {
-          title: contentJson.BLOG_POST1_TITLE || t('BLOG_POST1_TITLE'),
-          excerpt: contentJson.BLOG_POST1_EXCERPT || t('BLOG_POST1_EXCERPT'),
+          title: postTitle,
+          excerpt: postExcerpt,
           intro: contentJson.BLOG_POST1_INTRO || '',
           whatIs: contentJson.BLOG_POST1_WHAT_IS || '',
           rsc: contentJson.BLOG_POST1_RSC || '',
@@ -243,9 +272,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
           conclusion: contentJson.BLOG_POST1_CONCLUSION || '',
         };
       } else if (postId === 2) {
+        postTitle = contentJson.BLOG_POST2_TITLE || t('BLOG_POST2_TITLE');
+        postExcerpt = contentJson.BLOG_POST2_EXCERPT || t('BLOG_POST2_EXCERPT');
         postContent = {
-          title: contentJson.BLOG_POST2_TITLE || t('BLOG_POST2_TITLE'),
-          excerpt: contentJson.BLOG_POST2_EXCERPT || t('BLOG_POST2_EXCERPT'),
+          title: postTitle,
+          excerpt: postExcerpt,
           intro: contentJson.BLOG_POST2_INTRO || '',
           whatIs: contentJson.BLOG_POST2_WHAT_IS || '',
           howItWorks: contentJson.BLOG_POST2_HOW_IT_WORKS || '',
@@ -259,9 +290,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
           conclusion: contentJson.BLOG_POST2_CONCLUSION || '',
         };
       } else if (postId === 3) {
+        postTitle = contentJson.BLOG_POST3_TITLE || t('BLOG_POST3_TITLE');
+        postExcerpt = contentJson.BLOG_POST3_EXCERPT || t('BLOG_POST3_EXCERPT');
         postContent = {
-          title: contentJson.BLOG_POST3_TITLE || t('BLOG_POST3_TITLE'),
-          excerpt: contentJson.BLOG_POST3_EXCERPT || t('BLOG_POST3_EXCERPT'),
+          title: postTitle,
+          excerpt: postExcerpt,
           intro: contentJson.BLOG_POST3_INTRO || '',
           whatIs: contentJson.BLOG_POST3_WHAT_IS || '',
           structuredData: contentJson.BLOG_POST3_STRUCTURED_DATA || '',
@@ -276,9 +309,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
           conclusion: contentJson.BLOG_POST3_CONCLUSION || '',
         };
       } else if (postId === 4) {
+        postTitle = contentJson.BLOG_POST4_TITLE || t('BLOG_POST4_TITLE');
+        postExcerpt = contentJson.BLOG_POST4_EXCERPT || t('BLOG_POST4_EXCERPT');
         postContent = {
-          title: contentJson.BLOG_POST4_TITLE || t('BLOG_POST4_TITLE'),
-          excerpt: contentJson.BLOG_POST4_EXCERPT || t('BLOG_POST4_EXCERPT'),
+          title: postTitle,
+          excerpt: postExcerpt,
           intro: contentJson.BLOG_POST4_INTRO || '',
           whatIs: contentJson.BLOG_POST4_WHAT_IS || '',
           rls: contentJson.BLOG_POST4_RLS || '',
@@ -294,9 +329,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
           conclusion: contentJson.BLOG_POST4_CONCLUSION || '',
         };
       } else if (postId === 5) {
+        postTitle = contentJson.BLOG_POST5_TITLE || t('BLOG_POST5_TITLE');
+        postExcerpt = contentJson.BLOG_POST5_EXCERPT || t('BLOG_POST5_EXCERPT');
         postContent = {
-          title: contentJson.BLOG_POST5_TITLE || t('BLOG_POST5_TITLE'),
-          excerpt: contentJson.BLOG_POST5_EXCERPT || t('BLOG_POST5_EXCERPT'),
+          title: postTitle,
+          excerpt: postExcerpt,
           intro: contentJson.BLOG_POST5_INTRO || '',
           whatIs: contentJson.BLOG_POST5_WHAT_IS || '',
           basics: contentJson.BLOG_POST5_BASICS || '',
@@ -310,9 +347,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
           conclusion: contentJson.BLOG_POST5_CONCLUSION || '',
         };
       } else if (postId === 6) {
+        postTitle = contentJson.BLOG_POST6_TITLE || t('BLOG_POST6_TITLE');
+        postExcerpt = contentJson.BLOG_POST6_EXCERPT || t('BLOG_POST6_EXCERPT');
         postContent = {
-          title: contentJson.BLOG_POST6_TITLE || t('BLOG_POST6_TITLE'),
-          excerpt: contentJson.BLOG_POST6_EXCERPT || t('BLOG_POST6_EXCERPT'),
+          title: postTitle,
+          excerpt: postExcerpt,
           intro: contentJson.BLOG_POST6_INTRO || '',
           whatIs: contentJson.BLOG_POST6_WHAT_IS || '',
           ssrSsg: contentJson.BLOG_POST6_SSR_SSG || '',
@@ -331,8 +370,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
       // If file reading fails, set postContent to null
       // BlogPostContent will use default translations from t()
       postContent = null;
+      postTitle = t(`BLOG_POST${postId}_TITLE`);
+      postExcerpt = t(`BLOG_POST${postId}_EXCERPT`);
     }
   }
+  
+  // Generate BlogPosting schema
+  const dates = postDates[postId] || { published: new Date().toISOString().split('T')[0], modified: new Date().toISOString().split('T')[0] };
+  const blogPostingLd = getBlogPostingLd(
+    postId,
+    postTitle || t(`BLOG_POST${postId}_TITLE`),
+    postExcerpt || t(`BLOG_POST${postId}_EXCERPT`),
+    dates.published,
+    dates.modified,
+    'VETAP Team',
+    locale as 'ar' | 'en'
+  );
   
   return (
     <>
@@ -343,6 +396,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ local
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingLd) }}
       />
       {faqLd && (
         <script

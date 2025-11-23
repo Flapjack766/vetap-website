@@ -8,6 +8,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import { getDirection, getMarginClass } from '@/lib/utils/rtl';
 
 type FormState = {
   name: string;
@@ -21,6 +22,8 @@ type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 export function ContactForm() {
   const t = useTranslations();
   const locale = useLocale();
+  const isRTL = locale === 'ar';
+  const dir = getDirection(locale);
   const [formState, setFormState] = useState<FormState>({
     name: '',
     email: '',
@@ -132,9 +135,9 @@ export function ContactForm() {
           </Button>
         </motion.div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" dir={dir}>
           <div className="space-y-2">
-            <Label htmlFor="name">{t('A21')} *</Label>
+            <Label htmlFor="name" className={isRTL ? 'text-right' : 'text-left'}>{t('A21')} *</Label>
             <Input
               id="name"
               name="name"
@@ -143,11 +146,12 @@ export function ContactForm() {
               onChange={handleChange}
               required
               disabled={status === 'loading'}
+              dir={dir}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">{t('A22')} *</Label>
+            <Label htmlFor="email" className={isRTL ? 'text-right' : 'text-left'}>{t('A22')} *</Label>
             <Input
               id="email"
               name="email"
@@ -156,11 +160,12 @@ export function ContactForm() {
               onChange={handleChange}
               required
               disabled={status === 'loading'}
+              dir={dir}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">{t('A123')}</Label>
+            <Label htmlFor="phone" className={isRTL ? 'text-right' : 'text-left'}>{t('A123')}</Label>
             <Input
               id="phone"
               name="phone"
@@ -168,11 +173,12 @@ export function ContactForm() {
               value={formState.phone}
               onChange={handleChange}
               disabled={status === 'loading'}
+              dir={dir}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="message">{t('A124')} *</Label>
+            <Label htmlFor="message" className={isRTL ? 'text-right' : 'text-left'}>{t('A124')} *</Label>
             <Textarea
               id="message"
               name="message"
@@ -181,6 +187,7 @@ export function ContactForm() {
               onChange={handleChange}
               required
               disabled={status === 'loading'}
+              dir={dir}
             />
           </div>
 
@@ -188,21 +195,21 @@ export function ContactForm() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 rounded-md border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400"
+              className={`flex items-center gap-2 rounded-md border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400 ${isRTL ? 'flex-row-reverse' : ''}`}
             >
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>{errorMessage}</span>
             </motion.div>
           )}
 
-          <Button type="submit" size="lg" className="w-full" disabled={status === 'loading'}>
+          <Button type="submit" size="lg" className={`w-full ${isRTL ? 'flex-row-reverse' : ''}`} disabled={status === 'loading'}>
             {status === 'loading' ? (
               <>
                 <span className="animate-pulse">{t('A125')}</span>
               </>
             ) : (
               <>
-                <Send className="mr-2 h-4 w-4" />
+                <Send className={`h-4 w-4 ${getMarginClass(locale, 'mr-2', 'ml-2')}`} />
                 {t('A25')}
               </>
             )}

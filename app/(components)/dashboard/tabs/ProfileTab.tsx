@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Upload, X, Eye } from 'lucide-react';
 import { useToast } from '@/components/ui/toaster';
 import dynamic from 'next/dynamic';
+import { getMarginClass, getPositionClass, getDirection } from '@/lib/utils/rtl';
 
 // Dynamically import template components for live preview
 const Template1Profile = dynamic(() => import('@/app/(components)/profile/templates/Template1Profile').then(mod => ({ default: mod.Template1Profile })), { ssr: false });
@@ -34,6 +35,8 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
   const supabase = createClient();
   const { success: showSuccess, error: showError } = useToast();
   const [showPreview, setShowPreview] = useState(false);
+  const isRTL = locale === 'ar';
+  const dir = getDirection(locale);
 
   const [formData, setFormData] = useState({
     display_name: profile.display_name || '',
@@ -296,9 +299,9 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       {/* Toggle Preview Button */}
-      <div className="flex justify-end">
+      <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'}`}>
         <Button
           type="button"
           variant="outline"
@@ -310,15 +313,15 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
         </Button>
       </div>
 
-      <div className={showPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : ''}>
+      <div className={showPreview ? `grid grid-cols-1 lg:grid-cols-2 gap-6 ${isRTL ? 'lg:grid-flow-col-dense' : ''}` : ''}>
         {/* Form Section */}
         <Card className={showPreview ? '' : 'w-full'}>
-      <CardHeader>
+      <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
         <CardTitle>{t('DASH3')}</CardTitle>
         <CardDescription>{t('DASH9')}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" dir={dir}>
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
@@ -333,8 +336,8 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
 
           {/* Avatar Upload */}
           <div className="space-y-4">
-            <Label>{t('DASH11')}</Label>
-            <div className="flex items-center gap-6">
+            <Label className={isRTL ? 'text-right' : 'text-left'}>{t('DASH11')}</Label>
+            <div className={`flex items-center gap-6 ${isRTL ? '' : ''}`}>
               <div className="relative">
                 <Avatar className="h-24 w-24 border-2 border-border">
                   <AvatarImage src={previewUrl || formData.avatar_url || undefined} />
@@ -347,7 +350,7 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
                     type="button"
                     variant="destructive"
                     size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                    className={`absolute -top-2 ${isRTL ? '-left-2' : '-right-2'} h-6 w-6 rounded-full`}
                     onClick={handleRemoveAvatar}
                   >
                     <X className="h-3 w-3" />
@@ -364,34 +367,16 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
                   id="avatar-upload"
                   disabled={uploading}
                 />
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="flex-1"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {uploading ? t('DASH48') : t('DASH49')}
-                  </Button>
-                  {formData.avatar_url && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        const url = prompt(t('DASH50'), formData.avatar_url);
-                        if (url) {
-                          setFormData({ ...formData, avatar_url: url });
-                          setPreviewUrl(url);
-                        }
-                      }}
-                      disabled={uploading}
-                    >
-                      {t('DASH51')}
-                    </Button>
-                  )}
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className={`w-full ${isRTL ? 'flex-row-reverse' : ''}`}
+                >
+                  <Upload className={`h-4 w-4 ${getMarginClass(locale, 'mr-2', 'ml-2')}`} />
+                  {uploading ? t('DASH48') : t('DASH49')}
+                </Button>
                 <p className="text-xs text-muted-foreground">
                   {t('DASH52')}
                 </p>
@@ -451,7 +436,7 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
 
           {/* Phone */}
           <div>
-            <Label htmlFor="phone">{t('DASH19')}</Label>
+            <Label htmlFor="phone" className={isRTL ? 'text-left' : 'text-left'}>{t('DASH19')}</Label>
             <Input
               id="phone"
               type="tel"
@@ -459,6 +444,7 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder={t('DASH20')}
               className="mt-1"
+              dir={isRTL ? 'rtl' : 'ltr'}
             />
           </div>
 
@@ -475,7 +461,7 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
           </div>
 
           {mounted && onNext ? (
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
               <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? t('DASH23') : t('DASH24')}
               </Button>
@@ -510,13 +496,13 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
         {/* Live Preview Section */}
         {showPreview && (
           <Card className="sticky top-4 h-fit max-h-[calc(100vh-2rem)] overflow-hidden">
-            <CardHeader>
+            <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
               <CardTitle>{t('DASH_PREVIEW') || 'Live Preview'}</CardTitle>
               <CardDescription>{t('DASH_PREVIEW_DESC') || 'See how your profile looks in real-time'}</CardDescription>
             </CardHeader>
             <CardContent className="p-0 overflow-hidden">
               <div className="overflow-y-auto overflow-x-hidden max-h-[calc(100vh-12rem)] w-full">
-                <div className="scale-75 origin-top-left w-[133.33%] h-[133.33%] overflow-x-hidden" style={{ maxWidth: '100%' }}>
+                <div className={`scale-75 ${isRTL ? 'origin-top-right' : 'origin-top-left'} w-[133.33%] h-[133.33%] overflow-x-hidden`} style={{ maxWidth: '100%' }}>
                   {getTemplateComponent()}
                 </div>
               </div>

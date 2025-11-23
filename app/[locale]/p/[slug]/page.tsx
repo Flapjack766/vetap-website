@@ -17,13 +17,133 @@ export async function generateMetadata({
   params: Promise<{ locale: string; slug: string }> 
 }) {
   const { locale, slug } = await params;
+  const siteUrl = process.env.SITE_URL || 'https://vetaps.com';
+  const isArabic = locale === 'ar';
   
-  // Don't use createClient in generateMetadata to avoid DYNAMIC_SERVER_USAGE
-  // Metadata will be set dynamically on the client side if needed
-  return {
-    title: 'Profile | VETAP',
-    description: 'View profile',
-  };
+  // Try to fetch profile for better metadata
+  try {
+    const supabase = await createClient();
+    
+    // Try custom username first
+    const { data: customProfile } = await supabase
+      .from('profiles')
+      .select('profile_name, username_custom, username_random')
+      .eq('username_custom', slug)
+      .eq('is_deleted', false)
+      .maybeSingle();
+    
+    let profile: { profile_name: any; username_custom?: any; username_random: any } | null = customProfile;
+    
+    // Check expiration if custom profile exists
+    if (customProfile) {
+      const { data: fullProfile } = await supabase
+        .from('profiles')
+        .select('custom_username_expires_at, profile_name, username_custom, username_random')
+        .eq('username_custom', slug)
+        .eq('is_deleted', false)
+        .single();
+      
+      if (fullProfile) {
+        const now = new Date();
+        const expiresAt = fullProfile.custom_username_expires_at 
+          ? new Date(fullProfile.custom_username_expires_at) 
+          : null;
+        
+        if (expiresAt && expiresAt <= now) {
+          // Expired, try random username
+          const { data: randomProfile } = await supabase
+            .from('profiles')
+            .select('profile_name, username_custom, username_random')
+            .eq('username_random', slug)
+            .eq('is_deleted', false)
+            .maybeSingle();
+          
+          profile = randomProfile || null;
+        } else {
+          profile = fullProfile;
+        }
+      }
+    }
+    
+    // If not found by custom, try random
+    if (!profile) {
+      const { data: randomProfile } = await supabase
+        .from('profiles')
+        .select('profile_name, username_custom, username_random')
+        .eq('username_random', slug)
+        .eq('is_deleted', false)
+        .maybeSingle();
+      
+      profile = randomProfile || null;
+    }
+    
+    const profileName = profile?.profile_name || slug;
+    const title = isArabic 
+      ? `${profileName} - بروفايل | VETAP`
+      : `${profileName} - Profile | VETAP`;
+    const description = isArabic
+      ? `عرض بروفايل ${profileName} على VETAP. تواصل واحصل على معلومات التواصل والروابط الاجتماعية.`
+      : `View ${profileName}'s profile on VETAP. Connect and get contact information and social links.`;
+    
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        url: `${siteUrl}/${locale}/p/${slug}`,
+        siteName: 'VETAP',
+        locale: locale,
+        type: 'profile',
+        images: [
+          {
+            url: `${siteUrl}/images/og-image.png`,
+            width: 1200,
+            height: 630,
+            alt: profileName,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [`${siteUrl}/images/og-image.png`],
+      },
+      alternates: {
+        canonical: `${siteUrl}/${locale}/p/${slug}`,
+        languages: {
+          'ar': `${siteUrl}/ar/p/${slug}`,
+          'en': `${siteUrl}/en/p/${slug}`,
+        },
+      },
+    };
+  } catch (error) {
+    // Fallback metadata if profile fetch fails
+    return {
+      title: isArabic ? 'بروفايل | VETAP' : 'Profile | VETAP',
+      description: isArabic 
+        ? 'عرض بروفايل على VETAP'
+        : 'View profile on VETAP',
+      openGraph: {
+        title: isArabic ? 'بروفايل | VETAP' : 'Profile | VETAP',
+        description: isArabic 
+          ? 'عرض بروفايل على VETAP'
+          : 'View profile on VETAP',
+        url: `${siteUrl}/${locale}/p/${slug}`,
+        siteName: 'VETAP',
+        locale: locale,
+        type: 'profile',
+      },
+      alternates: {
+        canonical: `${siteUrl}/${locale}/p/${slug}`,
+        languages: {
+          'ar': `${siteUrl}/ar/p/${slug}`,
+          'en': `${siteUrl}/en/p/${slug}`,
+        },
+      },
+    };
+  }
 }
 
 export default async function PublicProfilePage({

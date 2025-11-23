@@ -9,6 +9,7 @@ import { Label } from '@/app/(components)/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { getDirection } from '@/lib/utils/rtl';
 
 interface LinksTabProps {
   profile: any;
@@ -24,7 +25,7 @@ const linkBaseUrls: Record<string, string> = {
   whatsapp_business: 'https://wa.me/',
   instagram: 'https://instagram.com/',
   snapchat: 'https://snapchat.com/add/',
-  twitter: 'https://twitter.com/',
+  twitter: 'https://twitter.com/', // Kept for migration of old links
   x: 'https://x.com/',
   tiktok: 'https://tiktok.com/@',
   linkedin: 'https://linkedin.com/in/',
@@ -39,8 +40,7 @@ const defaultLinks = [
   { key: 'whatsapp_business', label: 'WhatsApp Business', placeholder: '1234567890', prefix: '+', baseUrl: linkBaseUrls.whatsapp_business },
   { key: 'instagram', label: 'Instagram', placeholder: 'username', baseUrl: linkBaseUrls.instagram },
   { key: 'snapchat', label: 'Snapchat', placeholder: 'username', baseUrl: linkBaseUrls.snapchat },
-  { key: 'twitter', label: 'Twitter / X', placeholder: 'username', baseUrl: linkBaseUrls.twitter },
-  { key: 'x', label: 'X', placeholder: 'username', baseUrl: linkBaseUrls.x },
+  { key: 'x', label: 'Twitter / X', placeholder: 'username', baseUrl: linkBaseUrls.x },
   { key: 'tiktok', label: 'TikTok', placeholder: 'username', baseUrl: linkBaseUrls.tiktok },
   { key: 'linkedin', label: 'LinkedIn', placeholder: 'username', baseUrl: linkBaseUrls.linkedin },
   { key: 'facebook', label: 'Facebook', placeholder: 'username', baseUrl: linkBaseUrls.facebook },
@@ -53,6 +53,8 @@ export function LinksTab({ profile, locale, onUpdate, onNext, onPrevious }: Link
   const t = useTranslations();
   const router = useRouter();
   const supabase = createClient();
+  const isRTL = locale === 'ar';
+  const dir = getDirection(locale);
 
   const links = typeof profile.links === 'string' 
     ? JSON.parse(profile.links || '{}') 
@@ -88,6 +90,11 @@ export function LinksTab({ profile, locale, onUpdate, onNext, onPrevious }: Link
       initialUsernames[link.key] = extractUsername(link.key, links[link.key]);
     }
   });
+  
+  // Migrate old 'twitter' links to 'x'
+  if (links['twitter'] && !links['x']) {
+    initialUsernames['x'] = extractUsername('twitter', links['twitter']);
+  }
 
   const [usernames, setUsernames] = useState<Record<string, string>>(initialUsernames);
   const [loading, setLoading] = useState(false);
@@ -111,6 +118,11 @@ export function LinksTab({ profile, locale, onUpdate, onNext, onPrevious }: Link
         updatedUsernames[link.key] = extractUsername(link.key, currentLinks[link.key]);
       }
     });
+    
+    // Migrate old 'twitter' links to 'x'
+    if (currentLinks['twitter'] && !currentLinks['x']) {
+      updatedUsernames['x'] = extractUsername('twitter', currentLinks['twitter']);
+    }
     
     setUsernames(updatedUsernames);
     setError(null);
@@ -186,6 +198,11 @@ export function LinksTab({ profile, locale, onUpdate, onNext, onPrevious }: Link
 
       // Build full URLs from usernames
       const fullUrls = buildFullUrls();
+      
+      // Remove old 'twitter' key if it exists (migrated to 'x')
+      if (fullUrls['twitter']) {
+        delete fullUrls['twitter'];
+      }
 
       // Update profile - use select() to return updated data
       const { data: updatedProfile, error: updateError } = await supabase
@@ -255,13 +272,13 @@ export function LinksTab({ profile, locale, onUpdate, onNext, onPrevious }: Link
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card dir="ltr">
+      <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
         <CardTitle>{t('DASH4')}</CardTitle>
         <CardDescription>{t('DASH25')}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" dir="ltr">
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
@@ -281,7 +298,7 @@ export function LinksTab({ profile, locale, onUpdate, onNext, onPrevious }: Link
               
               return (
                 <div key={link.key} className="space-y-2">
-                  <Label htmlFor={link.key}>{link.label}</Label>
+                  <Label htmlFor={link.key} className="text-left">{link.label}</Label>
                   <div className="flex gap-2">
                     {link.key === 'website' ? (
                       // Website needs full URL input
@@ -293,6 +310,7 @@ export function LinksTab({ profile, locale, onUpdate, onNext, onPrevious }: Link
                           onChange={(e) => handleUsernameChange(link.key, e.target.value)}
                           placeholder={link.placeholder}
                           className="mt-1"
+                          dir="ltr"
                         />
                       </div>
                     ) : (
@@ -309,6 +327,7 @@ export function LinksTab({ profile, locale, onUpdate, onNext, onPrevious }: Link
                             onChange={(e) => handleUsernameChange(link.key, e.target.value)}
                             placeholder={link.placeholder}
                             className="mt-1"
+                            dir="ltr"
                           />
                         </div>
                       </>

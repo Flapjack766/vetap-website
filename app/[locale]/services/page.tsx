@@ -7,10 +7,41 @@ import { ServicesBenefits } from '@/app/(components)/services/ServicesBenefits';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale });
+  const siteUrl = process.env.SITE_URL || 'https://vetaps.com';
+  const isArabic = locale === 'ar';
   
   return {
-    title: t('A3'), // Services
+    title: isArabic ? `${t('A3')} - VETAP` : `${t('A3')} - VETAP`,
     description: t('A67'),
+    openGraph: {
+      title: isArabic ? `${t('A3')} - VETAP` : `${t('A3')} - VETAP`,
+      description: t('A67'),
+      url: `${siteUrl}/${locale}/services`,
+      siteName: 'VETAP',
+      locale: locale,
+      type: 'website',
+      images: [
+        {
+          url: `${siteUrl}/images/og-image.png`,
+          width: 1200,
+          height: 630,
+          alt: isArabic ? 'خدمات VETAP' : 'VETAP Services',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: isArabic ? `${t('A3')} - VETAP` : `${t('A3')} - VETAP`,
+      description: t('A67'),
+      images: [`${siteUrl}/images/og-image.png`],
+    },
+    alternates: {
+      canonical: `${siteUrl}/${locale}/services`,
+      languages: {
+        'ar': `${siteUrl}/ar/services`,
+        'en': `${siteUrl}/en/services`,
+      },
+    },
   };
 }
 

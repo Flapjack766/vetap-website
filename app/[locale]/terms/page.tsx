@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
-import { getOrganizationLd, getBreadcrumbLd } from '@/app/(seo)/jsonld';
+import { getOrganizationLd, getBreadcrumbLd, getTermsOfServicePageLd } from '@/app/(seo)/jsonld';
 import { TermsContent } from '@/app/(components)/terms/TermsContent';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -43,9 +43,14 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
     { name: isArabic ? 'الرئيسية' : 'Home', item: `${siteUrl}/${locale}` },
     { name: isArabic ? 'شروط الخدمة' : 'Terms of Service', item: `${siteUrl}/${locale}/terms` },
   ], locale as 'ar' | 'en');
+  const termsLd = getTermsOfServicePageLd(locale as 'ar' | 'en');
   
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(termsLd) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
