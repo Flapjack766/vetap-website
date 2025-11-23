@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/app/(components)/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Star } from 'lucide-react';
+import { Check, Star, Palette } from 'lucide-react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -25,6 +25,7 @@ interface TemplatesTabProps {
   onUpdate: (profile: any) => void;
   onNext?: () => void;
   onPrevious?: () => void;
+  onNavigateToTab?: (tab: string) => void;
 }
 
 const templates = [
@@ -60,7 +61,7 @@ const templates = [
   },
 ];
 
-export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious }: TemplatesTabProps) {
+export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious, onNavigateToTab }: TemplatesTabProps) {
   const t = useTranslations();
   const router = useRouter();
   const supabase = createClient();
@@ -299,8 +300,25 @@ export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious }: 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('DASH5')}</CardTitle>
-        <CardDescription>{t('DASH26')}</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{t('DASH5')}</CardTitle>
+            <CardDescription>{t('DASH26')}</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (onNavigateToTab) {
+                onNavigateToTab('link');
+              }
+            }}
+            className="gap-2"
+          >
+            <Palette className="h-4 w-4" />
+            {t('DASH72')}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {error && (

@@ -22,9 +22,10 @@ interface ProfileSelectorProps {
   currentProfile: any;
   locale: string;
   onProfileChange: (profile: any) => void;
+  onNavigateToTab?: (tab: string) => void;
 }
 
-export function ProfileSelector({ currentProfile, locale, onProfileChange }: ProfileSelectorProps) {
+export function ProfileSelector({ currentProfile, locale, onProfileChange, onNavigateToTab }: ProfileSelectorProps) {
   const t = useTranslations();
   const router = useRouter();
   const supabase = createClient();
@@ -137,72 +138,87 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange }: Pro
             </p>
           </div>
           
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                disabled={!canCreateRandom}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                {t('DASH56') || 'New Profile'}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t('DASH57') || 'Create New Profile'}</DialogTitle>
-                <DialogDescription>
-                  {t('DASH58') || 'Create a new random profile. You can have up to 3 random profiles.'}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="profile-name">{t('DASH59') || 'Profile Name'}</Label>
-                  <Input
-                    id="profile-name"
-                    value={newProfileName}
-                    onChange={(e) => setNewProfileName(e.target.value)}
-                    placeholder={t('DASH64') || 'e.g., Personal, Business, Portfolio'}
-                    className="mt-1"
-                  />
-                </div>
-                {createError && (
-                  <div className="text-sm text-destructive">{createError}</div>
-                )}
-                {!canCreateRandom && (
-                  <div className="text-sm text-muted-foreground">
-                    {t('DASH65') || 'You have reached the maximum limit of 3 random profiles. Request a custom username for more profiles.'}
+          <div className="flex gap-2">
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  disabled={!canCreateRandom}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t('DASH56') || 'New Profile'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t('DASH57') || 'Create New Profile'}</DialogTitle>
+                  <DialogDescription>
+                    {t('DASH58') || 'Create a new random profile. You can have up to 3 random profiles.'}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="profile-name">{t('DASH59') || 'Profile Name'}</Label>
+                    <Input
+                      id="profile-name"
+                      value={newProfileName}
+                      onChange={(e) => setNewProfileName(e.target.value)}
+                      placeholder={t('DASH64') || 'e.g., Personal, Business, Portfolio'}
+                      className="mt-1"
+                    />
                   </div>
-                )}
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowCreateDialog(false);
-                      setNewProfileName('');
-                      setCreateError(null);
-                    }}
-                  >
-                    {t('DASH66') || 'Cancel'}
-                  </Button>
-                  <Button
-                    onClick={handleCreateProfile}
-                    disabled={creating || !canCreateRandom}
-                  >
-                    {creating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {t('DASH67') || 'Creating...'}
-                      </>
-                    ) : (
-                      t('DASH68') || 'Create'
-                    )}
-                  </Button>
+                  {createError && (
+                    <div className="text-sm text-destructive">{createError}</div>
+                  )}
+                  {!canCreateRandom && (
+                    <div className="text-sm text-muted-foreground">
+                      {t('DASH65') || 'You have reached the maximum limit of 3 random profiles. Request a custom username for more profiles.'}
+                    </div>
+                  )}
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowCreateDialog(false);
+                        setNewProfileName('');
+                        setCreateError(null);
+                      }}
+                    >
+                      {t('DASH66') || 'Cancel'}
+                    </Button>
+                    <Button
+                      onClick={handleCreateProfile}
+                      disabled={creating || !canCreateRandom}
+                    >
+                      {creating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {t('DASH67') || 'Creating...'}
+                        </>
+                      ) : (
+                        t('DASH68') || 'Create'
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (onNavigateToTab) {
+                  onNavigateToTab('link');
+                }
+              }}
+              className="gap-2"
+            >
+              <Star className="h-4 w-4" />
+              {t('DASH71')}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">

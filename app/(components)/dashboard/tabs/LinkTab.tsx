@@ -26,9 +26,10 @@ const CustomTemplateRenderer = dynamic(() => import('@/app/(components)/profile/
 interface LinkTabProps {
   profile: any;
   locale: string;
+  activeSection?: string;
 }
 
-export function LinkTab({ profile, locale }: LinkTabProps) {
+export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
   const t = useTranslations();
   const router = useRouter();
   const supabase = createClient();
@@ -150,6 +151,27 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-open form when navigating to specific section
+  useEffect(() => {
+    if (activeSection === 'custom-username') {
+      setShowRequestForm(true);
+      setTimeout(() => {
+        const element = document.getElementById('custom-username-section');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } else if (activeSection === 'custom-template') {
+      setShowTemplateRequestForm(true);
+      setTimeout(() => {
+        const element = document.getElementById('custom-template-section');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [activeSection]);
 
   // Fetch custom template if needed
   useEffect(() => {
@@ -464,7 +486,7 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
       </Card>
 
       {/* Custom Username Status */}
-      <Card>
+      <Card id="custom-username-section">
         <CardHeader>
           <CardTitle>{t('DASH34')}</CardTitle>
           <CardDescription>{t('DASH35')}</CardDescription>
@@ -657,7 +679,7 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
       </Card>
 
       {/* Custom Template Request */}
-      <Card>
+      <Card id="custom-template-section">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5" />

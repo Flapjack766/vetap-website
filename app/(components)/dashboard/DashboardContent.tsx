@@ -26,6 +26,7 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
   const [currentProfile, setCurrentProfile] = useState(profile);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [activeSection, setActiveSection] = useState<string | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
   const supabase = createClient();
   const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -51,7 +52,7 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
 
   // Scroll to top of tabs content when tab changes
   useEffect(() => {
-    if (tabsContainerRef.current) {
+    if (tabsContainerRef.current && !activeSection) {
       // Small delay to ensure the tab content is rendered
       setTimeout(() => {
         const element = tabsContainerRef.current;
@@ -70,7 +71,13 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
         }
       }, 150);
     }
-  }, [activeTab]);
+    // Reset activeSection after navigation
+    if (activeSection) {
+      setTimeout(() => {
+        setActiveSection(undefined);
+      }, 1000);
+    }
+  }, [activeTab, activeSection]);
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -101,6 +108,12 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
             currentProfile={currentProfile}
             locale={locale}
             onProfileChange={setCurrentProfile}
+            onNavigateToTab={(tab) => {
+              setActiveTab(tab);
+              if (tab === 'link') {
+                setActiveSection('custom-username');
+              }
+            }}
           />
 
           {/* Tabs */}
@@ -144,6 +157,12 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
                   onUpdate={(updated) => setCurrentProfile(updated)}
                   onNext={() => setActiveTab('link')}
                   onPrevious={() => setActiveTab('links')}
+                  onNavigateToTab={(tab) => {
+                    setActiveTab(tab);
+                    if (tab === 'link') {
+                      setActiveSection('custom-template');
+                    }
+                  }}
                 />
               </TabsContent>
 
@@ -151,6 +170,7 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
                 <LinkTab 
                   profile={currentProfile} 
                   locale={locale}
+                  activeSection={activeSection}
                 />
               </TabsContent>
 
