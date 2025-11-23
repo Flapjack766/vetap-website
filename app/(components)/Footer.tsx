@@ -22,16 +22,16 @@ export function Footer() {
     {
       title: t('A173'), // Resources
       links: [
-        { href: '#', label: t('A174') }, // Blog
-        { href: '#', label: t('A175') }, // Documentation
-        { href: '#', label: t('A176') }, // Support
+        { href: '/blog', label: t('A174') }, // Blog
+        { href: '/documentation', label: t('A175') }, // Documentation
+        { href: '/support', label: t('A176') }, // Support
       ],
     },
     {
       title: t('A177'), // Privacy Policy (using as Legal header)
       links: [
-        { href: '#', label: t('A177') }, // Privacy Policy
-        { href: '#', label: t('A178') }, // Terms of Service
+        { href: '/privacy', label: t('A177') }, // Privacy Policy
+        { href: '/terms', label: t('A178') }, // Terms of Service
       ],
     },
   ];
