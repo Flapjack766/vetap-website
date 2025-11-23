@@ -30,37 +30,64 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   }
 
   // Get user profiles (get primary or first one) - optimized query
-  const { data: profiles, error } = await supabase
+  // Use maybeSingle() to avoid errors when no rows are found
+  const { data: profile, error } = await supabase
     .from('profiles')
-    .select('id, user_id, email, username_random, username_custom, username_type, profile_name, profile_description, profile_type, avatar_url, template_id, links, is_primary, is_deleted, created_at, updated_at')
+    .select('id, user_id, email, username_random, username_custom, username_type, profile_name, avatar_url, template_id, links, is_primary, is_deleted, created_at, updated_at')
     .eq('user_id', user.id)
     .eq('is_deleted', false)
     .order('is_primary', { ascending: false })
     .order('created_at', { ascending: true })
-    .limit(1);
+    .limit(1)
+    .maybeSingle();
 
-  // If profiles exist, use primary or first one
-  if (profiles && profiles.length > 0) {
-    const primaryProfile = profiles.find(p => p.is_primary) || profiles[0];
-    return <DashboardContent profile={primaryProfile} locale={locale} />;
+  // If profile exists, use it
+  if (profile) {
+    return <DashboardContent profile={profile} locale={locale} />;
   }
 
   // Profile doesn't exist - check if it's a real error or just missing
-  // PGRST116 means "no rows returned" which is expected for new users
-  // Also check if error is actually meaningful (not just empty object)
-  if (error) {
-    // Check if it's a real error (not just "no rows" or empty object)
-    const errorString = JSON.stringify(error);
-    const isEmptyObject = errorString === '{}' || errorString === 'null';
-    const isNoRowsError = error.code === 'PGRST116';
-    const hasRealErrorContent = error.message || (error.code && error.code !== 'PGRST116');
+  // With maybeSingle(), error is null when no rows found (expected for new users)
+  // We only want to handle real errors, not "no rows" scenarios
+  if (error && error !== null && typeof error === 'object') {
+    // Check if error is an empty object {} - these should be completely ignored
+    const errorKeys = Object.keys(error);
+    const isEmptyObject = errorKeys.length === 0;
     
-    // Only treat as real error if it has meaningful content and is not empty
-    if (!isEmptyObject && !isNoRowsError && hasRealErrorContent) {
-      console.error('Profile fetch error:', error);
-      redirect(`/${locale}/signup`);
+    // Also check JSON string representation to catch edge cases
+    const errorString = JSON.stringify(error);
+    const isEmptyString = errorString === '{}' || errorString === 'null';
+    
+    // Check if it's the "no rows" error (shouldn't happen with maybeSingle, but check anyway)
+    const isNoRowsError = error.code === 'PGRST116';
+    
+    // If error is empty or "no rows", ignore it completely and continue
+    if (isEmptyObject || isEmptyString || isNoRowsError) {
+      // Silently continue - this is expected for new users
+      // Do nothing, fall through to profile creation
+      // DO NOT log empty errors
+    } 
+    // Check if error has meaningful content (message or valid error code)
+    else {
+      const hasMessage = 
+        error.message && 
+        typeof error.message === 'string' && 
+        error.message.trim() !== '';
+      
+      const hasValidErrorCode = 
+        error.code && 
+        typeof error.code === 'string' && 
+        error.code !== 'PGRST116' && 
+        error.code.trim() !== '';
+      
+      // Only log and redirect if there's a real error with meaningful content
+      // Triple-check that error is not empty before logging
+      if (!isEmptyObject && !isEmptyString && (hasMessage || hasValidErrorCode)) {
+        console.error('Profile fetch error:', error);
+        redirect(`/${locale}/signup`);
+      }
+      // If no meaningful content or empty, ignore it and continue silently
     }
-    // If error is just "no rows" or empty, continue to create profile
   }
 
   // Profile doesn't exist - create it (only once)
