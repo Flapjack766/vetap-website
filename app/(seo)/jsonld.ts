@@ -39,6 +39,7 @@ export function getOrganizationLd(locale: 'ar' | 'en' = 'en') {
         '@type': 'ContactPoint',
         contactType: 'Customer Service',
         email: 'support@vetaps.com',
+        telephone: '+905346146038',
         availableLanguage: ['English', 'Arabic', 'العربية'],
         areaServed: 'Worldwide',
       },
@@ -46,6 +47,7 @@ export function getOrganizationLd(locale: 'ar' | 'en' = 'en') {
         '@type': 'ContactPoint',
         contactType: 'Sales',
         email: 'info@vetaps.com',
+        telephone: '+905346146038',
         availableLanguage: ['English', 'Arabic', 'العربية'],
         areaServed: 'Worldwide',
       },
@@ -58,6 +60,20 @@ export function getOrganizationLd(locale: 'ar' | 'en' = 'en') {
       '@type': 'Country',
       name: 'Worldwide',
     },
+    numberOfEmployees: {
+      '@type': 'QuantitativeValue',
+      value: '10-50',
+    },
+    knowsAbout: [
+      'Web Development',
+      'Website Design',
+      'NFC Technology',
+      'Next.js',
+      'TypeScript',
+      'React',
+      'SEO Optimization',
+      'Digital Solutions',
+    ],
   };
 }
 
@@ -74,9 +90,14 @@ export function getWebsiteLd(locale: 'ar' | 'en' = 'en') {
       ? 'حلول رقمية متكاملة - تطوير مواقع احترافية، بطاقات NFC ذكية، وتقنيات ويب حديثة'
       : 'Integrated Digital Solutions - Professional website development, NFC smart cards, and modern web technologies',
     inLanguage: [locale, locale === 'ar' ? 'en' : 'ar'],
+    alternateName: 'Verified Tap',
     publisher: {
       '@id': `${siteUrl}/#organization`,
     },
+    copyrightHolder: {
+      '@id': `${siteUrl}/#organization`,
+    },
+    copyrightYear: new Date().getFullYear(),
   };
 }
 

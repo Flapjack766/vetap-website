@@ -152,9 +152,11 @@ export const defaultMetadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    nocache: false,
     googleBot: {
       index: true,
       follow: true,
+      noimageindex: false,
       'max-video-preview': -1,
       'max-image-preview': 'large',
       'max-snippet': -1,
@@ -163,13 +165,19 @@ export const defaultMetadata: Metadata = {
   alternates: {
     canonical: '/',
     languages: {
+      'x-default': '/en',
       en: '/en',
       ar: '/ar',
     },
   },
   verification: {
-    google: 'your-google-verification-code',
+    // Add verification codes when available
+    // google: 'your-google-verification-code',
+    // yandex: 'your-yandex-verification-code',
+    // bing: 'your-bing-verification-code',
   },
+  category: 'Technology',
+  classification: 'Business',
 };
 
 export function getLocalizedMetadata(locale: string): Metadata {

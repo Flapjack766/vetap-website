@@ -49,10 +49,14 @@ const nextConfig = {
             value: 'max-age=63072000; includeSubDomains; preload',
           },
           {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in",
+              "img-src 'self' data: blob: https:",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
               "connect-src 'self' https://api.resend.com https://*.supabase.co https://*.supabase.in",

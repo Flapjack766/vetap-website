@@ -1,0 +1,19 @@
+/* TEAM */
+Founder & CEO: Ahmed Alzbaji
+Site: https://vetaps.com/ceo
+Twitter: @ahmedalzbaji
+Location: Jeddah, Saudi Arabia
+
+/* THANKS */
+Next.js Team
+React Team
+TypeScript Team
+Tailwind CSS Team
+Supabase Team
+
+/* SITE */
+Last update: 2024/12/23
+Standards: HTML5, CSS3, JavaScript ES6+
+Components: React, Next.js 15, TypeScript
+Software: VS Code, Git
+
