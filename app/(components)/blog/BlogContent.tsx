@@ -13,14 +13,13 @@ interface BlogContentProps {
 
 export function BlogContent({ locale }: BlogContentProps) {
   const t = useTranslations();
-  const isArabic = locale === 'ar';
 
   const blogPosts = [
     {
       id: 1,
       title: t('BLOG_POST1_TITLE'),
       excerpt: t('BLOG_POST1_EXCERPT'),
-      category: isArabic ? 'تطوير المواقع' : 'Web Development',
+      category: t('BLOG_CATEGORY_WEB_DEV'),
       date: '2024-12-15',
       readTime: '15',
       icon: Code2,
@@ -30,7 +29,7 @@ export function BlogContent({ locale }: BlogContentProps) {
       id: 2,
       title: t('BLOG_POST2_TITLE'),
       excerpt: t('BLOG_POST2_EXCERPT'),
-      category: isArabic ? 'تقنيات NFC' : 'NFC Technology',
+      category: t('BLOG_CATEGORY_NFC'),
       date: '2024-12-10',
       readTime: '12',
       icon: Zap,
@@ -40,7 +39,7 @@ export function BlogContent({ locale }: BlogContentProps) {
       id: 3,
       title: t('BLOG_POST3_TITLE'),
       excerpt: t('BLOG_POST3_EXCERPT'),
-      category: isArabic ? 'تحسين SEO' : 'SEO Optimization',
+      category: t('BLOG_CATEGORY_SEO'),
       date: '2024-12-05',
       readTime: '10',
       icon: Globe,
@@ -50,7 +49,7 @@ export function BlogContent({ locale }: BlogContentProps) {
       id: 4,
       title: t('BLOG_POST4_TITLE'),
       excerpt: t('BLOG_POST4_EXCERPT'),
-      category: isArabic ? 'الأمان' : 'Security',
+      category: t('BLOG_CATEGORY_SECURITY'),
       date: '2024-11-28',
       readTime: '12',
       icon: Shield,
@@ -60,7 +59,7 @@ export function BlogContent({ locale }: BlogContentProps) {
       id: 5,
       title: t('BLOG_POST5_TITLE'),
       excerpt: t('BLOG_POST5_EXCERPT'),
-      category: isArabic ? 'تطوير المواقع' : 'Web Development',
+      category: t('BLOG_CATEGORY_WEB_DEV'),
       date: '2024-11-20',
       readTime: '7',
       icon: Code2,
@@ -70,7 +69,7 @@ export function BlogContent({ locale }: BlogContentProps) {
       id: 6,
       title: t('BLOG_POST6_TITLE'),
       excerpt: t('BLOG_POST6_EXCERPT'),
-      category: isArabic ? 'الأداء' : 'Performance',
+      category: t('BLOG_CATEGORY_PERFORMANCE'),
       date: '2024-11-15',
       readTime: '9',
       icon: Zap,
@@ -94,13 +93,11 @@ export function BlogContent({ locale }: BlogContentProps) {
           <div className="mb-4 flex items-center justify-center gap-2">
             <BookOpen className="h-8 w-8 text-primary" />
             <h1 className="text-4xl font-bold md:text-5xl">
-              {isArabic ? 'المدونة' : 'Blog'}
+              {t('BLOG_TITLE')}
             </h1>
           </div>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            {isArabic
-              ? 'اكتشف أحدث المقالات حول تطوير المواقع، تقنيات NFC، SEO، وأفضل الممارسات في التطوير الرقمي'
-              : 'Discover the latest articles on web development, NFC technology, SEO, and digital development best practices'}
+            {t('BLOG_DESCRIPTION')}
           </p>
         </motion.div>
 
@@ -108,7 +105,7 @@ export function BlogContent({ locale }: BlogContentProps) {
         {featuredPosts.length > 0 && (
           <section className="mb-16">
             <h2 className="mb-6 text-2xl font-semibold">
-              {isArabic ? 'المقالات المميزة' : 'Featured Articles'}
+              {t('BLOG_FEATURED_ARTICLES')}
             </h2>
             <div className="grid gap-6 md:grid-cols-2">
               {featuredPosts.map((post, index) => {
@@ -137,12 +134,12 @@ export function BlogContent({ locale }: BlogContentProps) {
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            <span>{post.readTime} {isArabic ? 'دقائق' : 'min read'}</span>
+                            <span>{post.readTime} {t('BLOG_MIN_READ')}</span>
                           </div>
                         </div>
                         <Button variant="outline" className="w-full" asChild>
                           <Link href={`/${locale}/blog/${post.id}`}>
-                            {isArabic ? 'اقرأ المزيد' : 'Read More'}
+                            {t('BLOG_READ_MORE')}
                             <ArrowRight className="ml-2 h-4 w-4" />
                           </Link>
                         </Button>
@@ -158,7 +155,7 @@ export function BlogContent({ locale }: BlogContentProps) {
         {/* Regular Posts */}
         <section>
           <h2 className="mb-6 text-2xl font-semibold">
-            {isArabic ? 'جميع المقالات' : 'All Articles'}
+            {t('BLOG_ALL_ARTICLES')}
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {regularPosts.map((post, index) => {
@@ -188,12 +185,12 @@ export function BlogContent({ locale }: BlogContentProps) {
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          <span>{post.readTime} {isArabic ? 'د' : 'min'}</span>
+                          <span>{post.readTime} {t('BLOG_MIN')}</span>
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" className="w-full" asChild>
                         <Link href={`/${locale}/blog/${post.id}`}>
-                          {isArabic ? 'اقرأ المزيد' : 'Read More'}
+                          {t('BLOG_READ_MORE')}
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
@@ -214,16 +211,14 @@ export function BlogContent({ locale }: BlogContentProps) {
           className="mt-16 rounded-lg border bg-muted/50 p-8 text-center"
         >
           <h3 className="mb-4 text-2xl font-semibold">
-            {isArabic ? 'هل تريد معرفة المزيد؟' : 'Want to Learn More?'}
+            {t('BLOG_WANT_LEARN_MORE')}
           </h3>
           <p className="mb-6 text-muted-foreground">
-            {isArabic
-              ? 'تواصل معنا لمعرفة كيف يمكننا مساعدتك في مشروعك القادم'
-              : 'Get in touch with us to see how we can help with your next project'}
+            {t('BLOG_CONTACT_DESCRIPTION')}
           </p>
           <Button asChild size="lg">
             <Link href={`/${locale}/contact`}>
-              {isArabic ? 'تواصل معنا' : 'Contact Us'}
+              {t('BLOG_CONTACT_US')}
             </Link>
           </Button>
         </motion.div>

@@ -449,11 +449,11 @@ export function BlogPostContent({ locale, postId, postContent }: BlogPostContent
       <div className="min-h-screen bg-background pt-24 pb-16">
         <div className="vetap-container text-center">
           <h1 className="text-4xl font-bold mb-4">
-            {isArabic ? 'المقال غير موجود' : 'Post Not Found'}
+            {t('BLOG_POST_NOT_FOUND')}
           </h1>
           <Button asChild>
             <Link href={`/${locale}/blog`}>
-              {isArabic ? 'العودة إلى المدونة' : 'Back to Blog'}
+              {t('BLOG_BACK_TO_BLOG')}
             </Link>
           </Button>
         </div>
@@ -476,7 +476,7 @@ export function BlogPostContent({ locale, postId, postContent }: BlogPostContent
           <Button variant="ghost" asChild>
             <Link href={`/${locale}/blog`}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              {isArabic ? 'العودة إلى المدونة' : 'Back to Blog'}
+              {t('BLOG_BACK_TO_BLOG')}
             </Link>
           </Button>
         </motion.div>
@@ -501,7 +501,7 @@ export function BlogPostContent({ locale, postId, postContent }: BlogPostContent
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
-              <span>{post.readTime} {isArabic ? 'دقائق قراءة' : 'min read'}</span>
+              <span>{post.readTime} {t('BLOG_MIN_READ')}</span>
             </div>
           </div>
         </motion.div>
@@ -976,7 +976,7 @@ export function BlogPostContent({ locale, postId, postContent }: BlogPostContent
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-center text-muted-foreground">
-                    {isArabic ? 'المحتوى غير متوفر' : 'Content not available'}
+                    {t('BLOG_CONTENT_NOT_AVAILABLE')}
                   </p>
                 </CardContent>
               </Card>
@@ -993,22 +993,20 @@ export function BlogPostContent({ locale, postId, postContent }: BlogPostContent
           className="mt-12 rounded-lg border bg-muted/50 p-8 text-center"
         >
           <h3 className="mb-4 text-2xl font-semibold">
-            {isArabic ? 'هل أعجبك هذا المقال؟' : 'Enjoyed This Article?'}
+            {t('BLOG_ENJOYED_ARTICLE')}
           </h3>
           <p className="mb-6 text-muted-foreground">
-            {isArabic
-              ? 'تواصل معنا لمعرفة كيف يمكننا مساعدتك في مشروعك القادم'
-              : 'Get in touch with us to see how we can help with your next project'}
+            {t('BLOG_CONTACT_DESCRIPTION')}
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Button variant="outline" asChild>
               <Link href={`/${locale}/blog`}>
-                {isArabic ? 'اقرأ المزيد من المقالات' : 'Read More Articles'}
+                {t('BLOG_READ_MORE_ARTICLES')}
               </Link>
             </Button>
             <Button asChild>
               <Link href={`/${locale}/contact`}>
-                {isArabic ? 'تواصل معنا' : 'Contact Us'}
+                {t('BLOG_CONTACT_US')}
               </Link>
             </Button>
           </div>

@@ -15,33 +15,26 @@ interface SupportContentProps {
 
 export function SupportContent({ locale, faqs }: SupportContentProps) {
   const t = useTranslations();
-  const isArabic = locale === 'ar';
 
   const supportOptions = [
     {
       icon: BookOpen,
-      title: isArabic ? 'التوثيق' : 'Documentation',
-      description: isArabic
-        ? 'استكشف أدلة الاستخدام الشاملة'
-        : 'Explore comprehensive usage guides',
+      title: t('SUPPORT_DOCUMENTATION'),
+      description: t('SUPPORT_DOCUMENTATION_DESC'),
       href: `/${locale}/documentation`,
       color: 'text-blue-500',
     },
     {
       icon: MessageSquare,
-      title: isArabic ? 'اتصل بنا' : 'Contact Us',
-      description: isArabic
-        ? 'تواصل مع فريق الدعم مباشرة'
-        : 'Get in touch with our support team',
+      title: t('SUPPORT_CONTACT'),
+      description: t('SUPPORT_CONTACT_DESC'),
       href: `/${locale}/contact`,
       color: 'text-green-500',
     },
     {
       icon: Mail,
-      title: isArabic ? 'البريد الإلكتروني' : 'Email',
-      description: isArabic
-        ? 'أرسل بريداً إلكترونياً إلى support@vetaps.com'
-        : 'Send an email to support@vetaps.com',
+      title: t('SUPPORT_EMAIL'),
+      description: t('SUPPORT_EMAIL_DESC'),
       href: 'mailto:support@vetaps.com',
       color: 'text-purple-500',
     },
@@ -49,16 +42,16 @@ export function SupportContent({ locale, faqs }: SupportContentProps) {
 
   const responseTimes = [
     {
-      type: isArabic ? 'الاستفسارات العامة' : 'General Inquiries',
-      time: isArabic ? 'خلال 24 ساعة' : 'Within 24 hours',
+      type: t('SUPPORT_GENERAL_INQUIRIES'),
+      time: t('SUPPORT_GENERAL_TIME'),
     },
     {
-      type: isArabic ? 'المشاكل التقنية' : 'Technical Issues',
-      time: isArabic ? 'خلال 12 ساعة' : 'Within 12 hours',
+      type: t('SUPPORT_TECHNICAL_ISSUES'),
+      time: t('SUPPORT_TECHNICAL_TIME'),
     },
     {
-      type: isArabic ? 'الاستفسارات العاجلة' : 'Urgent Inquiries',
-      time: isArabic ? 'خلال 4 ساعات' : 'Within 4 hours',
+      type: t('SUPPORT_URGENT_INQUIRIES'),
+      time: t('SUPPORT_URGENT_TIME'),
     },
   ];
 
@@ -75,20 +68,18 @@ export function SupportContent({ locale, faqs }: SupportContentProps) {
           <div className="mb-4 flex items-center justify-center gap-2">
             <HelpCircle className="h-8 w-8 text-primary" />
             <h1 className="text-4xl font-bold md:text-5xl">
-              {isArabic ? 'مركز الدعم' : 'Support Center'}
+              {t('SUPPORT_TITLE')}
             </h1>
           </div>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            {isArabic
-              ? 'نحن هنا لمساعدتك. ابحث عن إجابات لأسئلتك أو تواصل معنا للحصول على مساعدة فورية'
-              : 'We are here to help. Find answers to your questions or contact us for immediate assistance'}
+            {t('SUPPORT_DESCRIPTION')}
           </p>
         </motion.div>
 
         {/* Support Options */}
         <section className="mb-16">
           <h2 className="mb-6 text-2xl font-semibold">
-            {isArabic ? 'طرق الحصول على المساعدة' : 'Ways to Get Help'}
+            {t('SUPPORT_WAYS_TO_GET_HELP')}
           </h2>
           <div className="grid gap-6 md:grid-cols-3">
             {supportOptions.map((option, index) => {
@@ -110,7 +101,7 @@ export function SupportContent({ locale, faqs }: SupportContentProps) {
                     <CardContent>
                       <Button variant="outline" className="w-full" asChild>
                         <Link href={option.href}>
-                          {isArabic ? 'ابدأ الآن' : 'Get Started'}
+                          {t('SUPPORT_GET_STARTED')}
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
@@ -125,7 +116,7 @@ export function SupportContent({ locale, faqs }: SupportContentProps) {
         {/* FAQs */}
         <section className="mb-16">
           <h2 className="mb-6 text-2xl font-semibold">
-            {isArabic ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
+            {t('SUPPORT_FAQS')}
           </h2>
           <Card>
             <CardContent className="pt-6">
@@ -148,7 +139,7 @@ export function SupportContent({ locale, faqs }: SupportContentProps) {
         {/* Response Times */}
         <section className="mb-16">
           <h2 className="mb-6 text-2xl font-semibold">
-            {isArabic ? 'أوقات الاستجابة المتوقعة' : 'Expected Response Times'}
+            {t('SUPPORT_RESPONSE_TIMES')}
           </h2>
           <div className="grid gap-4 md:grid-cols-3">
             {responseTimes.map((item, index) => (
@@ -184,16 +175,14 @@ export function SupportContent({ locale, faqs }: SupportContentProps) {
           className="rounded-lg border bg-muted/50 p-8"
         >
           <h3 className="mb-6 text-2xl font-semibold">
-            {isArabic ? 'لم تجد ما تبحث عنه؟' : "Can't Find What You're Looking For?"}
+            {t('SUPPORT_CANT_FIND')}
           </h3>
           <p className="mb-6 text-muted-foreground">
-            {isArabic
-              ? 'تواصل معنا مباشرة وسنكون سعداء بمساعدتك'
-              : 'Contact us directly and we will be happy to help you'}
+            {t('SUPPORT_CANT_FIND_DESC')}
           </p>
           <Button asChild size="lg">
             <Link href={`/${locale}/contact`}>
-              {isArabic ? 'اتصل بنا الآن' : 'Contact Us Now'}
+              {t('SUPPORT_CONTACT_NOW')}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
