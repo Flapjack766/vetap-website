@@ -21,7 +21,7 @@ export function AdminDashboard({ locale }: AdminDashboardProps) {
       </div>
 
       <Tabs defaultValue="username-requests" className="space-y-6">
-        <div className="w-full overflow-x-auto">
+        <div className="w-full">
           <TabsList className="w-full min-w-max inline-flex md:w-auto md:grid md:grid-cols-3">
             <TabsTrigger value="username-requests" className="whitespace-nowrap flex-shrink-0">
               {t('ADMIN3')}

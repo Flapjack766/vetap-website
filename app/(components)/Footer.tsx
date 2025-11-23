@@ -42,7 +42,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Brand Column */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+            <Link href="/" prefetch={true} className="flex items-center gap-2 transition-opacity hover:opacity-80">
               <Image
                 src="/icons/logo.png"
                 alt="VETAP Logo"
@@ -91,6 +91,7 @@ export function Footer() {
                   <li key={`${sectionIndex}-${linkIndex}-${link.label}`}>
                     <Link
                       href={link.href}
+                      prefetch={link.href !== '#'}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {link.label}

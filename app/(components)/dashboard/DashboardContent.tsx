@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,9 +25,15 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
   const router = useRouter();
   const [currentProfile, setCurrentProfile] = useState(profile);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
+  const [mounted, setMounted] = useState(false);
   const supabase = createClient();
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Set mounted to true after component mounts on client
+    setMounted(true);
+    
     // Check if user is admin (admin@vetaps.com)
     const checkAdmin = async () => {
       try {
@@ -42,6 +48,29 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
 
     checkAdmin();
   }, []);
+
+  // Scroll to top of tabs content when tab changes
+  useEffect(() => {
+    if (tabsContainerRef.current) {
+      // Small delay to ensure the tab content is rendered
+      setTimeout(() => {
+        const element = tabsContainerRef.current;
+        if (element) {
+          // Get the position of the element relative to the viewport
+          const elementPosition = element.getBoundingClientRect().top;
+          // Get current scroll position
+          const offsetPosition = elementPosition + window.pageYOffset;
+          // Account for fixed header (approximately 64px = 16 * 4 = pt-16)
+          const headerHeight = 64;
+          // Scroll to position minus header height
+          window.scrollTo({
+            top: offsetPosition - headerHeight,
+            behavior: 'smooth'
+          });
+        }
+      }, 150);
+    }
+  }, [activeTab]);
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -75,63 +104,91 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
           />
 
           {/* Tabs */}
-          <Tabs defaultValue="profile" className="w-full">
-            <div className="mb-8 w-full overflow-x-auto">
-              <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-3 lg:grid-cols-6">
-                <TabsTrigger value="profile" className="whitespace-nowrap flex-shrink-0">{t('DASH3')}</TabsTrigger>
-                <TabsTrigger value="links" className="whitespace-nowrap flex-shrink-0">{t('DASH4')}</TabsTrigger>
-                <TabsTrigger value="templates" className="whitespace-nowrap flex-shrink-0">{t('DASH5')}</TabsTrigger>
-                <TabsTrigger value="link" className="whitespace-nowrap flex-shrink-0">{t('DASH6')}</TabsTrigger>
-                <TabsTrigger value="analytics" className="whitespace-nowrap flex-shrink-0">{t('DASH54')}</TabsTrigger>
-                <TabsTrigger value="reports" className="whitespace-nowrap flex-shrink-0">{t('DASH55')}</TabsTrigger>
-              </TabsList>
-            </div>
+          <div ref={tabsContainerRef}>
+            {mounted ? (
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <div className="mb-8 w-full overflow-x-auto">
+                  <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+                    <TabsTrigger value="profile" className="whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">{t('DASH3')}</TabsTrigger>
+                    <TabsTrigger value="links" className="whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">{t('DASH4')}</TabsTrigger>
+                    <TabsTrigger value="templates" className="whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">{t('DASH5')}</TabsTrigger>
+                    <TabsTrigger value="link" className="whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">{t('DASH6')}</TabsTrigger>
+                    <TabsTrigger value="analytics" className="whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">{t('DASH54')}</TabsTrigger>
+                    <TabsTrigger value="reports" className="whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">{t('DASH55')}</TabsTrigger>
+                  </TabsList>
+                </div>
 
-            <TabsContent value="profile">
-              <ProfileTab 
-                profile={currentProfile} 
-                locale={locale}
-                onUpdate={(updated) => setCurrentProfile(updated)}
-              />
-            </TabsContent>
+                <TabsContent value="profile">
+                <ProfileTab 
+                  profile={currentProfile} 
+                  locale={locale}
+                  onUpdate={(updated) => setCurrentProfile(updated)}
+                  onNext={() => setActiveTab('links')}
+                />
+              </TabsContent>
 
-            <TabsContent value="links">
-              <LinksTab 
-                profile={currentProfile} 
-                locale={locale}
-                onUpdate={(updated) => setCurrentProfile(updated)}
-              />
-            </TabsContent>
+              <TabsContent value="links">
+                <LinksTab 
+                  profile={currentProfile} 
+                  locale={locale}
+                  onUpdate={(updated) => setCurrentProfile(updated)}
+                  onNext={() => setActiveTab('templates')}
+                  onPrevious={() => setActiveTab('profile')}
+                />
+              </TabsContent>
 
-            <TabsContent value="templates">
-              <TemplatesTab 
-                profile={currentProfile} 
-                locale={locale}
-                onUpdate={(updated) => setCurrentProfile(updated)}
-              />
-            </TabsContent>
+              <TabsContent value="templates">
+                <TemplatesTab 
+                  profile={currentProfile} 
+                  locale={locale}
+                  onUpdate={(updated) => setCurrentProfile(updated)}
+                  onNext={() => setActiveTab('link')}
+                  onPrevious={() => setActiveTab('links')}
+                />
+              </TabsContent>
 
-            <TabsContent value="link">
-              <LinkTab 
-                profile={currentProfile} 
-                locale={locale}
-              />
-            </TabsContent>
+              <TabsContent value="link">
+                <LinkTab 
+                  profile={currentProfile} 
+                  locale={locale}
+                />
+              </TabsContent>
 
-            <TabsContent value="analytics">
-              <AnalyticsTab 
-                profile={currentProfile} 
-                locale={locale}
-              />
-            </TabsContent>
+              <TabsContent value="analytics">
+                <AnalyticsTab 
+                  profile={currentProfile} 
+                  locale={locale}
+                />
+              </TabsContent>
 
-            <TabsContent value="reports">
-              <ReportsTab 
-                profile={currentProfile} 
-                locale={locale}
-              />
-            </TabsContent>
-          </Tabs>
+                <TabsContent value="reports">
+                  <ReportsTab 
+                    profile={currentProfile} 
+                    locale={locale}
+                  />
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <div className="w-full">
+                <div className="mb-8 w-full overflow-x-auto">
+                  <div className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+                    <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs sm:text-sm font-medium bg-background text-foreground shadow">{t('DASH3')}</div>
+                    <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs sm:text-sm font-medium">{t('DASH4')}</div>
+                    <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs sm:text-sm font-medium">{t('DASH5')}</div>
+                    <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs sm:text-sm font-medium">{t('DASH6')}</div>
+                    <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs sm:text-sm font-medium">{t('DASH54')}</div>
+                    <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs sm:text-sm font-medium">{t('DASH55')}</div>
+                  </div>
+                </div>
+                <ProfileTab 
+                  profile={currentProfile} 
+                  locale={locale}
+                  onUpdate={(updated) => setCurrentProfile(updated)}
+                  onNext={() => setActiveTab('links')}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

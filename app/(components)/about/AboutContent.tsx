@@ -65,7 +65,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
     {
       title: t('ABOUT25'),
       text: t('ABOUT26'),
-      href: '/services',
+      href: '/web-dev',
     },
     {
       title: t('ABOUT27'),
@@ -154,7 +154,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
               <motion.div
                 initial={{ opacity: 0, x: isRtl ? 20 : -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.5 }}
                 className="lg:col-span-2"
               >
@@ -175,7 +175,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
                     key={title}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: true, margin: "-100px" }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                     className="vetap-card"
                   >
@@ -199,7 +199,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5 }}
               className="mb-10"
             >
@@ -211,7 +211,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
                   key={title}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="vetap-card"
                 >
@@ -234,7 +234,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5 }}
               className="mb-6"
             >
@@ -247,7 +247,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
                   key={client}
                   initial={{ opacity: 0, scale: 0.95 }}
                   whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.3, delay: index * 0.02 }}
                   className="vetap-card p-3 text-sm"
                 >
@@ -266,7 +266,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5 }}
               className="mb-10"
             >
@@ -278,7 +278,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
                   key={service.title}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
                   <Link
@@ -306,7 +306,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
               <motion.div
                 initial={{ opacity: 0, x: isRtl ? 20 : -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.5 }}
                 className="lg:col-span-2"
               >
@@ -328,7 +328,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
                     key={stat.label}
                     initial={{ opacity: 0, scale: 0.9 }}
                     whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: true, margin: "-100px" }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                     className="vetap-card p-5"
                   >
@@ -349,7 +349,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5 }}
               className="mb-8"
             >
@@ -361,7 +361,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
                   key={faq.question}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="vetap-card group"
                 >
@@ -382,7 +382,7 @@ export function AboutContent({ locale }: { locale: 'ar' | 'en' }) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
             className="mx-auto max-w-3xl text-center"
           >

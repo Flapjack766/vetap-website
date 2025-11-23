@@ -7,6 +7,9 @@ import { ServiceCards } from '@/app/(components)/ServiceCards';
 import { CTA } from '@/app/(components)/CTA';
 import { organizationLd, websiteLd } from '@/app/(seo)/jsonld';
 
+// Revalidate home page every 5 minutes
+export const revalidate = 300;
+
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);

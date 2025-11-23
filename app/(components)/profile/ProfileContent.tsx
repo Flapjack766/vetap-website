@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { memo } from 'react';
 import { 
   Globe, 
   Palette, 
@@ -20,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/app/(components)/ui/button';
 
-export function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
+export const ProfileContent = memo(function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
   const t = useTranslations();
   const isRtl = locale === 'ar';
 
@@ -67,7 +68,7 @@ export function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
             className="mx-auto max-w-4xl text-center"
           >
@@ -99,7 +100,7 @@ export function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, x: isRtl ? 20 : -20 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5 }}
               className="space-y-6"
             >
@@ -133,7 +134,7 @@ export function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="flex justify-center"
             >
@@ -158,7 +159,7 @@ export function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
             className="mb-12 text-center"
           >
@@ -210,7 +211,7 @@ export function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5 }}
               className="mb-12 text-center"
             >
@@ -232,7 +233,7 @@ export function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
                   key={i}
                   initial={{ opacity: 0, x: isRtl ? 20 : -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
                   className="vetap-card flex items-start gap-4"
                 >
@@ -254,7 +255,7 @@ export function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
             className="vetap-card bg-primary/5 border-primary/20 text-center"
           >
@@ -273,7 +274,7 @@ export function ProfileContent({ locale }: { locale: 'ar' | 'en' }) {
       </section>
     </div>
   );
-}
+});
 
 function FeatureItem({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
@@ -289,7 +290,7 @@ function FeatureItem({ icon, title, description }: { icon: React.ReactNode; titl
   );
 }
 
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+const FeatureCard = memo(function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -305,5 +306,5 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
       <p className="text-sm text-muted-foreground">{description}</p>
     </motion.div>
   );
-}
+});
 

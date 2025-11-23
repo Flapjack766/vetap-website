@@ -101,7 +101,7 @@ export function CaptainView({ locale, handle, data }: { locale: Locale; handle: 
       {/* About */}
       <section className="vetap-section">
         <div className="vetap-container">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="mx-auto max-w-3xl">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.5 }} className="mx-auto max-w-3xl">
             <h2 className="mb-6 text-center text-3xl font-bold">About the Captain</h2>
             <div className="vetap-card">
               <p className="text-lg leading-relaxed text-muted-foreground">{data.about}</p>
@@ -114,7 +114,7 @@ export function CaptainView({ locale, handle, data }: { locale: Locale; handle: 
       <section className="vetap-section">
         <div className="vetap-container">
           <div className="grid gap-6 md:grid-cols-2">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="vetap-card">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.5 }} className="vetap-card">
               <h3 className="mb-3 text-xl font-semibold">Safety & Operational Discipline</h3>
               <ul className="list-disc pl-5 text-muted-foreground">
                 {data.safety.map((s, i) => (
@@ -122,7 +122,7 @@ export function CaptainView({ locale, handle, data }: { locale: Locale; handle: 
                 ))}
               </ul>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }} className="vetap-card">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.5, delay: 0.1 }} className="vetap-card">
               <h3 className="mb-3 text-xl font-semibold">Certificates & Licenses</h3>
               <ul className="list-disc pl-5 text-muted-foreground">
                 {data.certs.map((s, i) => (
@@ -167,13 +167,13 @@ export function CaptainView({ locale, handle, data }: { locale: Locale; handle: 
       {/* Timeline */}
       <section className="vetap-section">
         <div className="vetap-container">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="mb-12 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.5 }} className="mb-12 text-center">
             <h2 className="text-3xl font-bold">Professional Record</h2>
           </motion.div>
           <div className="mx-auto max-w-3xl">
             <div className="space-y-8">
               {data.timeline.map((m, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.1 }} className="flex gap-6">
+                <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.5, delay: i * 0.1 }} className="flex gap-6">
                   <div className="flex flex-col items-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <span className="text-sm font-semibold">{m.year}</span>

@@ -7,6 +7,7 @@ import { getDirection } from '@/lib/i18n/helper';
 import { Header } from '@/app/(components)/Header';
 import { Footer } from '@/app/(components)/Footer';
 import { LoadingBar } from '@/app/(components)/LoadingBar';
+import { ToasterProvider } from '@/components/ui/toaster';
 import '@/styles/globals.css';
 import '@/styles/themes.css';
 
@@ -38,13 +39,15 @@ export default async function LocaleLayout({
     <html lang={locale} dir={direction} className="dark overflow-x-hidden">
       <body className="overflow-x-hidden">
         <NextIntlClientProvider messages={messages}>
-          <LoadingBar />
-          <a href="#main-content" className="skip-to-content">
-            Skip to content
-          </a>
-          <Header />
-          <main id="main-content" className="overflow-x-hidden">{children}</main>
-          <Footer />
+          <ToasterProvider>
+            <LoadingBar />
+            <a href="#main-content" className="skip-to-content">
+              Skip to content
+            </a>
+            <Header />
+            <main id="main-content" className="pt-16">{children}</main>
+            <Footer />
+          </ToasterProvider>
         </NextIntlClientProvider>
       </body>
     </html>

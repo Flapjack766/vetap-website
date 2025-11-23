@@ -10,18 +10,30 @@ import { Textarea } from '@/app/(components)/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Eye } from 'lucide-react';
+import { useToast } from '@/components/ui/toaster';
+import dynamic from 'next/dynamic';
+
+// Dynamically import template components for live preview
+const Template1Profile = dynamic(() => import('@/app/(components)/profile/templates/Template1Profile').then(mod => ({ default: mod.Template1Profile })), { ssr: false });
+const Template2Profile = dynamic(() => import('@/app/(components)/profile/templates/Template2Profile').then(mod => ({ default: mod.Template2Profile })), { ssr: false });
+const Template3Profile = dynamic(() => import('@/app/(components)/profile/templates/Template3Profile').then(mod => ({ default: mod.Template3Profile })), { ssr: false });
+const Template4Profile = dynamic(() => import('@/app/(components)/profile/templates/Template4Profile').then(mod => ({ default: mod.Template4Profile })), { ssr: false });
+const Template5Profile = dynamic(() => import('@/app/(components)/profile/templates/Template5Profile').then(mod => ({ default: mod.Template5Profile })), { ssr: false });
 
 interface ProfileTabProps {
   profile: any;
   locale: string;
   onUpdate: (profile: any) => void;
+  onNext?: () => void;
 }
 
-export function ProfileTab({ profile, locale, onUpdate }: ProfileTabProps) {
+export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProps) {
   const t = useTranslations();
   const router = useRouter();
   const supabase = createClient();
+  const { success: showSuccess, error: showError } = useToast();
+  const [showPreview, setShowPreview] = useState(false);
 
   const [formData, setFormData] = useState({
     display_name: profile.display_name || '',
@@ -37,8 +49,13 @@ export function ProfileTab({ profile, locale, onUpdate }: ProfileTabProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(profile.avatar_url || null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Update form data when profile changes (when switching between profiles)
   useEffect(() => {
@@ -155,8 +172,7 @@ export function ProfileTab({ profile, locale, onUpdate }: ProfileTabProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveProfile = async (): Promise<boolean> => {
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -166,7 +182,7 @@ export function ProfileTab({ profile, locale, onUpdate }: ProfileTabProps) {
       if (!user) {
         setError(t('DASH7'));
         setLoading(false);
-        return;
+        return false;
       }
 
       // Update profile - use profile.id to update the specific profile (not user_id)
@@ -194,8 +210,9 @@ export function ProfileTab({ profile, locale, onUpdate }: ProfileTabProps) {
         if (hasError) {
           const errorMessage = updateError.message || updateError.code || JSON.stringify(updateError) || t('DASH8');
           setError(errorMessage);
+          showError(errorMessage);
           setLoading(false);
-          return;
+          return false;
         }
         // If error is empty object, continue to check if update actually worked
       }
@@ -215,27 +232,87 @@ export function ProfileTab({ profile, locale, onUpdate }: ProfileTabProps) {
           onUpdate(checkProfile);
           setTimeout(() => setSuccess(false), 3000);
           router.refresh();
-          return;
+          return true;
         }
         
-        setError(t('DASH8'));
+        const errorMsg = t('DASH8');
+        setError(errorMsg);
+        showError(errorMsg);
         setLoading(false);
-        return;
+        return false;
       }
 
       setSuccess(true);
+      showSuccess(t('DASH10'));
       onUpdate(updatedProfile);
       setTimeout(() => setSuccess(false), 3000);
       router.refresh();
+      return true;
     } catch (err) {
-      setError(t('DASH8'));
+      const errorMsg = t('DASH8');
+      setError(errorMsg);
+      showError(errorMsg);
+      setLoading(false);
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveProfile();
+  };
+
+  // Create preview profile data from form data
+  const previewProfile = {
+    ...profile,
+    display_name: formData.display_name || profile.display_name,
+    headline: formData.headline || profile.headline,
+    bio: formData.bio || profile.bio,
+    phone: formData.phone || profile.phone,
+    email: formData.email || profile.email,
+    location: formData.location || profile.location,
+    avatar_url: previewUrl || formData.avatar_url || profile.avatar_url,
+  };
+
+  // Get template component based on profile template_id
+  const getTemplateComponent = () => {
+    const templateId = profile.template_id || 1;
+    switch (templateId) {
+      case 1:
+        return <Template1Profile profile={previewProfile} locale={locale} />;
+      case 2:
+        return <Template2Profile profile={previewProfile} locale={locale} />;
+      case 3:
+        return <Template3Profile profile={previewProfile} locale={locale} />;
+      case 4:
+        return <Template4Profile profile={previewProfile} locale={locale} />;
+      case 5:
+        return <Template5Profile profile={previewProfile} locale={locale} />;
+      default:
+        return <Template1Profile profile={previewProfile} locale={locale} />;
+    }
+  };
+
   return (
-    <Card>
+    <div className="space-y-6">
+      {/* Toggle Preview Button */}
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowPreview(!showPreview)}
+          className="gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          {showPreview ? t('DASH_HIDE_PREVIEW') || 'Hide Preview' : t('DASH_SHOW_PREVIEW') || 'Show Preview'}
+        </Button>
+      </div>
+
+      <div className={showPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : ''}>
+        {/* Form Section */}
+        <Card className={showPreview ? '' : 'w-full'}>
       <CardHeader>
         <CardTitle>{t('DASH3')}</CardTitle>
         <CardDescription>{t('DASH9')}</CardDescription>
@@ -397,12 +474,57 @@ export function ProfileTab({ profile, locale, onUpdate }: ProfileTabProps) {
             />
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? t('DASH23') : t('DASH24')}
-          </Button>
+          {mounted && onNext ? (
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button type="submit" disabled={loading} className="flex-1">
+                {loading ? t('DASH23') : t('DASH24')}
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                disabled={loading}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  // Save first, then navigate
+                  const saved = await saveProfile();
+                  if (saved) {
+                    setTimeout(() => {
+                      onNext();
+                    }, 500);
+                  }
+                }}
+                className="flex-1"
+              >
+                {t('NAV_NEXT')}
+              </Button>
+            </div>
+          ) : (
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? t('DASH23') : t('DASH24')}
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>
+
+        {/* Live Preview Section */}
+        {showPreview && (
+          <Card className="sticky top-4 h-fit max-h-[calc(100vh-2rem)] overflow-hidden">
+            <CardHeader>
+              <CardTitle>{t('DASH_PREVIEW') || 'Live Preview'}</CardTitle>
+              <CardDescription>{t('DASH_PREVIEW_DESC') || 'See how your profile looks in real-time'}</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0 overflow-hidden">
+              <div className="overflow-y-auto overflow-x-hidden max-h-[calc(100vh-12rem)] w-full">
+                <div className="scale-75 origin-top-left w-[133.33%] h-[133.33%] overflow-x-hidden" style={{ maxWidth: '100%' }}>
+                  {getTemplateComponent()}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
   );
 }
 

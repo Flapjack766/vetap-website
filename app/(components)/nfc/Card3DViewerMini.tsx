@@ -341,7 +341,7 @@ export function Card3DViewerMini({ className = "" }: Card3DViewerMiniProps) {
   return (
     <div className={`relative w-full ${className}`}>
       <div
-        className="relative w-full"
+        className="relative w-full overflow-visible"
         style={{
           aspectRatio: CARD_ASPECT,
           perspective: "800px",
@@ -393,7 +393,7 @@ export function Card3DViewerMini({ className = "" }: Card3DViewerMiniProps) {
           <div
             className="absolute inset-0 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-neutral-900 via-neutral-950 to-black"
             style={{
-              backfaceVisibility: "hidden",
+              backfaceVisibility: "visible",
               transform: "translateZ(1px)",
             }}
           >
@@ -420,7 +420,7 @@ export function Card3DViewerMini({ className = "" }: Card3DViewerMiniProps) {
           <div
             className="absolute inset-0 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-neutral-900 via-neutral-950 to-black"
             style={{
-              backfaceVisibility: "hidden",
+              backfaceVisibility: "visible",
               transform: "rotateY(180deg) translateZ(1px)",
             }}
           >

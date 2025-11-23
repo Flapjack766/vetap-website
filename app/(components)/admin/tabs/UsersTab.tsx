@@ -341,7 +341,7 @@ export function UsersTab({ locale }: UsersTabProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="overflow-x-auto">
+              <div>
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b">

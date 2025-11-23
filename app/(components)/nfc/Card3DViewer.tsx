@@ -410,22 +410,6 @@ export function Card3DViewer() {
 
   return (
     <div className="relative w-full max-w-md mx-auto">
-      <div className="absolute -top-12 right-0 z-10">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!isTransitioning && !isDraggingRef.current) {
-              toggleTheme();
-            }
-          }}
-          disabled={isTransitioning || isDraggingRef.current}
-          className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border border-neutral-700"
-        >
-          <span>{isDarkMode ? "☀️" : "🌙"}</span>
-          <span>{isDarkMode ? t('NFC42') : t('NFC43')}</span>
-        </button>
-      </div>
       
       <div
         className="relative w-full"

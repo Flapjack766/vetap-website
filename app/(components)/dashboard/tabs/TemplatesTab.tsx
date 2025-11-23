@@ -9,11 +9,22 @@ import { Check, Star } from 'lucide-react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+
+// Dynamically import template components for live preview
+const Template1Profile = dynamic(() => import('@/app/(components)/profile/templates/Template1Profile').then(mod => ({ default: mod.Template1Profile })), { ssr: false });
+const Template2Profile = dynamic(() => import('@/app/(components)/profile/templates/Template2Profile').then(mod => ({ default: mod.Template2Profile })), { ssr: false });
+const Template3Profile = dynamic(() => import('@/app/(components)/profile/templates/Template3Profile').then(mod => ({ default: mod.Template3Profile })), { ssr: false });
+const Template4Profile = dynamic(() => import('@/app/(components)/profile/templates/Template4Profile').then(mod => ({ default: mod.Template4Profile })), { ssr: false });
+const Template5Profile = dynamic(() => import('@/app/(components)/profile/templates/Template5Profile').then(mod => ({ default: mod.Template5Profile })), { ssr: false });
+const CustomTemplateRenderer = dynamic(() => import('@/app/(components)/profile/CustomTemplateRenderer').then(mod => ({ default: mod.CustomTemplateRenderer })), { ssr: false });
 
 interface TemplatesTabProps {
   profile: any;
   locale: string;
   onUpdate: (profile: any) => void;
+  onNext?: () => void;
+  onPrevious?: () => void;
 }
 
 const templates = [
@@ -49,7 +60,7 @@ const templates = [
   },
 ];
 
-export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
+export function TemplatesTab({ profile, locale, onUpdate, onNext, onPrevious }: TemplatesTabProps) {
   const t = useTranslations();
   const router = useRouter();
   const supabase = createClient();
@@ -62,6 +73,14 @@ export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [customTemplates, setCustomTemplates] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [hoveredTemplate, setHoveredTemplate] = useState<number | string | null>(null);
+  const [clickedTemplate, setClickedTemplate] = useState<number | string | null>(null);
+  const [customTemplateData, setCustomTemplateData] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Update selected template when profile changes (when switching between profiles)
   useEffect(() => {
@@ -75,16 +94,22 @@ export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
   useEffect(() => {
     const fetchCustomTemplates = async () => {
       try {
-        // Get ALL custom templates for this profile (not deleted)
+        // Get ALL custom templates for this profile (not deleted) with uploaded images
         const { data, error } = await supabase
           .from('custom_templates')
-          .select('*')
+          .select('*, custom_template_requests(uploaded_images)')
           .eq('profile_id', profile.id)
           .eq('is_deleted', false)
           .order('created_at', { ascending: false });
 
         if (!error && data) {
           setCustomTemplates(data);
+          // Store custom template data for preview
+          const templateDataMap: Record<string, any> = {};
+          data.forEach((template: any) => {
+            templateDataMap[template.id] = template;
+          });
+          setCustomTemplateData(templateDataMap);
           // If profile has custom_template_id, set it
           if (profile.custom_template_id) {
             setSelectedCustomTemplateId(profile.custom_template_id);
@@ -192,12 +217,82 @@ export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
       setSelectedCustomTemplateId(isCustomTemplate ? templateId : null);
       setSuccess(true);
       onUpdate(updatedProfile);
-      setTimeout(() => setSuccess(false), 3000);
       router.refresh();
+      
+      // Show success message and navigate to link tab after 2 seconds
+      if (onNext) {
+        setTimeout(() => {
+          onNext();
+        }, 2000);
+      } else {
+        setTimeout(() => setSuccess(false), 3000);
+      }
     } catch (err) {
       setError(t('DASH8'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Get template preview component
+  const getTemplatePreview = (templateId: number | string, customTemplate?: any) => {
+    const previewProfile = {
+      ...profile,
+      template_id: typeof templateId === 'number' ? templateId : 999,
+      custom_template_id: typeof templateId === 'string' ? templateId : null,
+    };
+
+    if (typeof templateId === 'string') {
+      // Custom template
+      const template = customTemplate || customTemplateData[templateId];
+      if (template) {
+        const profileWithImages = {
+          ...previewProfile,
+          uploaded_images: template.uploaded_images || template.custom_template_requests?.[0]?.uploaded_images || {},
+        };
+        return (
+          <div className="scale-50 origin-top-left w-[200%] h-[200%] pointer-events-none">
+            <CustomTemplateRenderer templateCode={template.template_code} profile={profileWithImages} locale={locale} />
+          </div>
+        );
+      }
+      return null;
+    }
+
+    // Standard templates
+    switch (templateId) {
+      case 1:
+        return (
+          <div className="scale-50 origin-top-left w-[200%] h-[200%] pointer-events-none">
+            <Template1Profile profile={previewProfile} locale={locale} />
+          </div>
+        );
+      case 2:
+        return (
+          <div className="scale-50 origin-top-left w-[200%] h-[200%] pointer-events-none" style={{ marginTop: '-6rem' }}>
+            <Template2Profile profile={previewProfile} locale={locale} />
+          </div>
+        );
+      case 3:
+        return (
+          <div className="scale-50 origin-top-left w-[200%] h-[200%] pointer-events-none">
+            <Template3Profile profile={previewProfile} locale={locale} />
+          </div>
+        );
+      case 4:
+        return (
+          <div className="scale-50 origin-top-left w-[200%] h-[200%] pointer-events-none">
+            <Template4Profile profile={previewProfile} locale={locale} />
+          </div>
+        );
+      case 5:
+        return (
+          <div className="scale-50 origin-top-left w-[200%] h-[200%] pointer-events-none">
+            <Template5Profile profile={previewProfile} locale={locale} />
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -215,8 +310,13 @@ export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
         )}
 
         {success && (
-          <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400 mb-6">
-            {t('DASH10')}
+          <div className="rounded-md bg-green-500/10 p-4 text-sm text-green-600 dark:text-green-400 mb-6 space-y-3">
+            <div className="font-medium">{t('NAV_SUCCESS')}</div>
+            {onNext && (
+              <div className="text-xs opacity-80">
+                {t('NAV_VIEW_LINK')}
+              </div>
+            )}
           </div>
         )}
 
@@ -232,16 +332,38 @@ export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
                     ? 'border-primary shadow-lg'
                     : 'border-border hover:border-primary/50'
                 }`}
-                onClick={() => !loading && handleTemplateSelect(customTemplate.id)}
+                onClick={(e) => {
+                  // On mobile: toggle preview on click
+                  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                    e.stopPropagation();
+                    setClickedTemplate(clickedTemplate === customTemplate.id ? null : customTemplate.id);
+                  } else {
+                    // On desktop: select template
+                    if (!loading) {
+                      handleTemplateSelect(customTemplate.id);
+                    }
+                  }
+                }}
+                onMouseEnter={() => setHoveredTemplate(customTemplate.id)}
+                onMouseLeave={() => setHoveredTemplate(null)}
               >
-                <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative">
-                  <div className="absolute top-2 right-2">
+                <div className="aspect-video bg-muted flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute top-2 right-2 z-10">
                     <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
                   </div>
+                  {(hoveredTemplate === customTemplate.id || clickedTemplate === customTemplate.id) && mounted ? (
+                    <div className="w-full h-full overflow-hidden">
+                      {getTemplatePreview(customTemplate.id, customTemplate)}
+                    </div>
+                  ) : (
                   <div className="text-center p-4">
                     <div className="text-4xl font-bold mb-2">Custom</div>
                     <div className="text-sm text-muted-foreground">{customTemplate.template_name}</div>
+                      {typeof window !== 'undefined' && window.innerWidth < 1024 && (
+                        <div className="text-xs text-muted-foreground mt-2">{t('TEMPLATE_TAP_PREVIEW')}</div>
+                      )}
                   </div>
+                  )}
                 </div>
 
                 <div className="p-4 bg-card">
@@ -270,6 +392,10 @@ export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
                     onClick={(e) => {
                       e.stopPropagation();
                       handleTemplateSelect(customTemplate.id);
+                      // Close preview on mobile after selection
+                      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                        setClickedTemplate(null);
+                      }
                     }}
                   >
                     {isSelected ? t('DASH27') : t('DASH28')}
@@ -288,14 +414,36 @@ export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
                   ? 'border-primary shadow-lg'
                   : 'border-border hover:border-primary/50'
               }`}
-              onClick={() => !loading && handleTemplateSelect(template.id)}
+              onClick={(e) => {
+                // On mobile: toggle preview on click
+                if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                  e.stopPropagation();
+                  setClickedTemplate(clickedTemplate === template.id ? null : template.id);
+                } else {
+                  // On desktop: select template
+                  if (!loading) {
+                    handleTemplateSelect(template.id);
+                  }
+                }
+              }}
+              onMouseEnter={() => setHoveredTemplate(template.id)}
+              onMouseLeave={() => setHoveredTemplate(null)}
             >
-              {/* Preview Placeholder */}
-              <div className="aspect-video bg-muted flex items-center justify-center">
+              {/* Live Preview */}
+              <div className={`aspect-video bg-muted flex overflow-hidden ${template.id === 2 ? 'items-start justify-center' : 'items-center justify-center'}`}>
+                {(hoveredTemplate === template.id || clickedTemplate === template.id) && mounted ? (
+                  <div className="w-full h-full overflow-hidden">
+                    {getTemplatePreview(template.id)}
+                  </div>
+                ) : (
                 <div className="text-center p-4">
                   <div className="text-4xl font-bold mb-2">Template {template.id}</div>
                   <div className="text-sm text-muted-foreground">{template.name}</div>
+                    {typeof window !== 'undefined' && window.innerWidth < 1024 && (
+                      <div className="text-xs text-muted-foreground mt-2">{t('TEMPLATE_TAP_PREVIEW')}</div>
+                    )}
                 </div>
+                )}
               </div>
 
               {/* Template Info */}
@@ -319,6 +467,10 @@ export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
                   onClick={(e) => {
                     e.stopPropagation();
                     handleTemplateSelect(template.id);
+                    // Close preview on mobile after selection
+                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                      setClickedTemplate(null);
+                    }
                   }}
                 >
                   {selectedTemplate === template.id ? t('DASH27') : t('DASH28')}
@@ -327,6 +479,37 @@ export function TemplatesTab({ profile, locale, onUpdate }: TemplatesTabProps) {
             </div>
           ))}
         </div>
+
+        {mounted && (onPrevious || onNext) && (
+          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+            {onPrevious && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading}
+                onClick={() => onPrevious()}
+                className="flex-1"
+              >
+                  {t('NAV_PREV')}
+              </Button>
+            )}
+            {onNext && (
+              <Button
+                type="button"
+                variant="default"
+                disabled={loading || !selectedTemplate}
+                onClick={() => {
+                  if (onNext) {
+                    onNext();
+                  }
+                }}
+                className={onPrevious ? "flex-1" : "w-full"}
+              >
+                {t('NAV_VIEW_LINK')}
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

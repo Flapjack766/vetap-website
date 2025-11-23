@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/check-expired-usernames",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
+

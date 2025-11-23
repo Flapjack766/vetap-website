@@ -163,7 +163,7 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange }: Pro
                     id="profile-name"
                     value={newProfileName}
                     onChange={(e) => setNewProfileName(e.target.value)}
-                    placeholder={t('DASH60') || 'e.g., Personal, Business, Portfolio'}
+                    placeholder={t('DASH64') || 'e.g., Personal, Business, Portfolio'}
                     className="mt-1"
                   />
                 </div>
@@ -172,7 +172,7 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange }: Pro
                 )}
                 {!canCreateRandom && (
                   <div className="text-sm text-muted-foreground">
-                    {t('DASH61') || 'You have reached the maximum limit of 3 random profiles. Request a custom username for more profiles.'}
+                    {t('DASH65') || 'You have reached the maximum limit of 3 random profiles. Request a custom username for more profiles.'}
                   </div>
                 )}
                 <div className="flex justify-end gap-2">
@@ -184,7 +184,7 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange }: Pro
                       setCreateError(null);
                     }}
                   >
-                    {t('DASH62') || 'Cancel'}
+                    {t('DASH66') || 'Cancel'}
                   </Button>
                   <Button
                     onClick={handleCreateProfile}
@@ -193,10 +193,10 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange }: Pro
                     {creating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {t('DASH63') || 'Creating...'}
+                        {t('DASH67') || 'Creating...'}
                       </>
                     ) : (
-                      t('DASH64') || 'Create'
+                      t('DASH68') || 'Create'
                     )}
                   </Button>
                 </div>
@@ -235,7 +235,7 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange }: Pro
                       </h4>
                       {profile.is_primary && (
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                          {t('DASH65') || 'Primary'}
+                          {t('DASH69') || 'Primary'}
                         </span>
                       )}
                       {isCustom && (
@@ -258,7 +258,7 @@ export function ProfileSelector({ currentProfile, locale, onProfileChange }: Pro
         {profiles.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>{t('DASH66') || 'No profiles yet. Create your first profile!'}</p>
+            <p>{t('DASH70') || 'No profiles yet. Create your first profile!'}</p>
           </div>
         )}
       </CardContent>

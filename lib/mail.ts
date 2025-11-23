@@ -54,7 +54,7 @@ export function renderClientEmailHTML(d: MailData): string {
     <!-- Header -->
     <div style="text-align:center;margin-bottom:24px">
       <div class="brand">VETAP</div>
-      <p class="muted">${arabic ? 'هندسة مواقع احترافية' : 'Elite Website Design & Engineering'}</p>
+      <p class="muted">${arabic ? 'حلول رقمية متكاملة' : 'Integrated Digital Solutions'}</p>
     </div>
 
     <!-- Success Message -->
@@ -156,7 +156,7 @@ export function renderClientEmailHTML(d: MailData): string {
 
     <!-- Footer -->
     <div class="footer">
-      <p><strong>VETAP</strong> - ${arabic ? 'هندسة مواقع احترافية' : 'Elite Website Design & Engineering'}</p>
+      <p><strong>VETAP</strong> - ${arabic ? 'حلول رقمية متكاملة' : 'Integrated Digital Solutions'}</p>
       <p class="muted">
         📧 info@vetaps.com | 🌐 www.vetaps.com | 📱 +966 553 198 577
       </p>

@@ -14,6 +14,8 @@ interface LinksTabProps {
   profile: any;
   locale: string;
   onUpdate: (profile: any) => void;
+  onNext?: () => void;
+  onPrevious?: () => void;
 }
 
 // Base URLs for social media platforms
@@ -47,7 +49,7 @@ const defaultLinks = [
   { key: 'website', label: 'Website', placeholder: 'https://example.com', baseUrl: '', isFullUrl: true },
 ];
 
-export function LinksTab({ profile, locale, onUpdate }: LinksTabProps) {
+export function LinksTab({ profile, locale, onUpdate, onNext, onPrevious }: LinksTabProps) {
   const t = useTranslations();
   const router = useRouter();
   const supabase = createClient();
@@ -91,6 +93,11 @@ export function LinksTab({ profile, locale, onUpdate }: LinksTabProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Update usernames when profile changes (when switching between profiles)
   useEffect(() => {
@@ -164,8 +171,7 @@ export function LinksTab({ profile, locale, onUpdate }: LinksTabProps) {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveLinks = async (): Promise<boolean> => {
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -175,7 +181,7 @@ export function LinksTab({ profile, locale, onUpdate }: LinksTabProps) {
       if (!user) {
         setError(t('DASH7'));
         setLoading(false);
-        return;
+        return false;
       }
 
       // Build full URLs from usernames
@@ -201,7 +207,7 @@ export function LinksTab({ profile, locale, onUpdate }: LinksTabProps) {
           const errorMessage = updateError.message || updateError.code || JSON.stringify(updateError) || t('DASH8');
           setError(errorMessage);
           setLoading(false);
-          return;
+          return false;
         }
         // If error is empty object, continue to check if update actually worked
       }
@@ -221,23 +227,31 @@ export function LinksTab({ profile, locale, onUpdate }: LinksTabProps) {
           onUpdate(checkProfile);
           setTimeout(() => setSuccess(false), 3000);
           router.refresh();
-          return;
+          return true;
         }
         
         setError(t('DASH8'));
         setLoading(false);
-        return;
+        return false;
       }
 
       setSuccess(true);
       onUpdate(updatedProfile);
       setTimeout(() => setSuccess(false), 3000);
       router.refresh();
+      return true;
     } catch (err) {
       setError(t('DASH8'));
+      setLoading(false);
+      return false;
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveLinks();
   };
 
   return (
@@ -321,9 +335,48 @@ export function LinksTab({ profile, locale, onUpdate }: LinksTabProps) {
             })}
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? t('DASH23') : t('DASH24')}
-          </Button>
+          {mounted && (onPrevious || onNext) ? (
+            <div className="flex flex-col sm:flex-row gap-3">
+              {onPrevious && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={loading}
+                  onClick={() => onPrevious()}
+                  className="flex-1"
+                >
+                  {t('NAV_PREV')}
+                </Button>
+              )}
+              <Button type="submit" disabled={loading} className={onPrevious || onNext ? "flex-1" : "w-full"}>
+                {loading ? t('DASH23') : t('DASH24')}
+              </Button>
+              {onNext && (
+                <Button
+                  type="button"
+                  variant="default"
+                  disabled={loading}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    // Save first, then navigate
+                    const saved = await saveLinks();
+                    if (saved) {
+                      setTimeout(() => {
+                        onNext();
+                      }, 500);
+                    }
+                  }}
+                  className="flex-1"
+                >
+                  {t('NAV_NEXT')}
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? t('DASH23') : t('DASH24')}
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>

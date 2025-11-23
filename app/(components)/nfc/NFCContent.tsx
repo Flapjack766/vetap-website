@@ -12,10 +12,20 @@ import {
   ArrowRight,
   Radio,
   Users,
-  Sparkles
+  Sparkles,
+  Globe,
+  Palette,
+  BarChart3,
+  UserCircle
 } from 'lucide-react';
+import { memo } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/app/(components)/ui/button';
-import { Card3DViewer } from './Card3DViewer';
+
+const Card3DViewer = dynamic(() => import('./Card3DViewer').then(mod => ({ default: mod.Card3DViewer })), {
+  ssr: false,
+  loading: () => <div className="w-full h-96 bg-muted animate-pulse rounded-lg" />
+});
 
 export function NFCContent({ locale }: { locale: 'ar' | 'en' }) {
   const t = useTranslations();
@@ -66,9 +76,9 @@ export function NFCContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5 }}
-              className="flex justify-center"
+              className="flex justify-center -mt-8"
             >
               <Card3DViewer />
             </motion.div>
@@ -77,7 +87,7 @@ export function NFCContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, x: isRtl ? -20 : 20 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="space-y-6"
             >
@@ -116,7 +126,7 @@ export function NFCContent({ locale }: { locale: 'ar' | 'en' }) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
             className="mb-12 text-center"
           >
@@ -168,7 +178,7 @@ export function NFCContent({ locale }: { locale: 'ar' | 'en' }) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5 }}
               className="mb-12 text-center"
             >
@@ -190,7 +200,7 @@ export function NFCContent({ locale }: { locale: 'ar' | 'en' }) {
                   key={i}
                   initial={{ opacity: 0, x: isRtl ? 20 : -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
                   className="vetap-card flex items-start gap-4"
                 >
@@ -206,13 +216,69 @@ export function NFCContent({ locale }: { locale: 'ar' | 'en' }) {
         </div>
       </section>
 
+      {/* Business Profile Section */}
+      <section className="vetap-section bg-muted/30">
+        <div className="vetap-container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+            className="mx-auto max-w-4xl"
+          >
+            <div className="vetap-card bg-primary/5 border-primary/20 p-8 md:p-12">
+              <div className="text-center mb-6">
+                <UserCircle className="mx-auto mb-4 h-12 w-12 text-primary" />
+                <h2 className="mb-3 text-3xl font-bold">{t('NFC51')}</h2>
+                <p className="text-lg leading-relaxed text-muted-foreground max-w-2xl mx-auto">
+                  {t('NFC52')}
+                </p>
+              </div>
+              
+              <div className="grid gap-4 md:grid-cols-3 mb-8">
+                <div className="text-center">
+                  <div className="inline-flex rounded-lg bg-primary/10 p-3 text-primary mb-3">
+                    <Globe className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-semibold mb-2">{t('NFC53')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('NFC54')}</p>
+                </div>
+                <div className="text-center">
+                  <div className="inline-flex rounded-lg bg-primary/10 p-3 text-primary mb-3">
+                    <Palette className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-semibold mb-2">{t('NFC55')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('NFC56')}</p>
+                </div>
+                <div className="text-center">
+                  <div className="inline-flex rounded-lg bg-primary/10 p-3 text-primary mb-3">
+                    <BarChart3 className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-semibold mb-2">{t('NFC57')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('NFC58')}</p>
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <Button asChild size="lg" className="gap-2">
+                  <Link href="/Business-Profile">
+                    {t('NFC59')}
+                    <ArrowRight className="h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="vetap-section">
         <div className="vetap-container">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.5 }}
             className="vetap-card bg-primary/5 border-primary/20 text-center"
           >
@@ -233,7 +299,7 @@ export function NFCContent({ locale }: { locale: 'ar' | 'en' }) {
   );
 }
 
-function FeatureItem({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+const FeatureItem = memo(function FeatureItem({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="flex items-start gap-3">
       <div className="mt-1 shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
@@ -245,9 +311,9 @@ function FeatureItem({ icon, title, description }: { icon: React.ReactNode; titl
       </div>
     </div>
   );
-}
+});
 
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+const FeatureCard = memo(function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -263,5 +329,5 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
       <p className="text-sm text-muted-foreground">{description}</p>
     </motion.div>
   );
-}
+});
 

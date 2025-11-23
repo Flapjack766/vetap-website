@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { createClient } from '@/lib/supabase/client';
 
-export function Header() {
+export const Header = memo(function Header() {
   const t = useTranslations();
   const locale = useLocale();
   const pathname = usePathname();
@@ -72,7 +72,7 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="vetap-container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link
@@ -96,6 +96,7 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               className="text-sm font-medium transition-colors hover:text-foreground/80"
             >
               {item.label}
@@ -114,7 +115,7 @@ export function Header() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={`/${locale}/dashboard`} className="flex items-center gap-2 cursor-pointer">
+                      <Link href={`/${locale}/dashboard`} prefetch={true} className="flex items-center gap-2 cursor-pointer">
                         <LayoutDashboard className="h-4 w-4" />
                         {t('HEADER2')}
                       </Link>
@@ -128,7 +129,7 @@ export function Header() {
                 </DropdownMenu>
               ) : (
                 <Button asChild size="sm">
-                  <Link href={`/${locale}/signup`}>{t('HEADER4')}</Link>
+                  <Link href={`/${locale}/signup`} prefetch={true}>{t('HEADER4')}</Link>
                 </Button>
               )}
             </>
@@ -208,5 +209,5 @@ export function Header() {
       </AnimatePresence>
     </header>
   );
-}
+});
 

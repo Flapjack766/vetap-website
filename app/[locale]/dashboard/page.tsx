@@ -1,10 +1,11 @@
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
-import { unstable_noStore as noStore } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { DashboardContent } from '@/app/(components)/dashboard/DashboardContent';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 60 seconds for dashboard data
+export const revalidate = 60;
+export const dynamic = 'force-dynamic'; // Keep dynamic for auth checks
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -16,7 +17,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
-  noStore(); // Prevent caching
   const { locale } = await params;
   const supabase = await createClient();
 
@@ -29,14 +29,15 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     redirect(`/${locale}/login`);
   }
 
-  // Get user profiles (get primary or first one)
+  // Get user profiles (get primary or first one) - optimized query
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, user_id, email, username_random, username_custom, username_type, profile_name, profile_description, profile_type, avatar_url, template_id, links, is_primary, is_deleted, created_at, updated_at')
     .eq('user_id', user.id)
     .eq('is_deleted', false)
     .order('is_primary', { ascending: false })
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .limit(1);
 
   // If profiles exist, use primary or first one
   if (profiles && profiles.length > 0) {

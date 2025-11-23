@@ -25,6 +25,7 @@ export interface Database {
           username_random: string
           username_custom: string | null
           custom_username_expires_at: string | null
+          custom_username_expired: boolean
           created_at: string
           updated_at: string
         }
@@ -43,6 +44,7 @@ export interface Database {
           username_random: string
           username_custom?: string | null
           custom_username_expires_at?: string | null
+          custom_username_expired?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -61,6 +63,7 @@ export interface Database {
           username_random?: string
           username_custom?: string | null
           custom_username_expires_at?: string | null
+          custom_username_expired?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -70,7 +73,16 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_expired_custom_usernames: {
+        Args: Record<PropertyKey, never>
+        Returns: Array<{
+          profile_id: string
+          user_id: string
+          email: string | null
+          username_custom: string | null
+          custom_username_expires_at: string | null
+        }>
+      }
     }
     Enums: {
       [_ in never]: never

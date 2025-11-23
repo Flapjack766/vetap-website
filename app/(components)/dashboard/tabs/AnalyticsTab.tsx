@@ -387,7 +387,7 @@ export function AnalyticsTab({ profile, locale }: AnalyticsTabProps) {
 
       {/* Detailed Analytics */}
       <Tabs defaultValue="overview" className="space-y-4 w-full">
-        <div className="w-full overflow-x-auto">
+        <div className="w-full">
           <TabsList className="w-full min-w-max inline-flex md:w-auto md:grid md:grid-cols-5">
             <TabsTrigger value="overview" className="whitespace-nowrap flex-shrink-0">{t('ANALYTICS15')}</TabsTrigger>
             <TabsTrigger value="links" className="whitespace-nowrap flex-shrink-0">{t('ANALYTICS37')}</TabsTrigger>

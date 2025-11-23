@@ -5,13 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/app/(components)/ui/button';
 import { Input } from '@/app/(components)/ui/input';
 import { Label } from '@/app/(components)/ui/label';
-import { Copy, ExternalLink, Calendar, AlertCircle, Loader2, Palette, Star, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Copy, ExternalLink, Calendar, AlertCircle, Loader2, Palette, Star, Upload, X, Image as ImageIcon, Eye } from 'lucide-react';
 import { Textarea } from '@/app/(components)/ui/textarea';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/toaster';
+import dynamic from 'next/dynamic';
+
+// Dynamically import template components for live preview
+const Template1Profile = dynamic(() => import('@/app/(components)/profile/templates/Template1Profile').then(mod => ({ default: mod.Template1Profile })), { ssr: false });
+const Template2Profile = dynamic(() => import('@/app/(components)/profile/templates/Template2Profile').then(mod => ({ default: mod.Template2Profile })), { ssr: false });
+const Template3Profile = dynamic(() => import('@/app/(components)/profile/templates/Template3Profile').then(mod => ({ default: mod.Template3Profile })), { ssr: false });
+const Template4Profile = dynamic(() => import('@/app/(components)/profile/templates/Template4Profile').then(mod => ({ default: mod.Template4Profile })), { ssr: false });
+const Template5Profile = dynamic(() => import('@/app/(components)/profile/templates/Template5Profile').then(mod => ({ default: mod.Template5Profile })), { ssr: false });
+const CustomTemplateRenderer = dynamic(() => import('@/app/(components)/profile/CustomTemplateRenderer').then(mod => ({ default: mod.CustomTemplateRenderer })), { ssr: false });
 
 interface LinkTabProps {
   profile: any;
@@ -22,6 +32,7 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
   const t = useTranslations();
   const router = useRouter();
   const supabase = createClient();
+  const { success: showSuccess, error: showError } = useToast();
   const [copied, setCopied] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [requestedUsername, setRequestedUsername] = useState('');
@@ -56,6 +67,10 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
   });
   const [uploadedImages, setUploadedImages] = useState<Record<string, string>>({});
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [customTemplate, setCustomTemplate] = useState<any>(null);
+  const [loadingCustomTemplate, setLoadingCustomTemplate] = useState(false);
 
   const randomUrl = `/${locale}/p/${profile.username_random}`;
   const customUrl = profile.username_custom 
@@ -72,6 +87,7 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
   const handleCopy = () => {
     navigator.clipboard.writeText(fullUrl);
     setCopied(true);
+    showSuccess(t('DASH32'));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -131,6 +147,87 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
     fetchPendingTemplateRequests();
   }, [profile.id]); // Re-fetch when profile changes
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Fetch custom template if needed
+  useEffect(() => {
+    if (profile.template_id === 999 && profile.custom_template_id && showPreview) {
+      const fetchCustomTemplate = async () => {
+        setLoadingCustomTemplate(true);
+        try {
+          const { data, error } = await supabase
+            .from('custom_templates')
+            .select('*, custom_template_requests(uploaded_images)')
+            .eq('id', profile.custom_template_id)
+            .eq('is_deleted', false)
+            .maybeSingle();
+
+          if (!error && data) {
+            const templateWithImages = {
+              ...data,
+              uploaded_images: data.custom_template_requests?.[0]?.uploaded_images || {},
+            };
+            setCustomTemplate(templateWithImages);
+          }
+        } catch (err) {
+          console.error('Error fetching custom template:', err);
+        } finally {
+          setLoadingCustomTemplate(false);
+        }
+      };
+
+      fetchCustomTemplate();
+    } else {
+      setCustomTemplate(null);
+    }
+  }, [profile.template_id, profile.custom_template_id, showPreview]);
+
+  // Get template preview component
+  const getTemplatePreview = () => {
+    const templateId = profile.template_id || 1;
+    
+    if (templateId === 999 && customTemplate) {
+      // Custom template
+      const profileWithImages = {
+        ...profile,
+        uploaded_images: customTemplate.uploaded_images || {},
+      };
+      return (
+        <CustomTemplateRenderer 
+          templateCode={customTemplate.template_code} 
+          profile={profileWithImages} 
+          locale={locale} 
+        />
+      );
+    }
+
+    if (templateId === 999 && loadingCustomTemplate) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
+    // Standard templates
+    switch (templateId) {
+      case 1:
+        return <Template1Profile profile={profile} locale={locale} />;
+      case 2:
+        return <Template2Profile profile={profile} locale={locale} />;
+      case 3:
+        return <Template3Profile profile={profile} locale={locale} />;
+      case 4:
+        return <Template4Profile profile={profile} locale={locale} />;
+      case 5:
+        return <Template5Profile profile={profile} locale={locale} />;
+      default:
+        return <Template1Profile profile={profile} locale={locale} />;
+    }
+  };
+
   const handleRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRequestLoading(true);
@@ -174,12 +271,25 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        setRequestError(data.error || t('USERNAME4'));
+        // Improved error messages
+        let errorMessage = t('USERNAME4');
+        if (data.error) {
+          if (data.error.toLowerCase().includes('exists') || data.error.toLowerCase().includes('taken') || data.error.toLowerCase().includes('already')) {
+            errorMessage = t('USERNAME_ERROR_EXISTS');
+          } else if (data.error.toLowerCase().includes('invalid') || data.error.toLowerCase().includes('format')) {
+            errorMessage = t('USERNAME_ERROR_INVALID');
+          } else {
+            errorMessage = data.error;
+          }
+        }
+        setRequestError(errorMessage);
+        showError(errorMessage);
         setRequestLoading(false);
         return;
       }
 
       setRequestSuccess(true);
+      showSuccess(t('USERNAME7'));
       setRequestedUsername('');
       setShowRequestForm(false);
       await fetchPendingRequests();
@@ -190,7 +300,9 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
       }, 5000);
     } catch (err) {
       console.error('Error submitting request:', err);
-      setRequestError(t('USERNAME4'));
+      const errorMsg = t('USERNAME_ERROR_NETWORK');
+      setRequestError(errorMsg);
+      showError(errorMsg);
     } finally {
       setRequestLoading(false);
     }
@@ -302,6 +414,21 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
   };
 
   return (
+    <div className="space-y-6">
+      {/* Toggle Preview Button */}
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowPreview(!showPreview)}
+          className="gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          {showPreview ? t('DASH_HIDE_PREVIEW') || 'Hide Preview' : t('DASH_SHOW_PREVIEW') || 'Show Preview'}
+        </Button>
+      </div>
+
+      <div className={showPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : ''}>
     <div className="space-y-6">
       {/* Random Username */}
       <Card>
@@ -869,6 +996,25 @@ export function LinkTab({ profile, locale }: LinkTabProps) {
           )}
         </CardContent>
       </Card>
+        </div>
+
+        {/* Live Preview Section */}
+        {showPreview && (
+          <Card className="sticky top-4 h-fit max-h-[calc(100vh-2rem)] overflow-hidden">
+            <CardHeader>
+              <CardTitle>{t('DASH_PREVIEW') || 'Live Preview'}</CardTitle>
+              <CardDescription>{t('DASH_PREVIEW_DESC') || 'See how your profile looks in real-time'}</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0 overflow-hidden">
+              <div className="overflow-y-auto overflow-x-hidden max-h-[calc(100vh-12rem)] w-full">
+                <div className="scale-75 origin-top-left w-[133.33%] h-[133.33%] overflow-x-hidden" style={{ maxWidth: '100%' }}>
+                  {mounted && getTemplatePreview()}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

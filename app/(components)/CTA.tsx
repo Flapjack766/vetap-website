@@ -15,7 +15,7 @@ export function CTA() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-center"
         >
@@ -28,7 +28,7 @@ export function CTA() {
               variant="secondary"
               className="text-lg"
             >
-              <Link href="/contact">
+              <Link href="/contact" prefetch={true}>
                 {t('A106')}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -39,7 +39,7 @@ export function CTA() {
               variant="outline"
               className="border-primary-foreground/20 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
             >
-              <Link href="/portfolio">{t('A148')}</Link>
+              <Link href="/portfolio" prefetch={true}>{t('A148')}</Link>
             </Button>
           </div>
         </motion.div>

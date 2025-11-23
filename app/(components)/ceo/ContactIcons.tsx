@@ -85,7 +85,7 @@ export function ContactIcons({ locale }: { locale: 'ar' | 'en' }) {
                     key={method.id}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: true, margin: "-100px" }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                     className="flex items-center justify-between rounded-lg border border-border bg-background p-4"
                   >

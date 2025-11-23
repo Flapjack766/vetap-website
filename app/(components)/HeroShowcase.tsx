@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, RotateCcw, ArrowRight } from 'lucide-react';
@@ -43,6 +43,7 @@ export function HeroShowcase() {
         { value: 'websites', label: t('A201') },
         { value: 'nfc-business-card', label: t('A202') },
         { value: 'nfc-google-maps', label: t('A203') },
+        { value: 'business-profile', label: t('HERO1') },
       ],
     },
     {
@@ -368,21 +369,47 @@ export function HeroShowcase() {
                   <div className="space-y-3">
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <Button asChild className="flex-1">
-                        <Link href="/contact">
+                        <Link href="/contact" prefetch={true}>
                           {t('A14')}
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
                       {(() => {
                         const services = answers.services || [];
+                        const hasWebsites = services.includes('websites');
                         const hasNFCBusinessCard = services.includes('nfc-business-card');
                         const hasNFCGoogleMaps = services.includes('nfc-google-maps');
+                        const hasBusinessProfile = services.includes('business-profile');
+                        
+                        // Show web development option if websites is selected
+                        if (hasWebsites) {
+                          return (
+                            <Button asChild variant="outline" className="flex-1">
+                              <Link href="/web-dev" prefetch={true}>
+                                {t('HERO3')}
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                              </Link>
+                            </Button>
+                          );
+                        }
+                        
+                        // Show create profile option if business profile is selected OR if NFC cards are selected
+                        if (hasBusinessProfile || hasNFCBusinessCard || hasNFCGoogleMaps) {
+                          return (
+                            <Button asChild variant="outline" className="flex-1">
+                              <Link href="/signup" prefetch={true}>
+                                {t('HERO2')}
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                              </Link>
+                            </Button>
+                          );
+                        }
                         
                         if (hasNFCBusinessCard && !hasNFCGoogleMaps) {
                           // Only business card selected
                           return (
                             <Button asChild variant="outline" className="flex-1">
-                              <Link href="/business-card">
+                              <Link href="/business-card" prefetch={true}>
                                 {t('A208')}
                                 <ArrowRight className="ml-2 h-4 w-4" />
                               </Link>
@@ -392,7 +419,7 @@ export function HeroShowcase() {
                           // Only Google Maps review card selected
                           return (
                             <Button asChild variant="outline" className="flex-1">
-                              <Link href="/review-card">
+                              <Link href="/review-card" prefetch={true}>
                                 {t('A209')}
                                 <ArrowRight className="ml-2 h-4 w-4" />
                               </Link>
@@ -403,13 +430,13 @@ export function HeroShowcase() {
                           return (
                             <>
                               <Button asChild variant="outline" className="flex-1">
-                                <Link href="/business-card">
+                                <Link href="/business-card" prefetch={true}>
                                   {t('A208')}
                                   <ArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
                               </Button>
                               <Button asChild variant="outline" className="flex-1">
-                                <Link href="/review-card">
+                                <Link href="/review-card" prefetch={true}>
                                   {t('A209')}
                                   <ArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
@@ -449,7 +476,7 @@ export function HeroShowcase() {
           >
             <p className="text-sm text-muted-foreground">
               {t('A35')}{' '}
-              <Link href="/contact" className="font-medium text-foreground underline-offset-4 hover:underline">
+              <Link href="/contact" prefetch={true} className="font-medium text-foreground underline-offset-4 hover:underline">
                 {t('A20')}
               </Link>
             </p>

@@ -4,9 +4,19 @@ import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { Code2, Palette, Wrench, CreditCard, Star, ArrowRight, UserCircle } from 'lucide-react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { memo } from 'react';
 import { Button } from './ui/button';
-import { Card3DViewerMini } from './nfc/Card3DViewerMini';
-import { ReviewCard3DViewerMini } from './nfc/ReviewCard3DViewerMini';
+
+const Card3DViewerMini = dynamic(() => import('./nfc/Card3DViewerMini').then(mod => ({ default: mod.Card3DViewerMini })), {
+  ssr: false,
+  loading: () => <div className="w-40 h-40 bg-muted animate-pulse rounded-lg" />
+});
+
+const ReviewCard3DViewerMini = dynamic(() => import('./nfc/ReviewCard3DViewerMini').then(mod => ({ default: mod.ReviewCard3DViewerMini })), {
+  ssr: false,
+  loading: () => <div className="w-32 h-32 bg-muted animate-pulse rounded-lg" />
+});
 
 const iconMap = {
   Code2,
@@ -17,7 +27,7 @@ const iconMap = {
   UserCircle,
 };
 
-export function ServiceCards() {
+export const ServiceCards = memo(function ServiceCards() {
   const t = useTranslations();
 
   const services = [
@@ -47,21 +57,21 @@ export function ServiceCards() {
       title: t('A29'), // Custom web development
       description: t('A67'),
       features: [t('A68'), t('A69'), t('A70'), t('A71')],
-      href: '/services',
+      href: '/web-dev',
     },
     {
       icon: 'Palette',
       title: t('A30'), // Brand-grade frontend
       description: t('A72'),
       features: [t('A73'), t('A74'), t('A75'), t('A63')],
-      href: '/services',
+      href: '/web-dev',
     },
     {
       icon: 'Wrench',
       title: t('A31'), // Migration & optimization
       description: t('A76'),
       features: [t('A77'), t('A78'), t('A79'), t('A71')],
-      href: '/services',
+      href: '/web-dev',
     },
   ];
 
@@ -90,9 +100,9 @@ export function ServiceCards() {
                 key={service.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`vetap-card flex flex-col ${isReviewCard ? '!p-3' : ''}`}
+                className="vetap-card flex flex-col"
               >
                 <div className="mb-4">
                   <div className="inline-flex rounded-lg bg-primary p-3 text-primary-foreground">
@@ -112,19 +122,19 @@ export function ServiceCards() {
                 {(isNFCCard || isReviewCard) && (
                   <div className={`mb-4 flex justify-center ${isNFCCard ? 'w-full' : 'w-full'}`}>
                     {isNFCCard && (
-                      <div className="w-40">
+                      <div className="w-40 p-2">
                         <Card3DViewerMini className="h-full" />
                       </div>
                     )}
                     {isReviewCard && (
-                      <div className="w-32">
+                      <div className="w-32 p-2">
                         <ReviewCard3DViewerMini className="h-full" />
                       </div>
                     )}
                   </div>
                 )}
                 <Button asChild variant="outline" className="w-full">
-                  <Link href={service.href}>{t('A193')}</Link>
+                  <Link href={service.href} prefetch={true}>{t('A193')}</Link>
                 </Button>
               </motion.div>
             );
@@ -133,5 +143,5 @@ export function ServiceCards() {
       </div>
     </section>
   );
-}
+});
 
