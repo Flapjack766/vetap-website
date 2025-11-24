@@ -325,3 +325,852 @@ export function renderCompanyEmailHTML(d: MailData): string {
   </div></body></html>`;
 }
 
+type UsernameRequestData = {
+  name: string;
+  email: string;
+  requested_username: string;
+  locale?: 'ar' | 'en';
+};
+
+export function renderUsernameRequestEmailHTML(d: UsernameRequestData): string {
+  const arabic = d.locale === 'ar';
+  
+  return `
+<!doctype html>
+<html lang="${arabic ? 'ar' : 'en'}" dir="${arabic ? 'rtl' : 'ltr'}">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${arabic ? 'طلب اسم المستخدم المخصص' : 'Custom Username Request'}</title>
+    <style>
+      @media (max-width: 600px) {
+        .container {
+          width: 100% !important;
+          padding: 16px !important;
+        }
+        .card {
+          padding: 24px !important;
+        }
+        .title {
+          font-size: 24px !important;
+          line-height: 32px !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      <tr>
+        <td align="center" style="padding:24px 16px;">
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="100%"
+            class="container"
+            style="max-width:640px; width:640px;"
+          >
+            <!-- بطاقة المحتوى -->
+            <tr>
+              <td>
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  width="100%"
+                  class="card"
+                  style="
+                    border-radius:16px;
+                    padding:32px;
+                    border:1px solid #e5e7eb;
+                    box-shadow:0 10px 30px rgba(15,23,42,0.08);
+                  "
+                >
+                  <!-- الشعار داخل البطاقة -->
+                  <tr>
+                    <td align="left" style="padding-bottom:24px;">
+                      <img
+                        src="https://vetaps.com/supabase/supabaselogo.png"
+                        alt="VETAP"
+                        width="80"
+                        height="80"
+                        style="display:block;"
+                      />
+                    </td>
+                  </tr>
+
+                  <!-- النصوص والمحتوى -->
+                  <tr>
+                    <td>
+                      <h1
+                        class="title"
+                        style="
+                          margin:0 0 16px 0;
+                          font-size:30px;
+                          line-height:38px;
+                          font-weight:700;
+                          color:#111827;
+                        "
+                      >
+                        ${arabic ? 'طلبك قيد المراجعة' : 'Your Request is Under Review'}
+                      </h1>
+
+                      <p
+                        style="
+                          margin:0 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#111827;
+                        "
+                      >
+                        ${arabic ? 'مرحباً' : 'Hi'} ${d.name},
+                      </p>
+
+                      <p
+                        style="
+                          margin:0 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? `شكراً لك على طلب اسم المستخدم المخصص <strong style="color:#111827;">${d.requested_username}</strong> لحسابك في <strong style="color:#111827;">VETAP</strong>.`
+                          : `Thank you for requesting the custom username <strong style="color:#111827;">${d.requested_username}</strong> for your <strong style="color:#111827;">VETAP</strong> account.`
+                        }
+                      </p>
+
+                      <p
+                        style="
+                          margin:0 0 16px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'تم استلام طلبك بنجاح وهو الآن قيد المراجعة من قبل فريقنا. نعمل على معالجة طلبك بعناية لضمان تلبية جميع المتطلبات.'
+                          : 'Your request has been successfully received and is now under review by our team. We are processing your request carefully to ensure all requirements are met.'
+                        }
+                      </p>
+
+                      <!-- معلومات الطلب -->
+                      <div
+                        style="
+                          background-color:#f9fafb;
+                          border-radius:8px;
+                          padding:16px;
+                          margin:24px 0;
+                        "
+                      >
+                        <p
+                          style="
+                            margin:0 0 8px 0;
+                            font-size:12px;
+                            line-height:18px;
+                            color:#6b7280;
+                            font-weight:600;
+                            text-transform:uppercase;
+                          "
+                        >
+                          ${arabic ? 'معلومات الطلب' : 'Request Information'}
+                        </p>
+                        <p
+                          style="
+                            margin:0;
+                            font-size:16px;
+                            line-height:24px;
+                            color:#111827;
+                            font-weight:600;
+                          "
+                        >
+                          ${arabic ? 'اسم المستخدم المطلوب:' : 'Requested Username:'} <span style="color:#16a34a;">${d.requested_username}</span>
+                        </p>
+                      </div>
+
+                      <!-- معلومات الوقت -->
+                      <p
+                        style="
+                          margin:24px 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? '⏰ <strong style="color:#111827;">مدة المراجعة:</strong> قد تستغرق عملية مراجعة طلبك حتى <strong style="color:#111827;">72 ساعة</strong> (3 أيام عمل).'
+                          : '⏰ <strong style="color:#111827;">Review Time:</strong> The review process for your request may take up to <strong style="color:#111827;">72 hours</strong> (3 business days).'
+                        }
+                      </p>
+
+                      <p
+                        style="
+                          margin:0 0 16px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'سنقوم بإشعارك فوراً عند اكتمال المراجعة. ستصلك رسالة بريد إلكتروني أخرى تخبرك بنتيجة الطلب (القبول أو الرفض) مع أي تعليمات إضافية قد تكون مطلوبة.'
+                          : 'We will notify you immediately once the review is complete. You will receive another email informing you of the request outcome (approval or rejection) along with any additional instructions that may be required.'
+                        }
+                      </p>
+
+                      <!-- ملاحظة مهمة -->
+                      <div
+                        style="
+                          background-color:#fef3c7;
+                          border-left:4px solid #f59e0b;
+                          padding:12px 16px;
+                          border-radius:6px;
+                          margin:24px 0;
+                        "
+                      >
+                        <p
+                          style="
+                            margin:0;
+                            font-size:13px;
+                            line-height:20px;
+                            color:#92400e;
+                          "
+                        >
+                          <strong>ℹ️ ${arabic ? 'ملاحظة مهمة:' : 'Important Note:'}</strong><br>
+                          ${arabic 
+                            ? 'يرجى عدم إعادة إرسال الطلب خلال فترة المراجعة. إذا لم تتلق رداً خلال 72 ساعة، يرجى التواصل معنا عبر البريد الإلكتروني أو الهاتف.'
+                            : 'Please do not resubmit your request during the review period. If you do not receive a response within 72 hours, please contact us via email or phone.'
+                          }
+                        </p>
+                      </div>
+
+                      <p
+                        style="
+                          margin:24px 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'إذا كان لديك أي استفسارات أو تحتاج إلى مساعدة إضافية، لا تتردد في التواصل معنا.'
+                          : 'If you have any questions or need additional assistance, please feel free to contact us.'
+                        }
+                      </p>
+
+                      <p
+                        style="
+                          margin:0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'نشكرك على صبرك وتفهمك.'
+                          : 'Thank you for your patience and understanding.'
+                        }
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- الفوتر -->
+            <tr>
+              <td align="center" style="padding-top:16px;">
+                <p
+                  style="
+                    margin:0;
+                    font-size:11px;
+                    line-height:16px;
+                    color:#6b7280;
+                  "
+                >
+                  © ${new Date().getFullYear()} VETAP. ${arabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
+                </p>
+                <p
+                  style="
+                    margin:8px 0 0 0;
+                    font-size:11px;
+                    line-height:16px;
+                    color:#6b7280;
+                  "
+                >
+                  ${arabic 
+                    ? 'هذه رسالة آلية، يرجى عدم الرد عليها. للاستفسارات، يرجى التواصل معنا عبر info@vetaps.com'
+                    : 'This is an automated message, please do not reply. For inquiries, please contact us at info@vetaps.com'
+                  }
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
+type UsernameApprovalData = {
+  name: string;
+  email: string;
+  requested_username: string;
+  expires_at: string;
+  locale?: 'ar' | 'en';
+};
+
+export function renderUsernameApprovalEmailHTML(d: UsernameApprovalData): string {
+  const arabic = d.locale === 'ar';
+  const expiresDate = new Date(d.expires_at).toLocaleDateString(
+    arabic ? 'ar-SA' : 'en-US',
+    { year: 'numeric', month: 'long', day: 'numeric' }
+  );
+  
+  return `
+<!doctype html>
+<html lang="${arabic ? 'ar' : 'en'}" dir="${arabic ? 'rtl' : 'ltr'}">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${arabic ? 'تم قبول طلب اسم المستخدم المخصص' : 'Custom Username Request Approved'}</title>
+    <style>
+      @media (max-width: 600px) {
+        .container {
+          width: 100% !important;
+          padding: 16px !important;
+        }
+        .card {
+          padding: 24px !important;
+        }
+        .title {
+          font-size: 24px !important;
+          line-height: 32px !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      <tr>
+        <td align="center" style="padding:24px 16px;">
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="100%"
+            class="container"
+            style="max-width:640px; width:640px;"
+          >
+            <!-- بطاقة المحتوى -->
+            <tr>
+              <td>
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  width="100%"
+                  class="card"
+                  style="
+                    border-radius:16px;
+                    padding:32px;
+                    border:1px solid #e5e7eb;
+                    box-shadow:0 10px 30px rgba(15,23,42,0.08);
+                  "
+                >
+                  <!-- الشعار داخل البطاقة -->
+                  <tr>
+                    <td align="left" style="padding-bottom:24px;">
+                      <img
+                        src="https://vetaps.com/supabase/supabaselogo.png"
+                        alt="VETAP"
+                        width="80"
+                        height="80"
+                        style="display:block;"
+                      />
+                    </td>
+                  </tr>
+
+                  <!-- النصوص والمحتوى -->
+                  <tr>
+                    <td>
+                      <h1
+                        class="title"
+                        style="
+                          margin:0 0 16px 0;
+                          font-size:30px;
+                          line-height:38px;
+                          font-weight:700;
+                          color:#16a34a;
+                        "
+                      >
+                        ${arabic ? '✓ تم قبول طلبك!' : '✓ Your Request Has Been Approved!'}
+                      </h1>
+
+                      <p
+                        style="
+                          margin:0 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#111827;
+                        "
+                      >
+                        ${arabic ? 'مرحباً' : 'Hi'} ${d.name},
+                      </p>
+
+                      <p
+                        style="
+                          margin:0 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? `يسعدنا إعلامك بأن طلب اسم المستخدم المخصص <strong style="color:#111827;">${d.requested_username}</strong> قد تم قبوله بنجاح.`
+                          : `We are pleased to inform you that your custom username request for <strong style="color:#111827;">${d.requested_username}</strong> has been approved.`
+                        }
+                      </p>
+
+                      <!-- معلومات القبول -->
+                      <div
+                        style="
+                          background-color:#f0fdf4;
+                          border-left:4px solid #16a34a;
+                          border-radius:8px;
+                          padding:16px;
+                          margin:24px 0;
+                        "
+                      >
+                        <p
+                          style="
+                            margin:0 0 8px 0;
+                            font-size:12px;
+                            line-height:18px;
+                            color:#166534;
+                            font-weight:600;
+                            text-transform:uppercase;
+                          "
+                        >
+                          ${arabic ? 'معلومات اسم المستخدم' : 'Username Information'}
+                        </p>
+                        <p
+                          style="
+                            margin:0 0 8px 0;
+                            font-size:16px;
+                            line-height:24px;
+                            color:#111827;
+                            font-weight:600;
+                          "
+                        >
+                          ${arabic ? 'اسم المستخدم المخصص:' : 'Custom Username:'} <span style="color:#16a34a;">${d.requested_username}</span>
+                        </p>
+                        <p
+                          style="
+                            margin:0;
+                            font-size:14px;
+                            line-height:22px;
+                            color:#166534;
+                          "
+                        >
+                          ${arabic 
+                            ? `⏰ <strong>تاريخ الانتهاء:</strong> ${expiresDate}`
+                            : `⏰ <strong>Expiration Date:</strong> ${expiresDate}`
+                          }
+                        </p>
+                      </div>
+
+                      <p
+                        style="
+                          margin:24px 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'يمكنك الآن استخدام اسم المستخدم المخصص الخاص بك للوصول إلى صفحة بروفايلك. رابط صفحتك هو:'
+                          : 'You can now use your custom username to access your profile page. Your profile link is:'
+                        }
+                      </p>
+
+                      <!-- رابط البروفايل -->
+                      <div
+                        style="
+                          background-color:#f9fafb;
+                          border-radius:8px;
+                          padding:16px;
+                          margin:24px 0;
+                          text-align:center;
+                        "
+                      >
+                        <p
+                          style="
+                            margin:0;
+                            font-size:14px;
+                            line-height:22px;
+                            color:#111827;
+                            font-weight:600;
+                            word-break:break-all;
+                          "
+                        >
+                          https://vetaps.com/p/${d.requested_username}
+                        </p>
+                      </div>
+
+                      <p
+                        style="
+                          margin:24px 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'نشكرك على اختيار VETAP. إذا كان لديك أي استفسارات أو تحتاج إلى مساعدة، لا تتردد في التواصل معنا.'
+                          : 'Thank you for choosing VETAP. If you have any questions or need assistance, please feel free to contact us.'
+                        }
+                      </p>
+
+                      <p
+                        style="
+                          margin:0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'نتمنى لك تجربة ممتعة معنا!'
+                          : 'We wish you a great experience with us!'
+                        }
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- الفوتر -->
+            <tr>
+              <td align="center" style="padding-top:16px;">
+                <p
+                  style="
+                    margin:0;
+                    font-size:11px;
+                    line-height:16px;
+                    color:#6b7280;
+                  "
+                >
+                  © ${new Date().getFullYear()} VETAP. ${arabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
+                </p>
+                <p
+                  style="
+                    margin:8px 0 0 0;
+                    font-size:11px;
+                    line-height:16px;
+                    color:#6b7280;
+                  "
+                >
+                  ${arabic 
+                    ? 'هذه رسالة آلية، يرجى عدم الرد عليها. للاستفسارات، يرجى التواصل معنا عبر info@vetaps.com'
+                    : 'This is an automated message, please do not reply. For inquiries, please contact us at info@vetaps.com'
+                  }
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
+type UsernameRejectionData = {
+  name: string;
+  email: string;
+  requested_username: string;
+  rejection_reason?: string;
+  locale?: 'ar' | 'en';
+};
+
+export function renderUsernameRejectionEmailHTML(d: UsernameRejectionData): string {
+  const arabic = d.locale === 'ar';
+  
+  return `
+<!doctype html>
+<html lang="${arabic ? 'ar' : 'en'}" dir="${arabic ? 'rtl' : 'ltr'}">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${arabic ? 'تم رفض طلب اسم المستخدم المخصص' : 'Custom Username Request Rejected'}</title>
+    <style>
+      @media (max-width: 600px) {
+        .container {
+          width: 100% !important;
+          padding: 16px !important;
+        }
+        .card {
+          padding: 24px !important;
+        }
+        .title {
+          font-size: 24px !important;
+          line-height: 32px !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      <tr>
+        <td align="center" style="padding:24px 16px;">
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="100%"
+            class="container"
+            style="max-width:640px; width:640px;"
+          >
+            <!-- بطاقة المحتوى -->
+            <tr>
+              <td>
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  width="100%"
+                  class="card"
+                  style="
+                    border-radius:16px;
+                    padding:32px;
+                    border:1px solid #e5e7eb;
+                    box-shadow:0 10px 30px rgba(15,23,42,0.08);
+                  "
+                >
+                  <!-- الشعار داخل البطاقة -->
+                  <tr>
+                    <td align="left" style="padding-bottom:24px;">
+                      <img
+                        src="https://vetaps.com/supabase/supabaselogo.png"
+                        alt="VETAP"
+                        width="80"
+                        height="80"
+                        style="display:block;"
+                      />
+                    </td>
+                  </tr>
+
+                  <!-- النصوص والمحتوى -->
+                  <tr>
+                    <td>
+                      <h1
+                        class="title"
+                        style="
+                          margin:0 0 16px 0;
+                          font-size:30px;
+                          line-height:38px;
+                          font-weight:700;
+                          color:#dc2626;
+                        "
+                      >
+                        ${arabic ? 'تم رفض طلبك' : 'Your Request Has Been Rejected'}
+                      </h1>
+
+                      <p
+                        style="
+                          margin:0 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#111827;
+                        "
+                      >
+                        ${arabic ? 'مرحباً' : 'Hi'} ${d.name},
+                      </p>
+
+                      <p
+                        style="
+                          margin:0 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? `نأسف لإعلامك بأن طلب اسم المستخدم المخصص <strong style="color:#111827;">${d.requested_username}</strong> قد تم رفضه.`
+                          : `We regret to inform you that your custom username request for <strong style="color:#111827;">${d.requested_username}</strong> has been rejected.`
+                        }
+                      </p>
+
+                      ${d.rejection_reason ? `
+                      <!-- سبب الرفض -->
+                      <div
+                        style="
+                          background-color:#fef2f2;
+                          border-left:4px solid #dc2626;
+                          border-radius:8px;
+                          padding:16px;
+                          margin:24px 0;
+                        "
+                      >
+                        <p
+                          style="
+                            margin:0 0 8px 0;
+                            font-size:12px;
+                            line-height:18px;
+                            color:#991b1b;
+                            font-weight:600;
+                            text-transform:uppercase;
+                          "
+                        >
+                          ${arabic ? 'سبب الرفض' : 'Rejection Reason'}
+                        </p>
+                        <p
+                          style="
+                            margin:0;
+                            font-size:14px;
+                            line-height:22px;
+                            color:#991b1b;
+                          "
+                        >
+                          ${d.rejection_reason}
+                        </p>
+                      </div>
+                      ` : ''}
+
+                      <p
+                        style="
+                          margin:24px 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'قد يكون سبب الرفض أحد الأسباب التالية:'
+                          : 'The rejection may be due to one of the following reasons:'
+                        }
+                      </p>
+
+                      <ul
+                        style="
+                          margin:16px 0;
+                          padding-${arabic ? 'right' : 'left'}:24px;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        <li style="margin-bottom:8px;">
+                          ${arabic 
+                            ? 'اسم المستخدم محجوز أو غير متاح'
+                            : 'The username is reserved or unavailable'
+                          }
+                        </li>
+                        <li style="margin-bottom:8px;">
+                          ${arabic 
+                            ? 'اسم المستخدم لا يلتزم بسياساتنا'
+                            : 'The username does not comply with our policies'
+                          }
+                        </li>
+                        <li style="margin-bottom:8px;">
+                          ${arabic 
+                            ? 'اسم المستخدم مستخدم بالفعل من قبل مستخدم آخر'
+                            : 'The username is already in use by another user'
+                          }
+                        </li>
+                      </ul>
+
+                      <p
+                        style="
+                          margin:24px 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'يمكنك تقديم طلب جديد باسم مستخدم مختلف من خلال لوحة التحكم الخاصة بك. ننصحك باختيار اسم مستخدم فريد ومتوافق مع سياساتنا.'
+                          : 'You can submit a new request with a different username through your dashboard. We recommend choosing a unique username that complies with our policies.'
+                        }
+                      </p>
+
+                      <p
+                        style="
+                          margin:24px 0 8px 0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'إذا كان لديك أي استفسارات حول سبب الرفض أو تحتاج إلى مساعدة في اختيار اسم مستخدم مناسب، لا تتردد في التواصل معنا.'
+                          : 'If you have any questions about the rejection reason or need help choosing an appropriate username, please feel free to contact us.'
+                        }
+                      </p>
+
+                      <p
+                        style="
+                          margin:0;
+                          font-size:14px;
+                          line-height:22px;
+                          color:#4b5563;
+                        "
+                      >
+                        ${arabic 
+                          ? 'نشكرك على تفهمك.'
+                          : 'Thank you for your understanding.'
+                        }
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- الفوتر -->
+            <tr>
+              <td align="center" style="padding-top:16px;">
+                <p
+                  style="
+                    margin:0;
+                    font-size:11px;
+                    line-height:16px;
+                    color:#6b7280;
+                  "
+                >
+                  © ${new Date().getFullYear()} VETAP. ${arabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
+                </p>
+                <p
+                  style="
+                    margin:8px 0 0 0;
+                    font-size:11px;
+                    line-height:16px;
+                    color:#6b7280;
+                  "
+                >
+                  ${arabic 
+                    ? 'هذه رسالة آلية، يرجى عدم الرد عليها. للاستفسارات، يرجى التواصل معنا عبر info@vetaps.com'
+                    : 'This is an automated message, please do not reply. For inquiries, please contact us at info@vetaps.com'
+                  }
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+

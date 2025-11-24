@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { Resend } from 'resend';
+import { renderUsernameApprovalEmailHTML } from '@/lib/mail';
 
 export async function POST(req: NextRequest) {
   try {
@@ -95,8 +98,11 @@ export async function POST(req: NextRequest) {
         break;
     }
 
-    // Check if username is still available
-    const { data: existingProfile } = await supabase
+    // Create admin client early to use for all database operations
+    const adminClient = createAdminClient();
+
+    // Check if username is still available using admin client (bypasses RLS)
+    const { data: existingProfile } = await adminClient
       .from('profiles')
       .select('id')
       .eq('username_custom', username)
@@ -109,18 +115,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user email from profiles (or use a default)
-    const { data: existingUserProfile } = await supabase
+    // Get user email and name from auth.users using admin client
+    const { data: authUser } = await adminClient.auth.admin.getUserById(user_id);
+    const userEmail = authUser?.user?.email || '';
+    
+    // Get user profile for name using admin client (bypasses RLS)
+    const { data: existingUserProfile } = await adminClient
       .from('profiles')
-      .select('email')
+      .select('profile_name, email')
       .eq('user_id', user_id)
       .limit(1)
       .maybeSingle();
 
-    const userEmail = existingUserProfile?.email || '';
+    const userName = existingUserProfile?.profile_name || authUser?.user?.email?.split('@')[0] || 'User';
 
-    // Create NEW profile with custom username (not update existing)
-    const { data: newProfile, error: profileError } = await supabase
+    // Create NEW profile with custom username using admin client (bypasses RLS)
+    const { data: newProfile, error: profileError } = await adminClient
       .from('profiles')
       .insert({
         user_id: user_id,
@@ -157,14 +167,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update request with profile_id
-    await supabase
+    // Update request with profile_id using admin client (bypasses RLS)
+    await adminClient
       .from('username_requests')
       .update({ profile_id: newProfile.id })
       .eq('id', request_id);
 
-    // Update request status to approved
-    const { data: updatedRequest, error: updateRequestError } = await supabase
+    // Update request status to approved using admin client (bypasses RLS)
+    const { data: updatedRequest, error: updateRequestError } = await adminClient
       .from('username_requests')
       .update({
         status: 'approved',
@@ -193,6 +203,36 @@ export async function POST(req: NextRequest) {
 
     if (!updatedRequest) {
       console.warn('Request update returned no data, but profile was updated');
+    }
+
+    // Send approval email to user
+    if (userEmail) {
+      try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        
+        // Determine locale from user metadata or default to 'en'
+        const locale = (authUser?.user?.user_metadata?.locale as 'ar' | 'en') || 'en';
+        
+        const emailHTML = renderUsernameApprovalEmailHTML({
+          name: userName,
+          email: userEmail,
+          requested_username: username,
+          expires_at: expiresAt.toISOString(),
+          locale,
+        });
+
+        await resend.emails.send({
+          from: process.env.USERS_EMAIL || 'VETAP <users@vetaps.com>',
+          to: userEmail,
+          subject: locale === 'ar' 
+            ? `VETAP • طلب اسم المستخدم المخصص - تم القبول`
+            : `VETAP • Custom Username Request - Approved`,
+          html: emailHTML,
+        });
+      } catch (emailError) {
+        // Log email error but don't fail the request
+        console.error('Error sending approval email:', emailError);
+      }
     }
 
     return NextResponse.json(

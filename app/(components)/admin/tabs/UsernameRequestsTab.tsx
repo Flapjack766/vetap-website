@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/app/(components)/ui/button';
 import { Loader2, CheckCircle2, XCircle, Calendar } from 'lucide-react';
@@ -30,7 +29,6 @@ interface UsernameRequestsTabProps {
 
 export function UsernameRequestsTab({ locale }: UsernameRequestsTabProps) {
   const t = useTranslations();
-  const supabase = createClient();
   const [requests, setRequests] = useState<UsernameRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,55 +40,23 @@ export function UsernameRequestsTab({ locale }: UsernameRequestsTabProps) {
       setLoading(true);
       setError(null);
 
-      // Fetch all username requests with user info (including profile_id)
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('username_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Fetch all username requests via API route (uses service role)
+      const response = await fetch('/api/admin/username-requests', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (requestsError) {
-        throw requestsError;
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('API Error:', data);
+        throw new Error(data.error || 'Failed to fetch username requests');
       }
 
-      // Fetch user info for each request
-      // Note: auth.admin.getUserById requires service role key
-      // For now, we'll fetch from profiles table which has email
-      const requestsWithUsers = await Promise.all(
-        (requestsData || []).map(async (request) => {
-          // Get primary profile or first profile for the user
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('display_name, email')
-            .eq('user_id', request.user_id)
-            .eq('is_deleted', false)
-            .order('is_primary', { ascending: false })
-            .order('created_at', { ascending: true })
-            .limit(1)
-            .maybeSingle();
-
-          // If no profile found, try to get any profile (in case RLS is blocking)
-          let finalProfileData = profileData;
-          if (!profileData) {
-            const { data: anyProfile } = await supabase
-              .from('profiles')
-              .select('display_name, email')
-              .eq('user_id', request.user_id)
-              .limit(1)
-              .maybeSingle();
-            finalProfileData = anyProfile;
-          }
-
-          return {
-            ...request,
-            user: {
-              email: finalProfileData?.email || 'Unknown',
-              profile: finalProfileData || undefined,
-            },
-          };
-        })
-      );
-
-      setRequests(requestsWithUsers);
+      console.log('Received requests:', data.requests?.length || 0);
+      setRequests(data.requests || []);
     } catch (err: any) {
       console.error('Error fetching requests:', err);
       setError(err.message || t('ADMIN4'));
@@ -109,13 +75,23 @@ export function UsernameRequestsTab({ locale }: UsernameRequestsTabProps) {
     }
 
     try {
-      const { error } = await supabase
-        .from('username_requests')
-        .update({ status: 'rejected' })
-        .eq('id', requestId);
+      // Call API route to reject request and send email
+      const response = await fetch('/api/admin/reject-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          request_id: requestId,
+          rejection_reason: undefined, // Can be added later if needed
+        }),
+      });
 
-      if (error) {
-        throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Reject request failed:', data);
+        throw new Error(data.error || data.details || 'Failed to reject request');
       }
 
       await fetchRequests();

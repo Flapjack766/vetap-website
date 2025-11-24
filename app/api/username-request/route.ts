@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { Resend } from 'resend';
+import { renderUsernameRequestEmailHTML } from '@/lib/mail';
 
 // Reserved usernames that cannot be used
 const RESERVED_USERNAMES = [
@@ -114,6 +116,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get user profile to get name and email
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('profile_name, user_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // Get user email from auth
+    const userEmail = user.email || '';
+    const userName = userProfile?.profile_name || user.email?.split('@')[0] || 'User';
+
     // Create username request
     const { data: newRequest, error: insertError } = await supabase
       .from('username_requests')
@@ -133,6 +146,34 @@ export async function POST(req: NextRequest) {
         { error: 'Failed to create request. Please try again.' },
         { status: 500 }
       );
+    }
+
+    // Send confirmation email to user
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      
+      // Determine locale from user metadata or default to 'en'
+      const locale = (user.user_metadata?.locale as 'ar' | 'en') || 'en';
+      
+      const emailHTML = renderUsernameRequestEmailHTML({
+        name: userName,
+        email: userEmail,
+        requested_username: username,
+        locale,
+      });
+
+      await resend.emails.send({
+        from: process.env.USERS_EMAIL || 'VETAP <users@vetaps.com>',
+        to: userEmail,
+        subject: locale === 'ar' 
+          ? `VETAP • طلب اسم المستخدم المخصص قيد المراجعة`
+          : `VETAP • Custom Username Request Under Review`,
+        html: emailHTML,
+      });
+    } catch (emailError) {
+      // Log email error but don't fail the request
+      console.error('Error sending username request email:', emailError);
+      // Continue - the request was created successfully
     }
 
     return NextResponse.json(
