@@ -2,7 +2,11 @@
   "crons": [
     {
       "path": "/api/google-business/sync-reviews",
-      "schedule": "0 * * * *"
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/check-expired-usernames",
+      "schedule": "0 0 * * *"
     }
   ]
 }

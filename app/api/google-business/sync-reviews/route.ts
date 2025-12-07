@@ -97,18 +97,24 @@ async function getBusinessProfileData(accessToken: string, placeId: string) {
   }
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    // Optional: Add authentication check for cron job
-    const authHeader = req.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
+/**
+ * Main sync function - shared between GET and POST
+ */
+async function syncReviews(req: NextRequest) {
+  // Optional: Add authentication check for cron job
+  const authHeader = req.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+  // Allow requests without auth if no CRON_SECRET is set (for Vercel Cron)
+  // Vercel Cron adds a special header that we can check
+  const isVercelCron = req.headers.get('x-vercel-cron') === '1';
+  
+  if (cronSecret && !isVercelCron && authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
 
     const adminClient = createAdminClient();
 
@@ -231,6 +237,7 @@ export async function POST(req: NextRequest) {
         success: true,
         synced: syncedCount,
         errors: errors.length > 0 ? errors : undefined,
+        timestamp: new Date().toISOString(),
       },
       { status: 200 }
     );
@@ -241,5 +248,19 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * GET handler - Used by Vercel Cron
+ */
+export async function GET(req: NextRequest) {
+  return syncReviews(req);
+}
+
+/**
+ * POST handler - For manual calls
+ */
+export async function POST(req: NextRequest) {
+  return syncReviews(req);
 }
 
