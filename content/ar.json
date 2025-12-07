@@ -2048,6 +2048,8 @@
   "CHECKIN_NO_CAMERA": "لا توجد كاميرا على هذا الجهاز",
   "CHECKIN_CAMERA_ERROR": "فشل في تشغيل الكاميرا",
   "CHECKIN_CAMERA_ERROR_TITLE": "خطأ في الكاميرا",
+  "CHECKIN_USE_UPLOAD_INSTEAD": "يمكنك رفع صورة رمز QR بدلاً من ذلك",
+  "CHECKIN_OR": "أو",
   "CHECKIN_RETRY": "حاول مرة أخرى",
 
   "CHECKIN_STATS_TOTAL": "الإجمالي",

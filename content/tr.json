@@ -336,6 +336,8 @@
   "CHECKIN_NO_CAMERA": "Kamera bulunamadı",
   "CHECKIN_CAMERA_ERROR": "Kamera hatası",
   "CHECKIN_CAMERA_ERROR_TITLE": "Kamera Hatası",
+  "CHECKIN_USE_UPLOAD_INSTEAD": "Bunun yerine bir QR kodu resmi yükleyebilirsiniz",
+  "CHECKIN_OR": "VEYA",
   "CHECKIN_STARTING_CAMERA": "Kamera başlatılıyor...",
   "CHECKIN_START_CAMERA": "Kamerayı Başlat",
   "CHECKIN_RETRY": "Tekrar Dene",

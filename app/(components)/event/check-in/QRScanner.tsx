@@ -701,24 +701,27 @@ export function QRScanner({ locale }: QRScannerProps) {
         {cameraError && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-900 p-6 z-10">
             <div className="text-center max-w-sm">
-              <CameraOff className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-              <p className="text-white font-medium mb-2">{t('CHECKIN_CAMERA_ERROR_TITLE')}</p>
-              <p className="text-slate-400 text-sm mb-6">{cameraError}</p>
+              <CameraOff className="h-20 w-20 text-slate-600 mx-auto mb-4" />
+              <p className="text-white font-medium text-lg mb-2">{t('CHECKIN_CAMERA_ERROR_TITLE')}</p>
+              <p className="text-slate-400 text-sm mb-2">{cameraError}</p>
+              <p className="text-slate-500 text-xs mb-6">
+                {t('CHECKIN_USE_UPLOAD_INSTEAD') || 'You can upload a QR code image instead'}
+              </p>
               
               <div className="space-y-3">
-                {/* ✅ Button triggers camera - user interaction required */}
-                <Button onClick={startCamera} className="w-full bg-emerald-500 hover:bg-emerald-600">
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  {t('CHECKIN_RETRY')}
-                </Button>
-                
+                {/* Primary: Upload Image Button */}
                 <Button 
                   onClick={() => fileInputRef.current?.click()} 
-                  variant="outline"
-                  className="w-full border-slate-600 text-slate-300 hover:bg-slate-800"
+                  className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700"
                 >
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="h-5 w-5 mr-2" />
                   {t('CHECKIN_UPLOAD_IMAGE') || 'Upload QR Image'}
+                </Button>
+                
+                {/* Secondary: Retry Camera */}
+                <Button onClick={startCamera} variant="outline" className="w-full border-slate-600 text-slate-300 hover:bg-slate-800">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  {t('CHECKIN_RETRY')}
                 </Button>
               </div>
             </div>
@@ -742,12 +745,19 @@ export function QRScanner({ locale }: QRScannerProps) {
                   {t('CHECKIN_START_CAMERA')}
                 </Button>
                 
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-4">
+                  <div className="flex-1 h-px bg-slate-700" />
+                  <span className="text-slate-500 text-sm">{t('CHECKIN_OR') || 'OR'}</span>
+                  <div className="flex-1 h-px bg-slate-700" />
+                </div>
+                
+                {/* Upload Image Button - More prominent */}
                 <Button 
                   onClick={() => fileInputRef.current?.click()} 
-                  variant="outline"
-                  className="w-full border-slate-600 text-slate-300 hover:bg-slate-800"
+                  className="w-full h-12 bg-blue-600 hover:bg-blue-700"
                 >
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="h-5 w-5 mr-2" />
                   {t('CHECKIN_UPLOAD_IMAGE') || 'Upload QR Image'}
                 </Button>
               </div>

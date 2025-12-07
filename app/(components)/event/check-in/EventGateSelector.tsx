@@ -86,7 +86,7 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
 
       const { data: gatesData, error: gatesError } = await supabase
         .from('event_gates')
-        .select('id, name, description, allowed_guest_types')
+        .select('id, name')
         .eq('event_id', eventId);
 
       if (gatesError) {

@@ -2048,6 +2048,8 @@
   "CHECKIN_NO_CAMERA": "No camera found on this device",
   "CHECKIN_CAMERA_ERROR": "Failed to start camera",
   "CHECKIN_CAMERA_ERROR_TITLE": "Camera Error",
+  "CHECKIN_USE_UPLOAD_INSTEAD": "You can upload a QR code image instead",
+  "CHECKIN_OR": "OR",
   "CHECKIN_RETRY": "Try Again",
 
   "CHECKIN_STATS_TOTAL": "Total",
