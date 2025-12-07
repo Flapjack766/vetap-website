@@ -166,16 +166,15 @@ export async function POST(request: NextRequest) {
         .from('event-invites')
         .getPublicUrl(fileName);
 
-      // Note: invite_file_url column needs to be added to event_passes table
-      // Uncomment when column exists:
-      // const { error: updateError } = await adminClient
-      //   .from('event_passes')
-      //   .update({ invite_file_url: urlData.publicUrl })
-      //   .eq('id', validatedData.pass_id);
-      // 
-      // if (updateError) {
-      //   console.error('Error updating pass with invite URL:', updateError);
-      // }
+      // Update pass with invite file URL
+      const { error: updateError } = await adminClient
+        .from('event_passes')
+        .update({ invite_file_url: urlData.publicUrl })
+        .eq('id', validatedData.pass_id);
+      
+      if (updateError) {
+        console.error('Error updating pass with invite URL:', updateError);
+      }
 
       return NextResponse.json(
         {

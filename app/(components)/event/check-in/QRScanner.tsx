@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import jsQR from 'jsqr';
 import {
   QrCode,
   Camera,
@@ -211,7 +212,7 @@ export function QRScanner({ locale }: QRScannerProps) {
     canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Use BarcodeDetector API if available
+    // Try BarcodeDetector API first (better performance on supported browsers)
     if ('BarcodeDetector' in window) {
       const barcodeDetector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
       barcodeDetector
@@ -226,11 +227,39 @@ export function QRScanner({ locale }: QRScannerProps) {
             }
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          // Fallback to jsQR on error
+          scanWithJsQR(context, canvas.width, canvas.height);
+        });
+    } else {
+      // Fallback to jsQR for browsers without BarcodeDetector (Safari, older browsers)
+      scanWithJsQR(context, canvas.width, canvas.height);
     }
 
     animationRef.current = requestAnimationFrame(scanFrame);
   }, [scanning, processing, showResult]);
+
+  // Fallback QR scanner using jsQR library
+  const scanWithJsQR = useCallback((context: CanvasRenderingContext2D, width: number, height: number) => {
+    if (processing || showResult) return;
+
+    try {
+      const imageData = context.getImageData(0, 0, width, height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert',
+      });
+
+      if (code && code.data) {
+        // Prevent duplicate scans
+        if (code.data !== lastScanRef.current) {
+          lastScanRef.current = code.data;
+          processQR(code.data);
+        }
+      }
+    } catch (err) {
+      console.error('jsQR scan error:', err);
+    }
+  }, [processing, showResult]);
 
   const processQR = async (payload: string) => {
     if (processing || !session) return;

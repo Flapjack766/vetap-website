@@ -64,6 +64,7 @@ export async function GET(
           generated_at,
           revoked_at,
           is_anonymous,
+          invite_file_url,
           guest:event_guests(id, full_name, email, phone, is_anonymous)
         `)
         .eq('event_id', eventId)
