@@ -121,7 +121,7 @@ export function GateStaffLogin({ locale }: GateStaffLoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="fixed inset-0 bg-background flex flex-col overflow-auto z-50" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Background Pattern */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]" />
@@ -314,7 +314,7 @@ export function GateStaffLogin({ locale }: GateStaffLoginProps) {
       {/* Footer */}
       <footer className="p-4 text-center">
         <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} VETAP. {t('FOOTER_RIGHTS') || 'All rights reserved.'}
+          © {new Date().getFullYear()} VETAP. {t('A36')}
         </p>
       </footer>
     </div>
