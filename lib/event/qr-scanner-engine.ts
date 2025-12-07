@@ -347,10 +347,9 @@ export class QRScannerEngine {
     const patterns: FinderPattern[] = [];
     const threshold = 128;
     
-    let runLengths: number[] = [];
+    const runLengths: number[] = [];
     let currentColor = data[y * imageWidth * 4] < threshold ? 0 : 1;
     let currentRun = 0;
-    let startX = 0;
     
     for (let x = 0; x < width; x++) {
       const idx = (y * imageWidth + x) * 4;
@@ -395,7 +394,7 @@ export class QRScannerEngine {
     const patterns: FinderPattern[] = [];
     const threshold = 128;
     
-    let runLengths: number[] = [];
+    const runLengths: number[] = [];
     let currentColor = data[x * 4] < threshold ? 0 : 1;
     let currentRun = 0;
     

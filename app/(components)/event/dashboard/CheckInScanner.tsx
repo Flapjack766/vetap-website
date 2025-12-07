@@ -252,8 +252,8 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
             resolve();
           };
           
-          const onError = (e: Event) => {
-            console.error('❌ Video error event:', e);
+          const onError = () => {
+            console.error('❌ Video error event');
             video.removeEventListener('loadedmetadata', onLoadedMetadata);
             video.removeEventListener('error', onError);
             reject(new Error('Video error'));
