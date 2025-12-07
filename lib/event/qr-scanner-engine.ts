@@ -115,34 +115,28 @@ export class QRScannerEngine {
         };
       }
 
-      // Check if QR is optimally positioned
-      if (qrSize < TOO_SMALL_THRESHOLD) {
-        return {
-          success: false,
-          data: qrResult.data,
-          feedback: this.createFeedback('too_far', 70, qrSize, qrPosition),
-          processingTime,
-        };
-      }
-
-      if (qrSize > TOO_LARGE_THRESHOLD) {
-        return {
-          success: false,
-          data: qrResult.data,
-          feedback: this.createFeedback('too_close', 70, qrSize, qrPosition),
-          processingTime,
-        };
-      }
-
-      // Success!
+      // ✅ QR detected and decoded - ALWAYS process it!
+      // Just provide feedback about positioning for user guidance
       this.lastSuccessfulScan = qrResult.data;
       this.lastScanTime = now;
       this.consecutiveFailures = 0;
 
+      // Determine feedback status based on size (informational only)
+      let feedbackStatus: ScanStatus = 'detected';
+      let confidence = 100;
+      
+      if (qrSize < TOO_SMALL_THRESHOLD) {
+        feedbackStatus = 'too_far';
+        confidence = 70;
+      } else if (qrSize > TOO_LARGE_THRESHOLD) {
+        feedbackStatus = 'too_close';
+        confidence = 70;
+      }
+
       return {
-        success: true,
+        success: true,  // ✅ Always true when QR is decoded
         data: qrResult.data,
-        feedback: this.createFeedback('detected', 100, qrSize, qrPosition),
+        feedback: this.createFeedback(feedbackStatus, confidence, qrSize, qrPosition),
         processingTime,
       };
     }

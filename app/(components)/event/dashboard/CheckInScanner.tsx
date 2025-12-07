@@ -53,8 +53,8 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
   const t = useTranslations();
   const isRTL = locale === 'ar';
   
-  // Scanner Engine for intelligent feedback
-  const scannerEngine = useRef<QRScannerEngine>(new QRScannerEngine(2500));
+  // Scanner Engine - 1.5 second cooldown for faster scanning
+  const scannerEngine = useRef<QRScannerEngine>(new QRScannerEngine(1500));
   
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -368,27 +368,18 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
 
-    // Use 80% of center for faster detection
-    const cropRatio = 0.8;
-    const cropWidth = Math.floor(videoWidth * cropRatio);
-    const cropHeight = Math.floor(videoHeight * cropRatio);
-    const cropX = Math.floor((videoWidth - cropWidth) / 2);
-    const cropY = Math.floor((videoHeight - cropHeight) / 2);
+    // ✅ Use FULL frame for maximum detection capability
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
 
-    canvas.width = cropWidth;
-    canvas.height = cropHeight;
+    // Draw full frame
+    ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
 
-    ctx.drawImage(
-      video,
-      cropX, cropY, cropWidth, cropHeight,
-      0, 0, cropWidth, cropHeight
-    );
-
-    const imageData = ctx.getImageData(0, 0, cropWidth, cropHeight);
+    const imageData = ctx.getImageData(0, 0, videoWidth, videoHeight);
     setScanCount(prev => prev + 1);
 
     // Use scanner engine for intelligent detection with feedback
-    const result = scannerEngine.current.scan(imageData, cropWidth, cropHeight);
+    const result = scannerEngine.current.scan(imageData, videoWidth, videoHeight);
     
     // Update feedback UI
     setFeedback(result.feedback);
