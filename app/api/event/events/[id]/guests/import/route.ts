@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, requireEventManagement } from '@/lib/event/api-auth';
+import { withAuth } from '@/lib/event/api-auth';
 import { createEventAdminClient } from '@/lib/supabase/event-admin';
 import { z } from 'zod';
 import type { GuestType } from '@/lib/event/types';
@@ -52,8 +52,7 @@ export async function POST(
       let eventQuery = supabase
         .from('event_events')
         .select('id, partner_id')
-        .eq('id', eventId)
-        .single();
+        .eq('id', eventId);
 
       if (user.role !== 'owner') {
         if (!user.partner_id) {
@@ -65,7 +64,7 @@ export async function POST(
         eventQuery = eventQuery.eq('partner_id', user.partner_id);
       }
 
-      const { data: event, error: eventError } = await eventQuery;
+      const { data: event, error: eventError } = await eventQuery.single();
 
       if (eventError || !event) {
         return NextResponse.json(

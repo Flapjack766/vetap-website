@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, requireUserManagement } from '@/lib/event/api-auth';
+import { withAuth } from '@/lib/event/api-auth';
 import { createEventClient } from '@/lib/supabase/event-server';
 import type { Partner } from '@/lib/event/types';
 

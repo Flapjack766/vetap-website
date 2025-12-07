@@ -5,8 +5,7 @@
  * Uses rounded/modern QR code style
  */
 
-import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
-import type { QRCodeRenderersOptions } from 'qrcode.react';
+// QRCodeSVG, QRCodeCanvas are client-side only - use qrcode for server-side
 
 /**
  * QR Code Generation Options
@@ -153,7 +152,7 @@ export interface QRCodeComponentProps {
  */
 export function getQRCodeRendererOptions(
   options: QRCodeOptions = {}
-): QRCodeRenderersOptions {
+): Omit<QRCodeComponentProps, 'payload'> {
   const opts = { ...defaultOptions, ...options };
   
   return {

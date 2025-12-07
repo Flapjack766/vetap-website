@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, requireEventManagement } from '@/lib/event/api-auth';
+import { withAuth } from '@/lib/event/api-auth';
 import { createEventAdminClient } from '@/lib/supabase/event-admin';
 import { z } from 'zod';
 
@@ -49,8 +49,7 @@ export async function GET(
           created_by_user:event_users!event_events_created_by_fkey(id, name, email),
           template:event_templates(id, name, base_file_url)
         `)
-        .eq('id', id)
-        .single();
+        .eq('id', id);
 
       // Non-owners can only see their partner's events
       if (user.role !== 'owner') {
@@ -63,7 +62,7 @@ export async function GET(
         query = query.eq('partner_id', user.partner_id);
       }
 
-      const { data: event, error } = await query;
+      const { data: event, error } = await query.single();
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -119,8 +118,7 @@ export async function PATCH(
       let eventQuery = supabase
         .from('event_events')
         .select('id, partner_id')
-        .eq('id', id)
-        .single();
+        .eq('id', id);
 
       if (user.role !== 'owner') {
         if (!user.partner_id) {
@@ -132,7 +130,7 @@ export async function PATCH(
         eventQuery = eventQuery.eq('partner_id', user.partner_id);
       }
 
-      const { data: existingEvent, error: fetchError } = await eventQuery;
+      const { data: existingEvent, error: fetchError } = await eventQuery.single();
 
       if (fetchError || !existingEvent) {
         return NextResponse.json(
@@ -217,8 +215,7 @@ export async function DELETE(
       let eventQuery = supabase
         .from('event_events')
         .select('id, partner_id, status')
-        .eq('id', id)
-        .single();
+        .eq('id', id);
 
       if (user.role !== 'owner') {
         if (!user.partner_id) {
@@ -230,7 +227,7 @@ export async function DELETE(
         eventQuery = eventQuery.eq('partner_id', user.partner_id);
       }
 
-      const { data: existingEvent, error: fetchError } = await eventQuery;
+      const { data: existingEvent, error: fetchError } = await eventQuery.single();
 
       if (fetchError || !existingEvent) {
         return NextResponse.json(

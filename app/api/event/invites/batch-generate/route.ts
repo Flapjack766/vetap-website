@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, requireEventManagement } from '@/lib/event/api-auth';
+import { withAuth } from '@/lib/event/api-auth';
 import { createEventAdminClient } from '@/lib/supabase/event-admin';
 import { generateInviteFile, getFileExtension, getMimeType } from '@/lib/event/invite-generator';
 import { generateQRPayload } from '@/lib/event/qr-payload';
@@ -42,8 +42,7 @@ export async function POST(request: NextRequest) {
       let eventQuery = adminClient
         .from('event_events')
         .select('id, partner_id, template_id, name, qr_position')
-        .eq('id', validatedData.event_id)
-        .single();
+        .eq('id', validatedData.event_id);
 
       if (user.role !== 'owner') {
         if (!user.partner_id) {
@@ -55,7 +54,7 @@ export async function POST(request: NextRequest) {
         eventQuery = eventQuery.eq('partner_id', user.partner_id);
       }
 
-      const { data: event, error: eventError } = await eventQuery;
+      const { data: event, error: eventError } = await eventQuery.single();
 
       if (eventError || !event) {
         return NextResponse.json(
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest) {
       // Fetch template
       const { data: template, error: templateError } = await adminClient
         .from('event_templates')
-        .select('id, name, base_file_url, qr_position_x, qr_position_y, qr_width, qr_height')
+        .select('id, name, base_file_url, qr_position_x, qr_position_y, qr_width, qr_height, qr_rotation, file_type, is_active, created_at')
         .eq('id', event.template_id)
         .single();
 
@@ -142,13 +141,25 @@ export async function POST(request: NextRequest) {
 
       for (const pass of passes) {
         try {
+          // Get guest data (Supabase returns array for relations)
+          const guest = Array.isArray(pass.guest) ? pass.guest[0] : pass.guest;
+          
+          if (!guest) {
+            results.push({
+              pass_id: pass.id,
+              guest_name: 'Unknown',
+              error: 'Guest not found for pass',
+            });
+            continue;
+          }
+
           // Generate QR payload if not present
           let qrPayload = pass.qr_payload;
           if (!qrPayload) {
             qrPayload = generateQRPayload(
               event.id,
               pass.id,
-              pass.guest.id,
+              guest.id,
               undefined,
               event.partner_id
             );
@@ -158,7 +169,7 @@ export async function POST(request: NextRequest) {
           const inviteBuffer = await generateInviteFile(
             templateWithPosition,
             pass as any,
-            pass.guest as any,
+            guest as any,
             qrPayload,
             {
               format: validatedData.format,
@@ -181,7 +192,7 @@ export async function POST(request: NextRequest) {
           if (uploadError) {
             results.push({
               pass_id: pass.id,
-              guest_name: pass.guest.full_name,
+              guest_name: guest.full_name || 'Unknown',
               error: uploadError.message,
             });
             continue;
@@ -201,14 +212,14 @@ export async function POST(request: NextRequest) {
 
           results.push({
             pass_id: pass.id,
-            guest_name: pass.guest.full_name,
+            guest_name: guest.full_name || 'Unknown',
             invite_url: urlData.publicUrl,
             file_name: fileName,
           });
         } catch (error: any) {
           results.push({
             pass_id: pass.id,
-            guest_name: pass.guest?.full_name || 'Unknown',
+            guest_name: 'Unknown',
             error: error.message || 'Failed to generate invite',
           });
         }

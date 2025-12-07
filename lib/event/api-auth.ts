@@ -120,8 +120,8 @@ export async function authenticateRequest(
 /**
  * Wrapper for authenticated API routes
  */
-export function withAuth<T = unknown>(
-  handler: (request: NextRequest, context: { user: EventUser }) => Promise<NextResponse<T>>
+export function withAuth(
+  handler: (request: NextRequest, context: { user: EventUser }) => Promise<NextResponse>
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     const authResult = await authenticateRequest(request);

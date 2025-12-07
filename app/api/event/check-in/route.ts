@@ -869,16 +869,19 @@ async function sendWebhook(
       clearTimeout(timeoutId);
     });
 
-    // Log webhook attempt
-    await client
-      .from('event_webhook_logs')
-      .insert({
-        partner_id: partnerId,
-        event_type: eventType,
-        payload: webhookPayload,
-        sent_at: new Date().toISOString(),
-      })
-      .catch(() => {}); // Ignore logging errors
+    // Log webhook attempt (ignore errors)
+    try {
+      await client
+        .from('event_webhook_logs')
+        .insert({
+          partner_id: partnerId,
+          event_type: eventType,
+          payload: webhookPayload,
+          sent_at: new Date().toISOString(),
+        });
+    } catch {
+      // Ignore logging errors
+    }
 
   } catch (err) {
     console.error('Webhook error:', err);

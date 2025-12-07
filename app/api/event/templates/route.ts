@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, requireEventManagement } from '@/lib/event/api-auth';
+import { withAuth } from '@/lib/event/api-auth';
 import { createEventAdminClient } from '@/lib/supabase/event-admin';
 import { z } from 'zod';
 import type { Template } from '@/lib/event/types';
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
             { status: 403 }
           );
         }
-        targetPartnerId = user.partner_id;
+        targetPartnerId = user.partner_id || null;
       }
 
       const supabase = createEventAdminClient();

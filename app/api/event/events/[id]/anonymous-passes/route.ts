@@ -47,8 +47,7 @@ export async function POST(
       let eventQuery = adminClient
         .from('event_events')
         .select('id, partner_id, name, status')
-        .eq('id', eventId)
-        .single();
+        .eq('id', eventId);
 
       if (user.role !== 'owner') {
         if (!user.partner_id) {
@@ -60,7 +59,7 @@ export async function POST(
         eventQuery = eventQuery.eq('partner_id', user.partner_id);
       }
 
-      const { data: event, error: eventError } = await eventQuery;
+      const { data: event, error: eventError } = await eventQuery.single();
 
       if (eventError || !event) {
         return NextResponse.json(
@@ -201,8 +200,7 @@ export async function GET(
       let eventQuery = adminClient
         .from('event_events')
         .select('id, partner_id')
-        .eq('id', eventId)
-        .single();
+        .eq('id', eventId);
 
       if (user.role !== 'owner') {
         if (!user.partner_id) {
@@ -214,7 +212,7 @@ export async function GET(
         eventQuery = eventQuery.eq('partner_id', user.partner_id);
       }
 
-      const { data: event, error: eventError } = await eventQuery;
+      const { data: event, error: eventError } = await eventQuery.single();
 
       if (eventError || !event) {
         return NextResponse.json(

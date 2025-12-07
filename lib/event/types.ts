@@ -165,10 +165,12 @@ export interface Template {
   name: string;
   description?: string;
   base_file_url: string; // Image or PDF URL
+  file_type?: 'image' | 'pdf'; // Type of base file
   qr_position_x?: number; // Position in pixels or percentage
   qr_position_y?: number;
   qr_width?: number;
   qr_height?: number;
+  qr_rotation?: number; // QR code rotation in degrees
   is_active: boolean;
   created_at: string;
   updated_at?: string;

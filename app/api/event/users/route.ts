@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, requireUserManagement } from '@/lib/event/api-auth';
+import { withAuth } from '@/lib/event/api-auth';
 import { createEventClient } from '@/lib/supabase/event-server';
 import { createEventAdminClient } from '@/lib/supabase/event-admin';
 import type { User, UserRole } from '@/lib/event/types';
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
             { status: 403 }
           );
         }
-        targetPartnerId = user.partner_id;
+        targetPartnerId = user.partner_id || null;
       }
 
       // Validate: only owners can create owner users

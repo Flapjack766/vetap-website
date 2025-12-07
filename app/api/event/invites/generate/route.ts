@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, requireEventManagement } from '@/lib/event/api-auth';
+import { withAuth } from '@/lib/event/api-auth';
 import { createEventAdminClient } from '@/lib/supabase/event-admin';
 import { generateInviteFile, getFileExtension, getMimeType } from '@/lib/event/invite-generator';
 import { generateQRPayload } from '@/lib/event/qr-payload';
@@ -65,9 +65,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Extract relations (Supabase returns arrays for relations)
+      const event = Array.isArray(passData.event) ? passData.event[0] : passData.event;
+      const guest = Array.isArray(passData.guest) ? passData.guest[0] : passData.guest;
+
+      if (!event) {
+        return NextResponse.json(
+          { error: 'Not Found', message: 'Event not found' },
+          { status: 404 }
+        );
+      }
+
       // Verify access
       if (user.role !== 'owner') {
-        if (!user.partner_id || passData.event.partner_id !== user.partner_id) {
+        if (!user.partner_id || event.partner_id !== user.partner_id) {
           return NextResponse.json(
             { error: 'Forbidden', message: 'Access denied' },
             { status: 403 }
@@ -76,7 +87,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Fetch template
-      if (!passData.event.template_id) {
+      if (!event.template_id) {
         return NextResponse.json(
           { error: 'Bad Request', message: 'Event has no template assigned' },
           { status: 400 }
@@ -85,8 +96,8 @@ export async function POST(request: NextRequest) {
 
       const { data: template, error: templateError } = await adminClient
         .from('event_templates')
-        .select('id, name, base_file_url, qr_position_x, qr_position_y, qr_width, qr_height')
-        .eq('id', passData.event.template_id)
+        .select('id, name, base_file_url, qr_position_x, qr_position_y, qr_width, qr_height, qr_rotation, file_type, is_active, created_at')
+        .eq('id', event.template_id)
         .single();
 
       if (templateError || !template) {
@@ -98,18 +109,18 @@ export async function POST(request: NextRequest) {
 
       // Generate QR payload if not present
       let qrPayload = passData.qr_payload;
-      if (!qrPayload) {
+      if (!qrPayload && guest) {
         qrPayload = generateQRPayload(
-          passData.event.id,
+          event.id,
           passData.id,
-          passData.guest.id,
+          guest.id,
           undefined,
-          passData.event.partner_id
+          event.partner_id
         );
       }
 
       // Merge event's qr_position with template data (event position takes precedence)
-      const qrPosition = passData.event.qr_position as { x?: number; y?: number; width?: number; height?: number } | null;
+      const qrPosition = event.qr_position as { x?: number; y?: number; width?: number; height?: number } | null;
       const templateWithPosition = {
         ...template,
         qr_position_x: qrPosition?.x ?? template.qr_position_x,
@@ -122,7 +133,7 @@ export async function POST(request: NextRequest) {
       const inviteBuffer = await generateInviteFile(
         templateWithPosition,
         passData as any,
-        passData.guest as any,
+        guest as any,
         qrPayload,
         {
           format: validatedData.format,
@@ -133,7 +144,7 @@ export async function POST(request: NextRequest) {
 
       // Upload to Supabase Storage
       const fileExtension = getFileExtension(validatedData.format);
-      const fileName = `invites/${passData.event.id}/${passData.id}.${fileExtension}`;
+      const fileName = `invites/${event.id}/${passData.id}.${fileExtension}`;
       
       const { data: uploadData, error: uploadError } = await adminClient.storage
         .from('event-invites')

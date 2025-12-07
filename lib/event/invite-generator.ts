@@ -287,7 +287,7 @@ async function generatePDFInvite(
     
     // Add guest info if requested
     if (options.includeGuestInfo && guest.full_name) {
-      const { font } = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
       
       page.drawText(guest.full_name, {
         x: 50,
