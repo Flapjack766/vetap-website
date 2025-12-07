@@ -2034,6 +2034,11 @@
   "CHECKIN_ERROR": "An error occurred",
   "CHECKIN_SCANNING": "Scanning...",
   "CHECKIN_SELECT_CAMERA": "Select Camera",
+  "CHECKIN_UPLOAD_IMAGE": "Upload QR Image",
+  "CHECKIN_TAP_TO_START": "Tap to start scanning",
+  "CHECKIN_CAMERA_HINT": "Point your camera at a QR code to check in guests",
+  "CHECKIN_NO_QR_IN_IMAGE": "No QR code found in image",
+  "CHECKIN_CAMERA_IN_USE": "Camera is in use by another application",
   "CHECKIN_LOGOUT": "Logout",
 
   "CHECKIN_STARTING_CAMERA": "Starting camera...",

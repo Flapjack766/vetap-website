@@ -358,5 +358,10 @@
   "CHECKIN_RESET_STATS": "İstatistikleri Sıfırla",
   "CHECKIN_ERROR": "Giriş işlemi başarısız",
   "CHECKIN_SCANNING": "Taranıyor...",
-  "CHECKIN_SELECT_CAMERA": "Kamera Seçin"
+  "CHECKIN_SELECT_CAMERA": "Kamera Seçin",
+  "CHECKIN_UPLOAD_IMAGE": "QR Resmi Yükle",
+  "CHECKIN_TAP_TO_START": "Taramaya başlamak için dokunun",
+  "CHECKIN_CAMERA_HINT": "Misafirleri kaydetmek için kameranızı QR koduna doğrultun",
+  "CHECKIN_NO_QR_IN_IMAGE": "Resimde QR kodu bulunamadı",
+  "CHECKIN_CAMERA_IN_USE": "Kamera başka bir uygulama tarafından kullanılıyor"
 }

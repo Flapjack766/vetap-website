@@ -2034,6 +2034,11 @@
   "CHECKIN_ERROR": "حدث خطأ",
   "CHECKIN_SCANNING": "جاري المسح...",
   "CHECKIN_SELECT_CAMERA": "اختر الكاميرا",
+  "CHECKIN_UPLOAD_IMAGE": "رفع صورة QR",
+  "CHECKIN_TAP_TO_START": "اضغط لبدء المسح",
+  "CHECKIN_CAMERA_HINT": "وجه الكاميرا إلى رمز QR لتسجيل دخول الضيوف",
+  "CHECKIN_NO_QR_IN_IMAGE": "لم يتم العثور على رمز QR في الصورة",
+  "CHECKIN_CAMERA_IN_USE": "الكاميرا قيد الاستخدام من تطبيق آخر",
   "CHECKIN_LOGOUT": "تسجيل الخروج",
 
   "CHECKIN_STARTING_CAMERA": "جاري تشغيل الكاميرا...",
