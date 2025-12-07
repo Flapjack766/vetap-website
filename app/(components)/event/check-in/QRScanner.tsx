@@ -101,6 +101,10 @@ export function QRScanner({ locale }: QRScannerProps) {
   // Real-time feedback
   const [feedback, setFeedback] = useState<ScanFeedback | null>(null);
 
+  // Scan history (persistent)
+  const [scanHistory, setScanHistory] = useState<CheckInResult[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const [stats, setStats] = useState<ScanStats>({
     total: 0,
     valid: 0,
@@ -114,11 +118,17 @@ export function QRScanner({ locale }: QRScannerProps) {
   // Audio context ref for Web Audio API
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Load session on mount
+  // Load session and scan history on mount
   useEffect(() => {
     const storedSession = sessionStorage.getItem('check_in_session') || sessionStorage.getItem('gate_session');
     if (storedSession) {
-      setSession(JSON.parse(storedSession));
+      const parsedSession = JSON.parse(storedSession);
+      setSession(parsedSession);
+      
+      // Load scan history for this event
+      if (parsedSession.event_id) {
+        loadScanHistory(parsedSession.event_id, parsedSession.gate_id);
+      }
     } else {
       router.push(`/${locale}/event/check-in`);
       return;
@@ -136,6 +146,65 @@ export function QRScanner({ locale }: QRScannerProps) {
       }
     };
   }, [locale, router]);
+
+  // Load scan history from API
+  const loadScanHistory = async (eventId: string, gateId?: string | null) => {
+    try {
+      setLoadingHistory(true);
+      const supabase = createEventClient();
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+
+      if (!authSession) return;
+
+      const params = new URLSearchParams({
+        limit: '50',
+        offset: '0',
+      });
+      if (gateId) {
+        params.append('gate_id', gateId);
+      }
+
+      const response = await fetch(`/api/event/events/${eventId}/scan-logs?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${authSession.access_token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.logs && Array.isArray(data.logs)) {
+        // Transform API logs to CheckInResult format
+        const history: CheckInResult[] = data.logs.map((log: any) => ({
+          result: log.result,
+          guest: log.pass?.guest ? {
+            full_name: log.pass.guest.full_name,
+            type: log.pass.guest.type || '',
+          } : undefined,
+          pass: log.pass ? {
+            id: log.pass.id,
+            first_used_at: log.pass.first_used_at,
+          } : undefined,
+          message: log.error_message || undefined,
+          errorKey: undefined,
+        }));
+
+        setScanHistory(history);
+
+        // Calculate stats from history
+        const calculatedStats: ScanStats = {
+          total: history.length,
+          valid: history.filter(h => h.result === 'valid').length,
+          already_used: history.filter(h => h.result === 'already_used').length,
+          invalid: history.filter(h => ['invalid', 'expired', 'revoked', 'not_allowed_zone'].includes(h.result)).length,
+        };
+        setStats(calculatedStats);
+      }
+    } catch (err) {
+      console.error('Error loading scan history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   // ==========================================
   // START CAMERA
@@ -314,8 +383,8 @@ export function QRScanner({ locale }: QRScannerProps) {
         return;
       }
 
-      // Skip if processing or showing result
-      if (!processingRef.current && !showResult) {
+      // Skip if processing or showing result (same logic as CheckInScanner)
+      if (!processingRef.current && !currentResult) {
         performScan();
       }
 
@@ -324,7 +393,7 @@ export function QRScanner({ locale }: QRScannerProps) {
     };
 
     animationFrameRef.current = requestAnimationFrame(scanFrame);
-  }, [showResult]);
+  }, [currentResult]);
 
   // ==========================================
   // PERFORM SCAN WITH FEEDBACK
@@ -368,7 +437,7 @@ export function QRScanner({ locale }: QRScannerProps) {
     if (result.success && result.data) {
       processQR(result.data);
     }
-  }, []);
+  }, [processQR]);
 
   // ==========================================
   // HANDLE FILE INPUT
@@ -438,7 +507,7 @@ export function QRScanner({ locale }: QRScannerProps) {
   // ==========================================
   // PROCESS QR CODE
   // ==========================================
-  const processQR = async (payload: string) => {
+  const processQR = useCallback(async (payload: string) => {
     if (processingRef.current || !session) return;
 
     console.log('🔄 Processing QR code...');
@@ -475,6 +544,9 @@ export function QRScanner({ locale }: QRScannerProps) {
       if (data.errorKey && data.message) {
         data.message = t(data.errorKey) || data.message;
       }
+
+      // Add to scan history (persistent)
+      setScanHistory(prev => [data, ...prev.slice(0, 49)]); // Keep last 50
 
       // Update stats
       setStats((prev) => ({
@@ -518,7 +590,7 @@ export function QRScanner({ locale }: QRScannerProps) {
         processingRef.current = false;
       }, 2500);
     }
-  };
+  }, [session, t]);
 
   // ==========================================
   // SOUND & VIBRATION
@@ -936,6 +1008,37 @@ export function QRScanner({ locale }: QRScannerProps) {
         )}
       </div>
 
+      {/* Scan History Section */}
+      {scanHistory.length > 0 && (
+        <div className="bg-card/95 backdrop-blur-xl border-t border-border/50 p-4 max-h-[200px] overflow-y-auto">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-foreground">{t('EVENT_STATS_RECENT_SCANS') || 'Recent Scans'}</h3>
+            <span className="text-xs text-muted-foreground">{scanHistory.length} {t('EVENT_SCANS') || 'scans'}</span>
+          </div>
+          <div className="space-y-2">
+            {scanHistory.slice(0, 5).map((scan, index) => (
+              <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    scan.result === 'valid' ? 'bg-emerald-500' :
+                    scan.result === 'already_used' ? 'bg-amber-500' :
+                    'bg-red-500'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {scan.guest?.full_name || '-'}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {getResultLabel(scan.result)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
@@ -984,7 +1087,13 @@ export function QRScanner({ locale }: QRScannerProps) {
 
               <div className="pt-4 border-t border-border/50">
                 <button
-                  onClick={() => setStats({ total: 0, valid: 0, already_used: 0, invalid: 0 })}
+                  onClick={() => {
+                    setStats({ total: 0, valid: 0, already_used: 0, invalid: 0 });
+                    setScanHistory([]);
+                    if (session?.event_id) {
+                      loadScanHistory(session.event_id, session.gate_id);
+                    }
+                  }}
                   className="w-full py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {t('CHECKIN_RESET_STATS')}

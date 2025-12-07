@@ -114,8 +114,62 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
   useEffect(() => {
     if (selectedEventId) {
       fetchGates(selectedEventId);
+      // Load scan history for selected event
+      loadScanHistory(selectedEventId, selectedGateId);
     }
-  }, [selectedEventId]);
+  }, [selectedEventId, selectedGateId]);
+
+  // Load scan history from API
+  const loadScanHistory = async (eventId: string, gateId?: string) => {
+    try {
+      const supabase = createEventClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
+      const params = new URLSearchParams({
+        limit: '50',
+        offset: '0',
+      });
+      if (gateId) {
+        params.append('gate_id', gateId);
+      }
+
+      const response = await fetch(`/api/event/events/${eventId}/scan-logs?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.logs && Array.isArray(data.logs)) {
+        // Transform API logs to ScanResultData format
+        const history: ScanResultData[] = data.logs.map((log: any) => ({
+          result: log.result,
+          guest_name: log.pass?.guest?.full_name,
+          guest_type: log.pass?.guest?.type,
+          message: log.error_message || undefined,
+          errorKey: undefined,
+          scanned_at: log.scanned_at,
+          first_used_at: log.pass?.first_used_at,
+        }));
+
+        setScanHistory(history);
+
+        // Calculate stats from history
+        const calculatedStats = {
+          total: history.length,
+          valid: history.filter(h => h.result === 'valid').length,
+          already_used: history.filter(h => h.result === 'already_used').length,
+          invalid: history.filter(h => !['valid', 'already_used'].includes(h.result)).length,
+        };
+        setStats(calculatedStats);
+      }
+    } catch (err) {
+      console.error('Error loading scan history:', err);
+    }
+  };
 
   // Cleanup on unmount
   useEffect(() => {
@@ -438,7 +492,8 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
       };
 
       setLastScanResult(scanResultData);
-      setScanHistory(prev => [scanResultData, ...prev.slice(0, 19)]);
+      // Add to history (keep last 50)
+      setScanHistory(prev => [scanResultData, ...prev.slice(0, 49)]);
 
       // Update stats
       setStats(prev => ({
