@@ -120,7 +120,7 @@ export async function authenticateRequest(
 /**
  * Wrapper for authenticated API routes
  */
-export function withAuth<T = any>(
+export function withAuth<T = unknown>(
   handler: (request: NextRequest, context: { user: EventUser }) => Promise<NextResponse<T>>
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
@@ -132,4 +132,90 @@ export function withAuth<T = any>(
 
     return handler(request, { user: authResult.user });
   };
+}
+
+/**
+ * Check if user has access to a specific partner
+ * Returns the partner data if access is granted, or an error response
+ */
+export async function requirePartnerAccess(
+  request: NextRequest,
+  partnerId: string
+): Promise<{ partner: { id: string; name: string } } | { error: NextResponse }> {
+  try {
+    const authResult = await authenticateRequest(request);
+    
+    if ('error' in authResult) {
+      return authResult;
+    }
+
+    const { user } = authResult;
+
+    // Owners can access any partner
+    if (user.role === 'owner') {
+      const adminClient = createEventAdminClient();
+      const { data: partner, error: partnerError } = await adminClient
+        .from('event_partners')
+        .select('id, name')
+        .eq('id', partnerId)
+        .single();
+
+      if (partnerError || !partner) {
+        return {
+          error: NextResponse.json(
+            { error: 'Not Found', message: 'Partner not found' },
+            { status: 404 }
+          ),
+        };
+      }
+
+      return { partner };
+    }
+
+    // Partner admins can only access their own partner
+    if (user.role === 'partner_admin') {
+      if (user.partner_id !== partnerId) {
+        return {
+          error: NextResponse.json(
+            { error: 'Forbidden', message: 'You do not have access to this partner' },
+            { status: 403 }
+          ),
+        };
+      }
+
+      const adminClient = createEventAdminClient();
+      const { data: partner, error: partnerError } = await adminClient
+        .from('event_partners')
+        .select('id, name')
+        .eq('id', partnerId)
+        .single();
+
+      if (partnerError || !partner) {
+        return {
+          error: NextResponse.json(
+            { error: 'Not Found', message: 'Partner not found' },
+            { status: 404 }
+          ),
+        };
+      }
+
+      return { partner };
+    }
+
+    // Other roles don't have partner access
+    return {
+      error: NextResponse.json(
+        { error: 'Forbidden', message: 'Partner access permission required' },
+        { status: 403 }
+      ),
+    };
+  } catch (error) {
+    console.error('❌ Partner Access Check Error:', error);
+    return {
+      error: NextResponse.json(
+        { error: 'Internal Server Error', message: 'Failed to verify partner access' },
+        { status: 500 }
+      ),
+    };
+  }
 }
