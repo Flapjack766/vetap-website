@@ -2032,6 +2032,7 @@
   "CHECKIN_BACK": "Back",
   "CHECKIN_LOADING": "Loading...",
   "CHECKIN_ERROR": "An error occurred",
+  "CHECKIN_SCANNING": "Scanning...",
   "CHECKIN_LOGOUT": "Logout",
 
   "CHECKIN_STARTING_CAMERA": "Starting camera...",

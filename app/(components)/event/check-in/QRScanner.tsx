@@ -66,7 +66,11 @@ export function QRScanner({ locale }: QRScannerProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number | null>(null);
   const lastScanRef = useRef<string>('');
-  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Use refs for values needed in the scan loop to avoid stale closures
+  const processingRef = useRef(false);
+  const showResultRef = useRef(false);
+  const sessionRef = useRef<ScanSession | null>(null);
 
   const [session, setSession] = useState<ScanSession | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
@@ -93,17 +97,32 @@ export function QRScanner({ locale }: QRScannerProps) {
   const warningSoundRef = useRef<HTMLAudioElement | null>(null);
   const errorSoundRef = useRef<HTMLAudioElement | null>(null);
 
+  // Keep refs in sync with state
   useEffect(() => {
-    // Load session from storage
+    processingRef.current = processing;
+  }, [processing]);
+
+  useEffect(() => {
+    showResultRef.current = showResult;
+  }, [showResult]);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
+  // Load session on mount
+  useEffect(() => {
     const storedSession = sessionStorage.getItem('check_in_session') || sessionStorage.getItem('gate_session');
     if (storedSession) {
-      setSession(JSON.parse(storedSession));
+      const parsed = JSON.parse(storedSession);
+      setSession(parsed);
+      sessionRef.current = parsed;
     } else {
       router.push(`/${locale}/event/check-in`);
       return;
     }
 
-    // Initialize audio (using Web Audio API for better mobile support)
+    // Initialize audio
     if (typeof window !== 'undefined') {
       successSoundRef.current = new Audio('/sounds/success.mp3');
       warningSoundRef.current = new Audio('/sounds/warning.mp3');
@@ -115,9 +134,25 @@ export function QRScanner({ locale }: QRScannerProps) {
     };
   }, [locale, router]);
 
+  // Start scanning loop when scanning state becomes true
+  useEffect(() => {
+    if (scanning && cameraReady) {
+      console.log('Starting scan loop...');
+      scanFrame();
+    }
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    };
+  }, [scanning, cameraReady]);
+
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null);
+      console.log('Starting camera...');
 
       const constraints: MediaStreamConstraints = {
         video: {
@@ -134,9 +169,9 @@ export function QRScanner({ locale }: QRScannerProps) {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
+        console.log('Camera ready, video playing');
         setCameraReady(true);
         setScanning(true);
-        requestAnimationFrame(scanFrame);
       }
     } catch (err: any) {
       console.error('Camera error:', err);
@@ -152,6 +187,7 @@ export function QRScanner({ locale }: QRScannerProps) {
   }, [t]);
 
   const stopCamera = useCallback(() => {
+    console.log('Stopping camera...');
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
@@ -188,8 +224,10 @@ export function QRScanner({ locale }: QRScannerProps) {
     }
   }, [flashEnabled]);
 
+  // Main scanning function - uses refs instead of state to avoid stale closures
   const scanFrame = useCallback(() => {
-    if (!scanning || processing || showResult) {
+    // Check refs instead of state
+    if (processingRef.current || showResultRef.current) {
       animationRef.current = requestAnimationFrame(scanFrame);
       return;
     }
@@ -202,46 +240,57 @@ export function QRScanner({ locale }: QRScannerProps) {
       return;
     }
 
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) {
       animationRef.current = requestAnimationFrame(scanFrame);
       return;
     }
 
+    // Set canvas size to match video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+
+    // Draw video frame to canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Try BarcodeDetector API first (better performance on supported browsers)
-    if ('BarcodeDetector' in window) {
-      const barcodeDetector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
-      barcodeDetector
-        .detect(canvas)
-        .then((barcodes: any[]) => {
-          if (barcodes.length > 0 && !processing && !showResult) {
-            const qrData = barcodes[0].rawValue;
-            // Prevent duplicate scans
-            if (qrData !== lastScanRef.current) {
-              lastScanRef.current = qrData;
-              processQR(qrData);
+    // Try to detect QR code
+    try {
+      // First try BarcodeDetector if available (Chrome, Edge)
+      if ('BarcodeDetector' in window) {
+        const barcodeDetector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+        barcodeDetector
+          .detect(canvas)
+          .then((barcodes: any[]) => {
+            if (barcodes.length > 0 && !processingRef.current && !showResultRef.current) {
+              const qrData = barcodes[0].rawValue;
+              console.log('BarcodeDetector found QR:', qrData.substring(0, 50) + '...');
+              if (qrData !== lastScanRef.current) {
+                lastScanRef.current = qrData;
+                processQR(qrData);
+              }
             }
-          }
-        })
-        .catch(() => {
-          // Fallback to jsQR on error
-          scanWithJsQR(context, canvas.width, canvas.height);
-        });
-    } else {
-      // Fallback to jsQR for browsers without BarcodeDetector (Safari, older browsers)
+          })
+          .catch((err: any) => {
+            // BarcodeDetector failed, try jsQR
+            scanWithJsQR(context, canvas.width, canvas.height);
+          });
+      } else {
+        // Fallback to jsQR for browsers without BarcodeDetector (Safari, Firefox)
+        scanWithJsQR(context, canvas.width, canvas.height);
+      }
+    } catch (err) {
+      console.error('Scan error:', err);
+      // Try jsQR as fallback
       scanWithJsQR(context, canvas.width, canvas.height);
     }
 
+    // Continue scanning
     animationRef.current = requestAnimationFrame(scanFrame);
-  }, [scanning, processing, showResult]);
+  }, []);
 
-  // Fallback QR scanner using jsQR library
+  // jsQR fallback scanner
   const scanWithJsQR = useCallback((context: CanvasRenderingContext2D, width: number, height: number) => {
-    if (processing || showResult) return;
+    if (processingRef.current || showResultRef.current) return;
 
     try {
       const imageData = context.getImageData(0, 0, width, height);
@@ -250,7 +299,7 @@ export function QRScanner({ locale }: QRScannerProps) {
       });
 
       if (code && code.data) {
-        // Prevent duplicate scans
+        console.log('jsQR found QR:', code.data.substring(0, 50) + '...');
         if (code.data !== lastScanRef.current) {
           lastScanRef.current = code.data;
           processQR(code.data);
@@ -259,13 +308,16 @@ export function QRScanner({ locale }: QRScannerProps) {
     } catch (err) {
       console.error('jsQR scan error:', err);
     }
-  }, [processing, showResult]);
+  }, []);
 
   const processQR = async (payload: string) => {
-    if (processing || !session) return;
+    if (processingRef.current || !sessionRef.current) return;
 
+    console.log('Processing QR code...');
+    
     try {
       setProcessing(true);
+      processingRef.current = true;
 
       const supabase = createEventClient();
       const { data: { session: authSession } } = await supabase.auth.getSession();
@@ -283,13 +335,14 @@ export function QRScanner({ locale }: QRScannerProps) {
         headers,
         body: JSON.stringify({
           qr_raw_value: payload,
-          event_id: session.event_id,
-          gate_id: session.gate_id,
+          event_id: sessionRef.current.event_id,
+          gate_id: sessionRef.current.gate_id,
           user_id: authSession?.user?.id,
         }),
       });
 
       const data: CheckInResult = await response.json();
+      console.log('Check-in result:', data.result);
 
       // Update stats
       setStats((prev) => ({
@@ -308,10 +361,12 @@ export function QRScanner({ locale }: QRScannerProps) {
       // Show result
       setCurrentResult(data);
       setShowResult(true);
+      showResultRef.current = true;
 
       // Auto-hide after 2 seconds
       setTimeout(() => {
         setShowResult(false);
+        showResultRef.current = false;
         setCurrentResult(null);
         lastScanRef.current = '';
       }, 2000);
@@ -322,16 +377,19 @@ export function QRScanner({ locale }: QRScannerProps) {
         message: err.message || t('CHECKIN_ERROR'),
       });
       setShowResult(true);
+      showResultRef.current = true;
       playSound('invalid');
       vibrate('invalid');
 
       setTimeout(() => {
         setShowResult(false);
+        showResultRef.current = false;
         setCurrentResult(null);
         lastScanRef.current = '';
       }, 2000);
     } finally {
       setProcessing(false);
+      processingRef.current = false;
     }
   };
 
@@ -520,6 +578,14 @@ export function QRScanner({ locale }: QRScannerProps) {
               {/* Scanning line animation */}
               <div className="absolute inset-x-4 top-4 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent animate-scan" />
             </div>
+            
+            {/* Scanning indicator */}
+            <div className="absolute bottom-8 left-0 right-0 flex justify-center">
+              <div className="bg-black/50 px-4 py-2 rounded-full flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-white text-sm">{t('CHECKIN_SCANNING') || 'Scanning...'}</span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -675,4 +741,3 @@ export function QRScanner({ locale }: QRScannerProps) {
     </div>
   );
 }
-

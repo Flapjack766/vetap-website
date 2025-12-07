@@ -356,5 +356,6 @@
   "CHECKIN_CHANGE_EVENT": "Etkinliği Değiştir",
   "CHECKIN_LOGOUT": "Çıkış Yap",
   "CHECKIN_RESET_STATS": "İstatistikleri Sıfırla",
-  "CHECKIN_ERROR": "Giriş işlemi başarısız"
+  "CHECKIN_ERROR": "Giriş işlemi başarısız",
+  "CHECKIN_SCANNING": "Taranıyor..."
 }
