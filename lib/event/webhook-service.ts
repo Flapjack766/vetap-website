@@ -4,6 +4,8 @@
  * Service for sending webhooks to partners with retry logic
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import crypto from 'crypto';
 import { createEventAdminClient } from '@/lib/supabase/event-admin';
 import type { WebhookEventType } from './types';
@@ -13,7 +15,7 @@ import type { WebhookEventType } from './types';
 interface WebhookPayload {
   event: WebhookEventType;
   timestamp: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 interface WebhookResult {
@@ -49,7 +51,7 @@ const WEBHOOK_TIMEOUT_MS = 10000;
 export async function sendWebhook(
   partnerId: string,
   eventType: WebhookEventType,
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   retryConfig: Partial<RetryConfig> = {}
 ): Promise<WebhookResult> {
   const config = { ...DEFAULT_RETRY_CONFIG, ...retryConfig };
@@ -101,9 +103,9 @@ export async function sendWebhook(
     await logWebhookAttempt(adminClient, partnerId, eventType, payload, result);
 
     return result;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Webhook service error:', error);
-    return { success: false, error_message: error.message || 'Unknown error' };
+    return { success: false, error_message: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
@@ -134,8 +136,8 @@ async function sendWithRetry(
       }
 
       lastError = result.error_message || `HTTP ${result.status_code}`;
-    } catch (error: any) {
-      lastError = error.message || 'Request failed';
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : 'Request failed';
     }
 
     // Wait before retry (except on last attempt)
@@ -196,11 +198,11 @@ async function sendSingleRequest(
       response_body: responseText.substring(0, 1000), // Limit response size
       error_message: response.ok ? undefined : `HTTP ${response.status}: ${response.statusText}`,
     };
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
       return { success: false, error_message: 'Request timed out' };
     }
-    return { success: false, error_message: error.message || 'Network error' };
+    return { success: false, error_message: error instanceof Error ? error.message : 'Network error' };
   } finally {
     clearTimeout(timeoutId);
   }
@@ -222,7 +224,7 @@ async function logWebhookAttempt(
       .insert({
         partner_id: partnerId,
         event_type: eventType,
-        payload: payload as any,
+        payload: payload as unknown as Record<string, unknown>,
         sent_at: new Date().toISOString(),
         response_status: result.status_code || null,
         response_body: result.response_body || null,
@@ -260,7 +262,7 @@ export async function sendTestWebhook(
 export async function triggerWebhook(
   eventType: WebhookEventType,
   partnerId: string,
-  data: Record<string, any>
+  data: Record<string, unknown>
 ): Promise<void> {
   // Fire and forget - don't wait for webhook to complete
   sendWebhook(partnerId, eventType, data).catch((error) => {
@@ -274,7 +276,7 @@ export async function triggerWebhook(
 export async function triggerWebhooksForEvent(
   eventType: WebhookEventType,
   partnerIds: string[],
-  data: Record<string, any>
+  data: Record<string, unknown>
 ): Promise<void> {
   await Promise.allSettled(
     partnerIds.map((partnerId) => sendWebhook(partnerId, eventType, data))

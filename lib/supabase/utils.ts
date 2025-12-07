@@ -1,4 +1,8 @@
 import { nanoid } from 'nanoid';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnySupabaseClient = SupabaseClient<any, any, any>;
 
 /**
  * Generate a random username for new users
@@ -13,7 +17,7 @@ export function generateRandomUsername(): string {
  * Check if username (random or custom) exists in database
  */
 export async function usernameExists(
-  supabase: any,
+  supabase: AnySupabaseClient,
   username: string
 ): Promise<boolean> {
   const { data, error } = await supabase
@@ -36,7 +40,7 @@ export async function usernameExists(
  * Works with both client and server Supabase instances
  */
 export async function generateUniqueRandomUsername(
-  supabase: any,
+  supabase: AnySupabaseClient,
   maxRetries: number = 5
 ): Promise<string> {
   for (let i = 0; i < maxRetries; i++) {
