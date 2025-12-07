@@ -316,6 +316,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
           return NextResponse.json({
             result: 'not_allowed_zone',
             message: `${guest.type} guests are not allowed at this gate`,
+            errorKey: 'CHECKIN_RESULT_NOT_ALLOWED',
             guest: { id: guest.id, full_name: guest.full_name, type: guest.type },
             pass: { id: pass.id, status: pass.status },
             event: event ? { id: event.id, name: event.name } : undefined,
