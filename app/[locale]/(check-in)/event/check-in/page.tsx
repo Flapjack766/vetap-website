@@ -1,6 +1,15 @@
 import { GateStaffLogin } from '@/app/(components)/event/check-in/GateStaffLogin';
+import type { Viewport } from 'next';
 
 export const dynamic = 'force-dynamic';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#0a0a0a',
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -9,8 +18,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: isArabic ? 'تسجيل الدخول - VETAP Check-in' : 'Check-in Login - VETAP',
     description: isArabic ? 'تسجيل دخول موظفي البوابة' : 'Gate staff login for check-in',
-    viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
-    themeColor: '#0f172a',
   };
 }
 

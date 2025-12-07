@@ -95,10 +95,8 @@ export function QRScanner({ locale }: QRScannerProps) {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Audio refs
-  const successSoundRef = useRef<HTMLAudioElement | null>(null);
-  const warningSoundRef = useRef<HTMLAudioElement | null>(null);
-  const errorSoundRef = useRef<HTMLAudioElement | null>(null);
+  // Audio context ref for Web Audio API
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // Load session on mount
   useEffect(() => {
@@ -110,20 +108,16 @@ export function QRScanner({ locale }: QRScannerProps) {
       return;
     }
 
-    // Initialize audio
+    // Initialize Web Audio API
     if (typeof window !== 'undefined') {
-      successSoundRef.current = new Audio('/sounds/success.mp3');
-      warningSoundRef.current = new Audio('/sounds/warning.mp3');
-      errorSoundRef.current = new Audio('/sounds/error.mp3');
-      
-      // Preload audio
-      successSoundRef.current.load();
-      warningSoundRef.current.load();
-      errorSoundRef.current.load();
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
 
     return () => {
       stopCamera();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
   }, [locale, router]);
 
@@ -553,18 +547,52 @@ export function QRScanner({ locale }: QRScannerProps) {
   // SOUND & VIBRATION
   // ==========================================
   const playSound = (result: ScanResult) => {
-    if (!soundEnabled) return;
+    if (!soundEnabled || !audioContextRef.current) return;
     try {
-      const audio = result === 'valid' 
-        ? successSoundRef.current 
-        : result === 'already_used' 
-          ? warningSoundRef.current 
-          : errorSoundRef.current;
-      if (audio) {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
+      const ctx = audioContextRef.current;
+      
+      // Resume audio context if suspended (required for iOS)
+      if (ctx.state === 'suspended') {
+        ctx.resume();
       }
-    } catch (err) {}
+
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      // Different tones for different results
+      if (result === 'valid') {
+        // Happy ascending tone
+        oscillator.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+        oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.4);
+      } else if (result === 'already_used') {
+        // Warning double beep
+        oscillator.frequency.setValueAtTime(440, ctx.currentTime); // A4
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.setValueAtTime(0, ctx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime + 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.3);
+      } else {
+        // Error descending tone
+        oscillator.frequency.setValueAtTime(349.23, ctx.currentTime); // F4
+        oscillator.frequency.setValueAtTime(261.63, ctx.currentTime + 0.15); // C4
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.35);
+      }
+    } catch (err) {
+      console.log('Audio playback error:', err);
+    }
   };
 
   const vibrate = (result: ScanResult) => {
@@ -626,11 +654,13 @@ export function QRScanner({ locale }: QRScannerProps) {
     }
   };
 
+  const isRTL = locale === 'ar';
+  
   // ==========================================
   // RENDER
   // ==========================================
   return (
-    <div className="fixed inset-0 bg-black flex flex-col">
+    <div className="fixed inset-0 bg-background flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hidden file input for fallback */}
       <input
         ref={fileInputRef}
@@ -645,29 +675,29 @@ export function QRScanner({ locale }: QRScannerProps) {
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Stats Bar */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-3 flex items-center justify-between z-20 border-b border-slate-700/50 safe-area-top">
+      <div className="bg-card/95 backdrop-blur-xl p-3 flex items-center justify-between z-20 border-b border-border/50 safe-area-top">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="text-center">
-            <div className="text-xl sm:text-2xl font-bold text-white">{stats.total}</div>
-            <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase">{t('CHECKIN_STATS_TOTAL')}</div>
+            <div className="text-xl sm:text-2xl font-bold text-foreground">{stats.total}</div>
+            <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase">{t('CHECKIN_STATS_TOTAL')}</div>
           </div>
-          <div className="w-px h-8 bg-slate-700" />
+          <div className="w-px h-8 bg-border" />
           <div className="text-center">
             <div className="text-xl sm:text-2xl font-bold text-emerald-400">{stats.valid}</div>
-            <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase">{t('CHECKIN_STATS_VALID')}</div>
+            <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase">{t('CHECKIN_STATS_VALID')}</div>
           </div>
           <div className="text-center">
             <div className="text-xl sm:text-2xl font-bold text-amber-400">{stats.already_used}</div>
-            <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase">{t('CHECKIN_STATS_USED')}</div>
+            <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase">{t('CHECKIN_STATS_USED')}</div>
           </div>
           <div className="text-center">
             <div className="text-xl sm:text-2xl font-bold text-red-400">{stats.invalid}</div>
-            <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase">{t('CHECKIN_STATS_INVALID')}</div>
+            <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase">{t('CHECKIN_STATS_INVALID')}</div>
           </div>
         </div>
         <button
           onClick={() => setShowSettings(true)}
-          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+          className="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors"
         >
           <Settings className="h-5 w-5" />
         </button>
@@ -675,20 +705,20 @@ export function QRScanner({ locale }: QRScannerProps) {
 
       {/* Event Info Bar */}
       {session && (
-        <div className="bg-slate-900/80 px-4 py-2 flex items-center justify-between border-b border-slate-700/30">
+        <div className="bg-card/80 backdrop-blur px-4 py-2 flex items-center justify-between border-b border-border/30">
           <div className="flex items-center gap-2 text-sm">
             <QrCode className="h-4 w-4 text-emerald-500" />
-            <span className="text-white font-medium truncate max-w-[150px] sm:max-w-none">{session.event_name}</span>
+            <span className="text-foreground font-medium truncate max-w-[150px] sm:max-w-none">{session.event_name}</span>
             {session.gate_name && (
               <>
-                <span className="text-slate-600">•</span>
-                <span className="text-slate-400 truncate max-w-[80px] sm:max-w-none">{session.gate_name}</span>
+                <span className="text-border">•</span>
+                <span className="text-muted-foreground truncate max-w-[80px] sm:max-w-none">{session.gate_name}</span>
               </>
             )}
           </div>
           {/* Debug: Show scan count */}
           {scanning && (
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-muted-foreground">
               Scans: {scanCount}
             </div>
           )}
@@ -696,15 +726,17 @@ export function QRScanner({ locale }: QRScannerProps) {
       )}
 
       {/* Camera View */}
-      <div className="flex-1 relative overflow-hidden bg-black">
+      <div className="flex-1 relative overflow-hidden bg-background">
         {/* Camera Error State */}
         {cameraError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-900 p-6 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-background p-6 z-10">
             <div className="text-center max-w-sm">
-              <CameraOff className="h-20 w-20 text-slate-600 mx-auto mb-4" />
-              <p className="text-white font-medium text-lg mb-2">{t('CHECKIN_CAMERA_ERROR_TITLE')}</p>
-              <p className="text-slate-400 text-sm mb-2">{cameraError}</p>
-              <p className="text-slate-500 text-xs mb-6">
+              <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                <CameraOff className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <p className="text-foreground font-medium text-lg mb-2">{t('CHECKIN_CAMERA_ERROR_TITLE')}</p>
+              <p className="text-muted-foreground text-sm mb-2">{cameraError}</p>
+              <p className="text-muted-foreground/70 text-xs mb-6">
                 {t('CHECKIN_USE_UPLOAD_INSTEAD') || 'You can upload a QR code image instead'}
               </p>
               
@@ -712,15 +744,15 @@ export function QRScanner({ locale }: QRScannerProps) {
                 {/* Primary: Upload Image Button */}
                 <Button 
                   onClick={() => fileInputRef.current?.click()} 
-                  className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700"
+                  className="w-full h-14 text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
                 >
-                  <Upload className="h-5 w-5 mr-2" />
+                  <Upload className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                   {t('CHECKIN_UPLOAD_IMAGE') || 'Upload QR Image'}
                 </Button>
                 
                 {/* Secondary: Retry Camera */}
-                <Button onClick={startCamera} variant="outline" className="w-full border-slate-600 text-slate-300 hover:bg-slate-800">
-                  <RotateCcw className="h-4 w-4 mr-2" />
+                <Button onClick={startCamera} variant="outline" className="w-full border-border text-muted-foreground hover:text-foreground hover:bg-muted">
+                  <RotateCcw className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                   {t('CHECKIN_RETRY')}
                 </Button>
               </div>
@@ -730,34 +762,42 @@ export function QRScanner({ locale }: QRScannerProps) {
 
         {/* Camera Not Started State */}
         {!cameraError && !scanning && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
-            <div className="text-center max-w-sm px-6">
-              <Camera className="h-16 w-16 text-emerald-500 mx-auto mb-4" />
-              <p className="text-white font-medium mb-2">{t('CHECKIN_TAP_TO_START') || 'Tap to start scanning'}</p>
-              <p className="text-slate-400 text-sm mb-6">
+          <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
+            {/* Background Pattern */}
+            <div className="absolute inset-0">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]" />
+            </div>
+            
+            <div className="text-center max-w-sm px-6 relative z-10">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20 flex items-center justify-center mx-auto mb-6">
+                <Camera className="h-10 w-10 text-white" />
+              </div>
+              <p className="text-foreground font-semibold text-lg mb-2">{t('CHECKIN_TAP_TO_START') || 'Tap to start scanning'}</p>
+              <p className="text-muted-foreground text-sm mb-8">
                 {t('CHECKIN_CAMERA_HINT') || 'Point your camera at a QR code to check in guests'}
               </p>
               
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* ✅ Button triggers camera - user interaction required */}
-                <Button onClick={startCamera} className="w-full bg-emerald-500 hover:bg-emerald-600 h-14 text-lg">
-                  <Camera className="h-5 w-5 mr-2" />
+                <Button onClick={startCamera} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 h-14 text-lg shadow-lg shadow-emerald-500/20">
+                  <Camera className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                   {t('CHECKIN_START_CAMERA')}
                 </Button>
                 
                 {/* Divider */}
                 <div className="flex items-center gap-3 my-4">
-                  <div className="flex-1 h-px bg-slate-700" />
-                  <span className="text-slate-500 text-sm">{t('CHECKIN_OR') || 'OR'}</span>
-                  <div className="flex-1 h-px bg-slate-700" />
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-muted-foreground text-sm">{t('CHECKIN_OR') || 'OR'}</span>
+                  <div className="flex-1 h-px bg-border" />
                 </div>
                 
                 {/* Upload Image Button - More prominent */}
                 <Button 
                   onClick={() => fileInputRef.current?.click()} 
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700"
+                  variant="outline"
+                  className="w-full h-12 border-border text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
-                  <Upload className="h-5 w-5 mr-2" />
+                  <Upload className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                   {t('CHECKIN_UPLOAD_IMAGE') || 'Upload QR Image'}
                 </Button>
               </div>
@@ -856,11 +896,11 @@ export function QRScanner({ locale }: QRScannerProps) {
       </div>
 
       {/* Bottom Controls */}
-      <div className="bg-slate-900 p-4 flex items-center justify-center gap-4 border-t border-slate-700/50 safe-area-bottom">
+      <div className="bg-card/95 backdrop-blur-xl p-4 flex items-center justify-center gap-3 border-t border-border/50 safe-area-bottom">
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className={`p-3 rounded-xl transition-colors ${
-            soundEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
+            soundEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-muted text-muted-foreground'
           }`}
         >
           {soundEnabled ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
@@ -869,7 +909,7 @@ export function QRScanner({ locale }: QRScannerProps) {
         {scanning && (
           <button
             onClick={switchCamera}
-            className="p-3 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-3 rounded-xl bg-muted text-muted-foreground hover:text-foreground transition-colors"
             title={t('CHECKIN_SWITCH_CAMERA') || 'Switch Camera'}
           >
             <SwitchCamera className="h-6 w-6" />
@@ -879,7 +919,7 @@ export function QRScanner({ locale }: QRScannerProps) {
         {/* Upload Image Button - More prominent */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white transition-colors shadow-lg shadow-emerald-500/20"
           title={t('CHECKIN_UPLOAD_IMAGE') || 'Upload QR Image'}
         >
           <Upload className="h-5 w-5" />
@@ -889,7 +929,7 @@ export function QRScanner({ locale }: QRScannerProps) {
         {scanning && (
           <button
             onClick={stopCamera}
-            className="p-3 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+            className="p-3 rounded-xl bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors"
           >
             <CameraOff className="h-6 w-6" />
           </button>
@@ -898,13 +938,13 @@ export function QRScanner({ locale }: QRScannerProps) {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-slate-900 rounded-t-3xl sm:rounded-2xl w-full sm:w-96 max-h-[80vh] overflow-auto safe-area-bottom">
-            <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
-              <h3 className="text-lg font-semibold text-white">{t('CHECKIN_SETTINGS')}</h3>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+          <div className="bg-card rounded-t-3xl sm:rounded-2xl w-full sm:w-96 max-h-[80vh] overflow-auto safe-area-bottom border border-border/50">
+            <div className="flex items-center justify-between p-4 border-b border-border/50">
+              <h3 className="text-lg font-semibold text-foreground">{t('CHECKIN_SETTINGS')}</h3>
               <button
                 onClick={() => setShowSettings(false)}
-                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -912,13 +952,13 @@ export function QRScanner({ locale }: QRScannerProps) {
 
             <div className="p-4 space-y-4">
               {session && (
-                <div className="bg-slate-800/50 rounded-xl p-4 space-y-2">
-                  <div className="text-sm text-slate-400">{t('CHECKIN_CURRENT_EVENT')}</div>
-                  <div className="text-white font-medium">{session.event_name}</div>
+                <div className="bg-muted/50 rounded-xl p-4 space-y-2">
+                  <div className="text-sm text-muted-foreground">{t('CHECKIN_CURRENT_EVENT')}</div>
+                  <div className="text-foreground font-medium">{session.event_name}</div>
                   {session.gate_name && (
                     <>
-                      <div className="text-sm text-slate-400 mt-2">{t('CHECKIN_CURRENT_GATE')}</div>
-                      <div className="text-white font-medium">{session.gate_name}</div>
+                      <div className="text-sm text-muted-foreground mt-2">{t('CHECKIN_CURRENT_GATE')}</div>
+                      <div className="text-foreground font-medium">{session.gate_name}</div>
                     </>
                   )}
                 </div>
@@ -927,7 +967,7 @@ export function QRScanner({ locale }: QRScannerProps) {
               <div className="space-y-2">
                 <button
                   onClick={handleChangeEvent}
-                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-slate-800/50 text-white hover:bg-slate-800 transition-colors"
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-muted/50 text-foreground hover:bg-muted transition-colors"
                 >
                   <QrCode className="h-5 w-5 text-emerald-500" />
                   <span>{t('CHECKIN_CHANGE_EVENT')}</span>
@@ -935,17 +975,17 @@ export function QRScanner({ locale }: QRScannerProps) {
 
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
                 >
                   <LogOut className="h-5 w-5" />
                   <span>{t('CHECKIN_LOGOUT')}</span>
                 </button>
               </div>
 
-              <div className="pt-4 border-t border-slate-700/50">
+              <div className="pt-4 border-t border-border/50">
                 <button
                   onClick={() => setStats({ total: 0, valid: 0, already_used: 0, invalid: 0 })}
-                  className="w-full py-3 text-sm text-slate-500 hover:text-white transition-colors"
+                  className="w-full py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {t('CHECKIN_RESET_STATS')}
                 </button>

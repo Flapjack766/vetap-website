@@ -1,6 +1,15 @@
 import { QRScanner } from '@/app/(components)/event/check-in/QRScanner';
+import type { Viewport } from 'next';
 
 export const dynamic = 'force-dynamic';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#0a0a0a',
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -9,8 +18,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: isArabic ? 'ماسح QR - VETAP Check-in' : 'QR Scanner - VETAP Check-in',
     description: isArabic ? 'مسح تذاكر الضيوف' : 'Scan guest passes',
-    viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
-    themeColor: '#0f172a',
   };
 }
 
