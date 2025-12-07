@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import jsQR from 'jsqr';
 import {
   QrCode,
   Camera,
@@ -22,10 +21,22 @@ import {
   RotateCcw,
   Upload,
   SwitchCamera,
+  MoveVertical,
+  Target,
+  Sun,
+  Move,
+  ArrowDown,
+  ArrowUp,
 } from 'lucide-react';
 import { Button } from '@/app/(components)/ui/button';
 import { createEventClient, clearEventClient } from '@/lib/supabase/event-client';
 import type { ScanResult } from '@/lib/event/types';
+import { 
+  QRScannerEngine, 
+  ScanFeedback, 
+  ScanStatus,
+  getFeedbackColor,
+} from '@/lib/event/qr-scanner-engine';
 
 interface QRScannerProps {
   locale: string;
@@ -62,13 +73,14 @@ export function QRScanner({ locale }: QRScannerProps) {
   const router = useRouter();
   const t = useTranslations();
   
+  // Scanner Engine
+  const scannerEngine = useRef<QRScannerEngine>(new QRScannerEngine(2500));
+  
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const lastScanRef = useRef<string>('');
-  const lastScanTimeRef = useRef<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isScannningRef = useRef<boolean>(false);
   const processingRef = useRef<boolean>(false);
@@ -80,10 +92,13 @@ export function QRScanner({ locale }: QRScannerProps) {
   const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-  const [scanCount, setScanCount] = useState(0); // Debug: track scan attempts
+  const [scanCount, setScanCount] = useState(0);
 
   const [showResult, setShowResult] = useState(false);
   const [currentResult, setCurrentResult] = useState<CheckInResult | null>(null);
+
+  // Real-time feedback
+  const [feedback, setFeedback] = useState<ScanFeedback | null>(null);
 
   const [stats, setStats] = useState<ScanStats>({
     total: 0,
@@ -122,11 +137,13 @@ export function QRScanner({ locale }: QRScannerProps) {
   }, [locale, router]);
 
   // ==========================================
-  // START CAMERA - Triggered by user button click
+  // START CAMERA
   // ==========================================
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null);
+      setFeedback(null);
+      scannerEngine.current.reset();
       console.log('📷 [1/5] Starting camera via user interaction...');
 
       // Stop any existing stream first
@@ -135,8 +152,7 @@ export function QRScanner({ locale }: QRScannerProps) {
         streamRef.current = null;
       }
 
-      // ✅ High resolution for better QR detection
-      // ✅ facingMode: "environment" for back camera (or { ideal: "environment" })
+      // High resolution for better QR detection
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode: { ideal: facingMode },
@@ -148,8 +164,21 @@ export function QRScanner({ locale }: QRScannerProps) {
 
       console.log('📷 [2/5] Requesting camera with constraints:', constraints);
       
-      // ✅ getUserMedia - must be triggered by user interaction
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (constraintErr: any) {
+        if (constraintErr.name === 'OverconstrainedError') {
+          console.log('⚠️ Retrying with basic constraints...');
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: facingMode }, 
+            audio: false 
+          });
+        } else {
+          throw constraintErr;
+        }
+      }
+      
       streamRef.current = stream;
       
       const videoTrack = stream.getVideoTracks()[0];
@@ -161,12 +190,15 @@ export function QRScanner({ locale }: QRScannerProps) {
       });
 
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+        const video = videoRef.current;
+        video.srcObject = stream;
+        video.playsInline = true;
+        video.muted = true;
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
         
-        // ✅ Wait for loadedmetadata before starting
+        // Wait for loadedmetadata before starting
         await new Promise<void>((resolve, reject) => {
-          const video = videoRef.current!;
-          
           const onLoadedMetadata = () => {
             console.log('📷 [4/5] Video metadata loaded:', {
               videoWidth: video.videoWidth,
@@ -186,7 +218,6 @@ export function QRScanner({ locale }: QRScannerProps) {
           video.addEventListener('loadedmetadata', onLoadedMetadata);
           video.addEventListener('error', onError);
           
-          // Timeout after 10 seconds
           setTimeout(() => {
             video.removeEventListener('loadedmetadata', onLoadedMetadata);
             video.removeEventListener('error', onError);
@@ -194,19 +225,19 @@ export function QRScanner({ locale }: QRScannerProps) {
           }, 10000);
         });
 
-        // ✅ Verify video dimensions are not 0
-        if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
+        // Verify video dimensions are not 0
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
           throw new Error('Video dimensions are 0');
         }
 
-        await videoRef.current.play();
+        await video.play();
         console.log('📷 [5/5] Video playing, starting scan loop...');
         
         setCameraReady(true);
         setScanning(true);
         isScannningRef.current = true;
         
-        // ✅ Start scanning loop with requestAnimationFrame
+        // Start high-performance scanning loop
         startScanLoop();
       }
     } catch (err: any) {
@@ -220,30 +251,6 @@ export function QRScanner({ locale }: QRScannerProps) {
         errorMessage = t('CHECKIN_NO_CAMERA');
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
         errorMessage = t('CHECKIN_CAMERA_IN_USE') || 'Camera is in use by another application';
-      } else if (err.name === 'OverconstrainedError') {
-        // Try with basic constraints
-        console.log('⚠️ Retrying with basic constraints...');
-        try {
-          const basicStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: facingMode }, 
-            audio: false 
-          });
-          streamRef.current = basicStream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = basicStream;
-            await new Promise<void>((resolve) => {
-              videoRef.current!.onloadedmetadata = () => resolve();
-            });
-            await videoRef.current.play();
-            setCameraReady(true);
-            setScanning(true);
-            isScannningRef.current = true;
-            startScanLoop();
-            return;
-          }
-        } catch (retryErr) {
-          console.error('❌ Retry failed:', retryErr);
-        }
       }
       
       setCameraError(errorMessage);
@@ -261,31 +268,28 @@ export function QRScanner({ locale }: QRScannerProps) {
     
     isScannningRef.current = false;
     
-    // Stop animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
 
-    // Stop stream
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
-        track.stop();
-      });
+      streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
 
-    // Clear video
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
 
     setCameraReady(false);
     setScanning(false);
+    setFeedback(null);
+    scannerEngine.current.reset();
   }, []);
 
   // ==========================================
-  // SWITCH CAMERA (front/back)
+  // SWITCH CAMERA
   // ==========================================
   const switchCamera = useCallback(async () => {
     const newFacingMode = facingMode === 'environment' ? 'user' : 'environment';
@@ -293,20 +297,17 @@ export function QRScanner({ locale }: QRScannerProps) {
     
     if (scanning) {
       stopCamera();
-      setTimeout(() => {
-        startCamera();
-      }, 300);
+      setTimeout(() => startCamera(), 300);
     }
   }, [facingMode, scanning, stopCamera, startCamera]);
 
   // ==========================================
-  // SCAN LOOP using requestAnimationFrame
+  // HIGH-PERFORMANCE SCAN LOOP
   // ==========================================
   const startScanLoop = useCallback(() => {
-    console.log('🔄 Starting scan loop with requestAnimationFrame...');
+    console.log('🔄 Starting high-performance scan loop...');
     
     const scanFrame = () => {
-      // Check if we should continue scanning
       if (!isScannningRef.current) {
         console.log('🛑 Scan loop stopped');
         return;
@@ -317,88 +318,65 @@ export function QRScanner({ locale }: QRScannerProps) {
         performScan();
       }
 
-      // ✅ Use requestAnimationFrame for smooth, synchronized scanning
+      // Continue loop at max frame rate
       animationFrameRef.current = requestAnimationFrame(scanFrame);
     };
 
-    // Start the loop
     animationFrameRef.current = requestAnimationFrame(scanFrame);
   }, [showResult]);
 
   // ==========================================
-  // PERFORM SINGLE SCAN with jsQR
+  // PERFORM SCAN WITH FEEDBACK
   // ==========================================
   const performScan = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
     if (!video || !canvas) return;
-    
-    // ✅ Check video is ready and has valid dimensions
     if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
     if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
-    // ✅ Get context with willReadFrequently for performance
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
-    // ✅ Set canvas dimensions from actual video values
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
     
-    // ✅ Crop center region only (reduces noise, increases speed)
-    // Use 70% of the center for scanning
-    const cropRatio = 0.7;
+    // Use 80% of center for scanning (larger area for faster detection)
+    const cropRatio = 0.8;
     const cropWidth = Math.floor(videoWidth * cropRatio);
     const cropHeight = Math.floor(videoHeight * cropRatio);
     const cropX = Math.floor((videoWidth - cropWidth) / 2);
     const cropY = Math.floor((videoHeight - cropHeight) / 2);
 
-    // Set canvas to crop size
     canvas.width = cropWidth;
     canvas.height = cropHeight;
 
-    // Draw only the center region
     ctx.drawImage(
       video,
-      cropX, cropY, cropWidth, cropHeight,  // Source (center crop)
-      0, 0, cropWidth, cropHeight            // Destination (full canvas)
+      cropX, cropY, cropWidth, cropHeight,
+      0, 0, cropWidth, cropHeight
     );
 
-    // Get image data
     const imageData = ctx.getImageData(0, 0, cropWidth, cropHeight);
 
-    // Update scan count for debugging
+    // Update scan count
     setScanCount(prev => prev + 1);
 
-    // ✅ Decode QR with jsQR - enable inversionAttempts for better detection
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: 'attemptBoth', // ✅ Try both normal and inverted colors
-    });
+    // Use scanner engine for intelligent feedback
+    const result = scannerEngine.current.scan(imageData, cropWidth, cropHeight);
+    
+    // Update feedback UI
+    setFeedback(result.feedback);
 
-    if (code && code.data) {
-      const now = Date.now();
-      
-      // Prevent duplicate scans within 3 seconds
-      if (code.data === lastScanRef.current && now - lastScanTimeRef.current < 3000) {
-        return;
-      }
-
-      console.log('✅ QR Code detected!', {
-        data: code.data.substring(0, 50) + '...',
-        location: code.location,
-      });
-      
-      lastScanRef.current = code.data;
-      lastScanTimeRef.current = now;
-      
-      // Process the QR code
-      processQR(code.data);
+    // Process successful scan
+    if (result.success && result.data) {
+      processQR(result.data);
     }
   }, []);
 
   // ==========================================
-  // HANDLE FILE INPUT (fallback)
+  // HANDLE FILE INPUT
   // ==========================================
   const handleFileInput = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -428,15 +406,13 @@ export function QRScanner({ locale }: QRScannerProps) {
       ctx.drawImage(image, 0, 0);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'attemptBoth',
-      });
+      const result = scannerEngine.current.scan(imageData, canvas.width, canvas.height);
 
       URL.revokeObjectURL(imageUrl);
 
-      if (code && code.data) {
-        console.log('✅ QR Code found in image:', code.data.substring(0, 50) + '...');
-        await processQR(code.data);
+      if (result.success && result.data) {
+        console.log('✅ QR Code found in image');
+        await processQR(result.data);
       } else {
         console.log('❌ No QR code found in image');
         setCurrentResult({
@@ -521,7 +497,7 @@ export function QRScanner({ locale }: QRScannerProps) {
         setCurrentResult(null);
         setProcessing(false);
         processingRef.current = false;
-        lastScanRef.current = ''; // Allow re-scanning same QR
+        scannerEngine.current.reset();  // Allow re-scanning
       }, 2500);
     } catch (err: any) {
       console.error('❌ Check-in error:', err);
@@ -551,7 +527,6 @@ export function QRScanner({ locale }: QRScannerProps) {
     try {
       const ctx = audioContextRef.current;
       
-      // Resume audio context if suspended (required for iOS)
       if (ctx.state === 'suspended') {
         ctx.resume();
       }
@@ -562,19 +537,16 @@ export function QRScanner({ locale }: QRScannerProps) {
       oscillator.connect(gainNode);
       gainNode.connect(ctx.destination);
       
-      // Different tones for different results
       if (result === 'valid') {
-        // Happy ascending tone
-        oscillator.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-        oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
-        oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+        oscillator.frequency.setValueAtTime(523.25, ctx.currentTime);
+        oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
         gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.4);
       } else if (result === 'already_used') {
-        // Warning double beep
-        oscillator.frequency.setValueAtTime(440, ctx.currentTime); // A4
+        oscillator.frequency.setValueAtTime(440, ctx.currentTime);
         gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
         gainNode.gain.setValueAtTime(0, ctx.currentTime + 0.1);
         gainNode.gain.setValueAtTime(0.3, ctx.currentTime + 0.15);
@@ -582,9 +554,8 @@ export function QRScanner({ locale }: QRScannerProps) {
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.3);
       } else {
-        // Error descending tone
-        oscillator.frequency.setValueAtTime(349.23, ctx.currentTime); // F4
-        oscillator.frequency.setValueAtTime(261.63, ctx.currentTime + 0.15); // C4
+        oscillator.frequency.setValueAtTime(349.23, ctx.currentTime);
+        oscillator.frequency.setValueAtTime(261.63, ctx.currentTime + 0.15);
         gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
         oscillator.start(ctx.currentTime);
@@ -654,6 +625,18 @@ export function QRScanner({ locale }: QRScannerProps) {
     }
   };
 
+  const getFeedbackIconComponent = (status: ScanStatus) => {
+    switch (status) {
+      case 'detected': return CheckCircle;
+      case 'too_far': return ArrowDown;
+      case 'too_close': return ArrowUp;
+      case 'blurry': return Target;
+      case 'low_contrast': return Sun;
+      case 'partial': return Move;
+      default: return QrCode;
+    }
+  };
+
   const isRTL = locale === 'ar';
   
   // ==========================================
@@ -716,12 +699,6 @@ export function QRScanner({ locale }: QRScannerProps) {
               </>
             )}
           </div>
-          {/* Debug: Show scan count */}
-          {scanning && (
-            <div className="text-xs text-muted-foreground">
-              Scans: {scanCount}
-            </div>
-          )}
         </div>
       )}
 
@@ -741,7 +718,6 @@ export function QRScanner({ locale }: QRScannerProps) {
               </p>
               
               <div className="space-y-3">
-                {/* Primary: Upload Image Button */}
                 <Button 
                   onClick={() => fileInputRef.current?.click()} 
                   className="w-full h-14 text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
@@ -750,7 +726,6 @@ export function QRScanner({ locale }: QRScannerProps) {
                   {t('CHECKIN_UPLOAD_IMAGE') || 'Upload QR Image'}
                 </Button>
                 
-                {/* Secondary: Retry Camera */}
                 <Button onClick={startCamera} variant="outline" className="w-full border-border text-muted-foreground hover:text-foreground hover:bg-muted">
                   <RotateCcw className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                   {t('CHECKIN_RETRY')}
@@ -763,7 +738,6 @@ export function QRScanner({ locale }: QRScannerProps) {
         {/* Camera Not Started State */}
         {!cameraError && !scanning && (
           <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
-            {/* Background Pattern */}
             <div className="absolute inset-0">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]" />
             </div>
@@ -778,20 +752,17 @@ export function QRScanner({ locale }: QRScannerProps) {
               </p>
               
               <div className="space-y-4">
-                {/* ✅ Button triggers camera - user interaction required */}
                 <Button onClick={startCamera} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 h-14 text-lg shadow-lg shadow-emerald-500/20">
                   <Camera className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                   {t('CHECKIN_START_CAMERA')}
                 </Button>
                 
-                {/* Divider */}
                 <div className="flex items-center gap-3 my-4">
                   <div className="flex-1 h-px bg-border" />
                   <span className="text-muted-foreground text-sm">{t('CHECKIN_OR') || 'OR'}</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
                 
-                {/* Upload Image Button - More prominent */}
                 <Button 
                   onClick={() => fileInputRef.current?.click()} 
                   variant="outline"
@@ -805,46 +776,75 @@ export function QRScanner({ locale }: QRScannerProps) {
           </div>
         )}
 
-        {/* ✅ Video Element with playsInline for iPhone */}
+        {/* Video Element */}
         <video
           ref={videoRef}
           className={`w-full h-full object-cover ${!scanning ? 'hidden' : ''}`}
-          playsInline  // ✅ Required for iPhone
+          playsInline
           muted
           autoPlay
-          webkit-playsinline="true"  // ✅ Legacy Safari support
+          webkit-playsinline="true"
         />
 
-        {/* Scan Frame Overlay */}
+        {/* Scan Frame Overlay with Real-time Feedback */}
         {scanning && !showResult && (
           <div className="absolute inset-0 pointer-events-none">
-            {/* Darkened area outside scan region */}
             <div className="absolute inset-0 bg-black/50" />
             
-            {/* Clear scanning area (70% center - matches crop ratio) */}
+            {/* Scanning area */}
             <div 
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-              style={{ width: '70%', height: '70%', maxWidth: '320px', maxHeight: '320px' }}
+              style={{ width: '80%', height: '80%', maxWidth: '350px', maxHeight: '350px' }}
             >
-              {/* Cut out the center */}
               <div className="absolute inset-0 bg-transparent" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }} />
               
-              {/* Corner markers */}
-              <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-emerald-500 rounded-tl-xl" />
-              <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-emerald-500 rounded-tr-xl" />
-              <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-emerald-500 rounded-bl-xl" />
-              <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-emerald-500 rounded-br-xl" />
+              {/* Corner markers with dynamic color based on feedback */}
+              {(() => {
+                const cornerColor = feedback?.status === 'detected' 
+                  ? 'border-emerald-400' 
+                  : feedback?.status === 'too_far' || feedback?.status === 'too_close'
+                    ? 'border-amber-400'
+                    : feedback?.status === 'blurry' || feedback?.status === 'partial' || feedback?.status === 'low_contrast'
+                      ? 'border-orange-400'
+                      : 'border-emerald-500';
+                return (
+                  <>
+                    <div className={`absolute top-0 left-0 w-14 h-14 border-t-4 border-l-4 ${cornerColor} rounded-tl-2xl transition-colors duration-200`} />
+                    <div className={`absolute top-0 right-0 w-14 h-14 border-t-4 border-r-4 ${cornerColor} rounded-tr-2xl transition-colors duration-200`} />
+                    <div className={`absolute bottom-0 left-0 w-14 h-14 border-b-4 border-l-4 ${cornerColor} rounded-bl-2xl transition-colors duration-200`} />
+                    <div className={`absolute bottom-0 right-0 w-14 h-14 border-b-4 border-r-4 ${cornerColor} rounded-br-2xl transition-colors duration-200`} />
+                  </>
+                );
+              })()}
               
-              {/* Scanning line animation */}
+              {/* Animated scan line */}
               <div className="absolute inset-x-4 top-4 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent rounded-full animate-scan" />
             </div>
             
-            {/* Scanning indicator */}
+            {/* Real-time Feedback Indicator */}
             <div className="absolute bottom-24 left-0 right-0 flex justify-center">
-              <div className="bg-black/80 backdrop-blur-sm px-5 py-2.5 rounded-full flex items-center gap-3">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-white text-sm font-medium">{t('CHECKIN_SCANNING') || 'Scanning...'}</span>
-              </div>
+              {feedback && feedback.status !== 'scanning' && feedback.status !== 'idle' ? (
+                <div className={`px-5 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-sm border transition-all duration-300 ${
+                  feedback.status === 'detected' 
+                    ? 'bg-emerald-500/90 border-emerald-400 text-white' 
+                    : feedback.status === 'too_far' || feedback.status === 'too_close'
+                      ? 'bg-amber-500/90 border-amber-400 text-white'
+                      : 'bg-orange-500/90 border-orange-400 text-white'
+                }`}>
+                  {(() => {
+                    const IconComponent = getFeedbackIconComponent(feedback.status);
+                    return <IconComponent className="h-6 w-6" />;
+                  })()}
+                  <span className="font-semibold text-base">
+                    {isRTL ? feedback.messageAr : feedback.message}
+                  </span>
+                </div>
+              ) : (
+                <div className="bg-black/80 backdrop-blur-sm px-5 py-2.5 rounded-full flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-white text-sm font-medium">{t('CHECKIN_SCANNING') || 'Scanning...'}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -916,7 +916,6 @@ export function QRScanner({ locale }: QRScannerProps) {
           </button>
         )}
 
-        {/* Upload Image Button - More prominent */}
         <button
           onClick={() => fileInputRef.current?.click()}
           className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white transition-colors shadow-lg shadow-emerald-500/20"

@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import jsQR from 'jsqr';
 import {
   QrCode,
   CheckCircle,
@@ -21,10 +20,20 @@ import {
   Volume2,
   VolumeX,
   Ticket,
+  ArrowDown,
+  ArrowUp,
+  Target,
+  Sun,
+  Move,
 } from 'lucide-react';
 import { Button } from '@/app/(components)/ui/button';
 import { createEventClient } from '@/lib/supabase/event-client';
 import type { Event, ScanResult } from '@/lib/event/types';
+import { 
+  QRScannerEngine, 
+  ScanFeedback, 
+  ScanStatus,
+} from '@/lib/event/qr-scanner-engine';
 
 interface CheckInScannerProps {
   locale: string;
@@ -44,13 +53,14 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
   const t = useTranslations();
   const isRTL = locale === 'ar';
   
+  // Scanner Engine for intelligent feedback
+  const scannerEngine = useRef<QRScannerEngine>(new QRScannerEngine(2500));
+  
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const lastScanRef = useRef<string>('');
-  const lastScanTimeRef = useRef<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isScannningRef = useRef<boolean>(false);
   const processingRef = useRef<boolean>(false);
@@ -74,6 +84,9 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
   const [scanHistory, setScanHistory] = useState<ScanResultData[]>([]);
   const [processing, setProcessing] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  // Real-time feedback from scanner engine
+  const [feedback, setFeedback] = useState<ScanFeedback | null>(null);
 
   // Stats
   const [stats, setStats] = useState({
@@ -168,6 +181,8 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null);
+      setFeedback(null);
+      scannerEngine.current.reset();
       console.log('📷 [1/5] Starting camera via user interaction...');
 
       // ✅ Stop any existing stream first
@@ -315,7 +330,8 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
     setCameraReady(false);
     setProcessing(false);
     setLastScanResult(null);
-    lastScanRef.current = '';
+    setFeedback(null);
+    scannerEngine.current.reset();
   }, []);
 
   const switchCamera = useCallback(() => {
@@ -343,67 +359,44 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
     const canvas = canvasRef.current;
 
     if (!video || !canvas) return;
-    
-    // ✅ Check video is ready and has valid dimensions
     if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
     if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
-    // ✅ Get context with willReadFrequently for performance
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
-    // ✅ Set canvas dimensions from actual video values
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
 
-    // ✅ Crop center region only (reduces noise, increases speed)
-    // Use 70% of the center for scanning
-    const cropRatio = 0.7;
+    // Use 80% of center for faster detection
+    const cropRatio = 0.8;
     const cropWidth = Math.floor(videoWidth * cropRatio);
     const cropHeight = Math.floor(videoHeight * cropRatio);
     const cropX = Math.floor((videoWidth - cropWidth) / 2);
     const cropY = Math.floor((videoHeight - cropHeight) / 2);
 
-    // Set canvas to crop size
     canvas.width = cropWidth;
     canvas.height = cropHeight;
 
-    // Draw only the center region
     ctx.drawImage(
       video,
-      cropX, cropY, cropWidth, cropHeight,  // Source (center crop)
-      0, 0, cropWidth, cropHeight            // Destination (full canvas)
+      cropX, cropY, cropWidth, cropHeight,
+      0, 0, cropWidth, cropHeight
     );
 
-    // Get image data
     const imageData = ctx.getImageData(0, 0, cropWidth, cropHeight);
-
-    // Update scan count for debugging
     setScanCount(prev => prev + 1);
 
-    // ✅ Decode QR with jsQR - enable inversionAttempts for better detection
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: 'attemptBoth', // ✅ Try both normal and inverted colors
-    });
+    // Use scanner engine for intelligent detection with feedback
+    const result = scannerEngine.current.scan(imageData, cropWidth, cropHeight);
+    
+    // Update feedback UI
+    setFeedback(result.feedback);
 
-    if (code && code.data) {
-      const now = Date.now();
-      
-      // Prevent duplicate scans within 3 seconds
-      if (code.data === lastScanRef.current && now - lastScanTimeRef.current < 3000) {
-        return;
-      }
-
-      console.log('✅ QR Code detected!', {
-        data: code.data.substring(0, 50) + '...',
-        location: code.location,
-      });
-      
-      lastScanRef.current = code.data;
-      lastScanTimeRef.current = now;
-      
-      // Process the QR code
-      processQRCode(code.data);
+    // Process successful scan
+    if (result.success && result.data) {
+      console.log('✅ QR Code detected!', result.data.substring(0, 50) + '...');
+      processQRCode(result.data);
     }
   }, []);
 
@@ -462,6 +455,7 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
       // Clear result after 2.5 seconds
       setTimeout(() => {
         setLastScanResult(null);
+        scannerEngine.current.reset();  // Allow re-scanning
       }, 2500);
 
     } catch (err: any) {
@@ -502,13 +496,13 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
         ctx.drawImage(img, 0, 0, img.width, img.height);
 
         const imageData = ctx.getImageData(0, 0, img.width, img.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'attemptBoth',
-        });
+        
+        // Use scanner engine for intelligent detection
+        const result = scannerEngine.current.scan(imageData, img.width, img.height);
 
-        if (code && code.data) {
+        if (result.success && result.data) {
           console.log('✅ QR found in image');
-          processQRCode(code.data);
+          processQRCode(result.data);
         } else {
           console.log('❌ No QR in image');
           setLastScanResult({
@@ -611,6 +605,18 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
       case 'not_allowed_zone': return t('EVENT_SCAN_RESULT_NOT_ALLOWED_ZONE') || 'Not Allowed';
       case 'revoked': return t('EVENT_SCAN_RESULT_REVOKED') || 'Revoked';
       default: return result;
+    }
+  };
+
+  const getFeedbackIconComponent = (status: ScanStatus) => {
+    switch (status) {
+      case 'detected': return CheckCircle;
+      case 'too_far': return ArrowDown;
+      case 'too_close': return ArrowUp;
+      case 'blurry': return Target;
+      case 'low_contrast': return Sun;
+      case 'partial': return Move;
+      default: return QrCode;
     }
   };
 
@@ -802,26 +808,62 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
           webkit-playsinline="true"  // ✅ Legacy Safari support
         />
 
-        {/* Scan Frame Overlay */}
+        {/* Scan Frame Overlay with Real-time Feedback */}
         {scanning && !lastScanResult && (
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0 bg-black/40" />
             <div 
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-              style={{ width: '60%', height: '60%', maxWidth: '280px', maxHeight: '280px' }}
+              style={{ width: '70%', height: '70%', maxWidth: '320px', maxHeight: '320px' }}
             >
               <div className="absolute inset-0 bg-transparent" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)' }} />
-              <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-emerald-500 rounded-tl-xl" />
-              <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-emerald-500 rounded-tr-xl" />
-              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-emerald-500 rounded-bl-xl" />
-              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-emerald-500 rounded-br-xl" />
+              
+              {/* Dynamic corner colors based on feedback */}
+              {(() => {
+                const cornerColor = feedback?.status === 'detected' 
+                  ? 'border-emerald-400' 
+                  : feedback?.status === 'too_far' || feedback?.status === 'too_close'
+                    ? 'border-amber-400'
+                    : feedback?.status === 'blurry' || feedback?.status === 'partial' || feedback?.status === 'low_contrast'
+                      ? 'border-orange-400'
+                      : 'border-emerald-500';
+                return (
+                  <>
+                    <div className={`absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 ${cornerColor} rounded-tl-2xl transition-colors duration-200`} />
+                    <div className={`absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 ${cornerColor} rounded-tr-2xl transition-colors duration-200`} />
+                    <div className={`absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 ${cornerColor} rounded-bl-2xl transition-colors duration-200`} />
+                    <div className={`absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 ${cornerColor} rounded-br-2xl transition-colors duration-200`} />
+                  </>
+                );
+              })()}
+              
               <div className="absolute inset-x-4 top-4 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent rounded-full animate-scan" />
             </div>
+            
+            {/* Real-time Feedback Indicator */}
             <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-              <div className="bg-black/70 backdrop-blur px-4 py-2 rounded-full flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-white text-sm">{t('CHECKIN_SCANNING') || 'Scanning...'}</span>
-              </div>
+              {feedback && feedback.status !== 'scanning' && feedback.status !== 'idle' ? (
+                <div className={`px-4 py-2.5 rounded-xl flex items-center gap-2.5 backdrop-blur-sm border transition-all duration-300 ${
+                  feedback.status === 'detected' 
+                    ? 'bg-emerald-500/90 border-emerald-400 text-white' 
+                    : feedback.status === 'too_far' || feedback.status === 'too_close'
+                      ? 'bg-amber-500/90 border-amber-400 text-white'
+                      : 'bg-orange-500/90 border-orange-400 text-white'
+                }`}>
+                  {(() => {
+                    const IconComponent = getFeedbackIconComponent(feedback.status);
+                    return <IconComponent className="h-5 w-5" />;
+                  })()}
+                  <span className="font-medium text-sm">
+                    {isRTL ? feedback.messageAr : feedback.message}
+                  </span>
+                </div>
+              ) : (
+                <div className="bg-black/70 backdrop-blur px-4 py-2 rounded-full flex items-center gap-2">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-white text-sm">{t('CHECKIN_SCANNING') || 'Scanning...'}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
