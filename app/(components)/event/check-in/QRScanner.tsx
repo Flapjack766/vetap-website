@@ -428,6 +428,90 @@ export function QRScanner({ locale }: QRScannerProps) {
   }, [currentResult]);
 
   // ==========================================
+  // PROCESS QR CODE
+  // ==========================================
+  const processQR = useCallback(async (payload: string) => {
+    if (processingRef.current || !session) return;
+
+    console.log('🔄 Processing QR code...');
+    setProcessing(true);
+    processingRef.current = true;
+
+    try {
+      const supabase = createEventClient();
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (authSession?.access_token) {
+        headers['Authorization'] = `Bearer ${authSession.access_token}`;
+      }
+
+      const response = await fetch('/api/event/check-in', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          qr_raw_value: payload,
+          event_id: session.event_id,
+          gate_id: session.gate_id,
+          user_id: authSession?.user?.id,
+        }),
+      });
+
+      const data: CheckInResult = await response.json();
+      console.log('✅ Check-in result:', data.result);
+
+      // Translate message if errorKey is provided
+      if (data.errorKey && data.message) {
+        data.message = t(data.errorKey) || data.message;
+      }
+
+      // Add to scan history (persistent)
+      setScanHistory(prev => {
+        const next = [data, ...prev.slice(0, 49)];
+        setStats(computeStats(next));
+        persistHistory(next);
+        return next;
+      }); // Keep last 50
+
+      // Play sound & vibrate
+      playSound(data.result);
+      vibrate(data.result);
+
+      // Show result
+      setCurrentResult(data);
+      setShowResult(true);
+
+      // Auto-hide after 2.5 seconds
+      setTimeout(() => {
+        setShowResult(false);
+        setCurrentResult(null);
+        setProcessing(false);
+        processingRef.current = false;
+      }, 2500);
+    } catch (err: any) {
+      console.error('❌ Check-in error:', err);
+      
+      setCurrentResult({
+        result: 'invalid',
+        message: err.message || t('CHECKIN_ERROR'),
+      });
+      setShowResult(true);
+      playSound('invalid');
+      vibrate('invalid');
+
+      setTimeout(() => {
+        setShowResult(false);
+        setCurrentResult(null);
+        setProcessing(false);
+        processingRef.current = false;
+      }, 2500);
+    }
+  }, [session, t, computeStats]);
+
+  // ==========================================
   // PERFORM SCAN WITH FEEDBACK
   // ==========================================
   const performScan = useCallback(() => {
@@ -535,94 +619,6 @@ export function QRScanner({ locale }: QRScannerProps) {
       }
     }
   }, [t]);
-
-  // ==========================================
-  // PROCESS QR CODE
-  // ==========================================
-  const processQR = useCallback(async (payload: string) => {
-    if (processingRef.current || !session) return;
-
-    console.log('🔄 Processing QR code...');
-    setProcessing(true);
-    processingRef.current = true;
-
-    try {
-      const supabase = createEventClient();
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      if (authSession?.access_token) {
-        headers['Authorization'] = `Bearer ${authSession.access_token}`;
-      }
-
-      const response = await fetch('/api/event/check-in', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          qr_raw_value: payload,
-          event_id: session.event_id,
-          gate_id: session.gate_id,
-          user_id: authSession?.user?.id,
-        }),
-      });
-
-      const data: CheckInResult = await response.json();
-      console.log('✅ Check-in result:', data.result);
-
-      // Translate message if errorKey is provided
-      if (data.errorKey && data.message) {
-        data.message = t(data.errorKey) || data.message;
-      }
-
-      // Add to scan history (persistent)
-      setScanHistory(prev => {
-        const next = [data, ...prev.slice(0, 49)];
-        setStats(computeStats(next));
-        persistHistory(next);
-        return next;
-      }); // Keep last 50
-
-      // Update stats
-      // Stats already recalculated above
-
-      // Play sound & vibrate
-      playSound(data.result);
-      vibrate(data.result);
-
-      // Show result
-      setCurrentResult(data);
-      setShowResult(true);
-
-      // Auto-hide after 2.5 seconds
-      setTimeout(() => {
-        setShowResult(false);
-        setCurrentResult(null);
-        setProcessing(false);
-        processingRef.current = false;
-        scannerEngine.current.reset();  // Allow re-scanning
-      }, 2500);
-    } catch (err: any) {
-      console.error('❌ Check-in error:', err);
-      
-      setCurrentResult({
-        result: 'invalid',
-        message: err.message || t('CHECKIN_ERROR'),
-      });
-      setShowResult(true);
-      playSound('invalid');
-      vibrate('invalid');
-
-      setTimeout(() => {
-        setShowResult(false);
-        setCurrentResult(null);
-        setProcessing(false);
-        processingRef.current = false;
-      }, 2500);
-    }
-  }, [session, t, computeStats]);
 
   // ==========================================
   // SOUND & VIBRATION
