@@ -60,6 +60,7 @@ interface CheckInResult {
     first_used_at?: string;
   };
   message?: string;
+  errorKey?: string;  // Translation key for error messages
 }
 
 interface ScanStats {
@@ -469,6 +470,11 @@ export function QRScanner({ locale }: QRScannerProps) {
 
       const data: CheckInResult = await response.json();
       console.log('✅ Check-in result:', data.result);
+
+      // Translate message if errorKey is provided
+      if (data.errorKey && data.message) {
+        data.message = t(data.errorKey) || data.message;
+      }
 
       // Update stats
       setStats((prev) => ({

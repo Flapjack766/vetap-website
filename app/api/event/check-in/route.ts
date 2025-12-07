@@ -34,6 +34,7 @@ interface CheckInRequest {
 interface CheckInResponse {
   result: ScanResult;
   message?: string;
+  errorKey?: string;  // Translation key for error messages
   guest?: {
     id: string;
     full_name: string;
@@ -107,7 +108,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       });
 
       return NextResponse.json(
-        { result: 'invalid', message: 'Missing required fields: qr_raw_value and event_id are required' },
+        { 
+          result: 'invalid', 
+          message: 'Missing required fields: qr_raw_value and event_id are required',
+          errorKey: 'CHECKIN_ERROR_MISSING_FIELDS'
+        },
         { status: 400 }
       );
     }
@@ -138,6 +143,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       return NextResponse.json({
         result: 'invalid',
         message: decodeResult.error || 'Invalid QR code format',
+        errorKey: 'CHECKIN_ERROR_INVALID_QR_FORMAT',
         scanned_at: new Date().toISOString(),
       });
     }
@@ -163,6 +169,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
         return NextResponse.json({
           result: 'invalid',
           message: 'QR code signature verification failed',
+          errorKey: 'CHECKIN_ERROR_SIGNATURE_FAILED',
           scanned_at: new Date().toISOString(),
         });
       }
@@ -204,7 +211,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       });
 
       return NextResponse.json(
-        { result: 'invalid', message: 'Database error occurred' },
+        { 
+          result: 'invalid', 
+          message: 'Database error occurred',
+          errorKey: 'CHECKIN_ERROR_DATABASE'
+        },
         { status: 500 }
       );
     }
@@ -224,6 +235,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       return NextResponse.json({
         result: 'invalid',
         message: 'Pass not found',
+        errorKey: 'CHECKIN_ERROR_PASS_NOT_FOUND',
         scanned_at: new Date().toISOString(),
       });
     }
@@ -249,6 +261,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       return NextResponse.json({
         result: 'invalid',
         message: 'Pass does not belong to this event',
+        errorKey: 'CHECKIN_ERROR_WRONG_EVENT',
         scanned_at: new Date().toISOString(),
       });
     }
@@ -333,6 +346,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       return NextResponse.json({
         result: 'invalid',
         message: 'Pass is not yet valid',
+        errorKey: 'CHECKIN_ERROR_NOT_VALID_YET',
         guest: guest ? { id: guest.id, full_name: guest.full_name, type: guest.type } : undefined,
         pass: { 
           id: pass.id, 
@@ -370,6 +384,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       return NextResponse.json({
         result: 'expired',
         message: 'Pass has expired',
+        errorKey: 'CHECKIN_ERROR_EXPIRED',
         guest: guest ? { id: guest.id, full_name: guest.full_name, type: guest.type } : undefined,
         pass: { 
           id: pass.id, 
@@ -407,6 +422,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       return NextResponse.json({
         result: 'expired',
         message: 'Pass has expired',
+        errorKey: 'CHECKIN_ERROR_EXPIRED',
         guest: guest ? { id: guest.id, full_name: guest.full_name, type: guest.type } : undefined,
         pass: { id: pass.id, status: pass.status },
         scanned_at: now.toISOString(),
@@ -441,6 +457,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       return NextResponse.json({
         result: 'revoked',
         message: 'Pass has been revoked',
+        errorKey: 'CHECKIN_ERROR_REVOKED',
         guest: guest ? { id: guest.id, full_name: guest.full_name, type: guest.type } : undefined,
         pass: { id: pass.id, status: 'revoked' },
         scanned_at: now.toISOString(),
@@ -479,6 +496,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
         return NextResponse.json({
           result: 'already_used',
           message: 'Pass has already been used',
+          errorKey: 'CHECKIN_ERROR_ALREADY_USED',
           guest: guest ? { id: guest.id, full_name: guest.full_name, type: guest.type } : undefined,
           pass: { 
             id: pass.id, 
@@ -532,6 +550,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
         return NextResponse.json({
           result: 'already_used',
           message: 'Pass was just used by another scanner',
+          errorKey: 'CHECKIN_ERROR_RACE_CONDITION',
           guest: guest ? { id: guest.id, full_name: guest.full_name, type: guest.type } : undefined,
           pass: { 
             id: pass.id, 
@@ -544,7 +563,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
 
       console.error('Pass update error:', updateError);
       return NextResponse.json(
-        { result: 'invalid', message: 'Failed to process check-in' },
+        { 
+          result: 'invalid', 
+          message: 'Failed to process check-in',
+          errorKey: 'CHECKIN_ERROR_PROCESSING_FAILED'
+        },
         { status: 500 }
       );
     }
@@ -578,6 +601,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
     return NextResponse.json({
       result: 'valid',
       message: 'Check-in successful',
+      errorKey: 'CHECKIN_SUCCESS',
       guest: guest ? {
         id: guest.id,
         full_name: guest.full_name,
@@ -613,7 +637,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
     });
 
     return NextResponse.json(
-      { result: 'invalid', message: error.message || 'Check-in failed' },
+      { 
+        result: 'invalid', 
+        message: error.message || 'Check-in failed',
+        errorKey: 'CHECKIN_ERROR_CHECKIN_FAILED'
+      },
       { status: 500 }
     );
   }

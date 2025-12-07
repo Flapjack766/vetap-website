@@ -44,6 +44,7 @@ interface ScanResultData {
   guest_name?: string;
   guest_type?: string;
   message?: string;
+  errorKey?: string;  // Translation key for error messages
   scanned_at?: string;
   first_used_at?: string;
 }
@@ -420,11 +421,18 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
 
       const data = await response.json();
       
+      // Translate message if errorKey is provided
+      let translatedMessage = data.message;
+      if (data.errorKey && data.message) {
+        translatedMessage = t(data.errorKey) || data.message;
+      }
+      
       const scanResultData: ScanResultData = {
         result: data.result || 'invalid',
         guest_name: data.guest?.full_name,
         guest_type: data.guest?.type,
-        message: data.message,
+        message: translatedMessage,
+        errorKey: data.errorKey,
         scanned_at: new Date().toISOString(),
         first_used_at: data.pass?.first_used_at,
       };
