@@ -860,16 +860,20 @@ export function QRScanner({ locale }: QRScannerProps) {
           <button
             onClick={switchCamera}
             className="p-3 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            title={t('CHECKIN_SWITCH_CAMERA') || 'Switch Camera'}
           >
             <SwitchCamera className="h-6 w-6" />
           </button>
         )}
 
+        {/* Upload Image Button - More prominent */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="p-3 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+          title={t('CHECKIN_UPLOAD_IMAGE') || 'Upload QR Image'}
         >
-          <Upload className="h-6 w-6" />
+          <Upload className="h-5 w-5" />
+          <span className="text-sm font-medium hidden sm:inline">{t('CHECKIN_UPLOAD_IMAGE') || 'Upload'}</span>
         </button>
 
         {scanning && (
