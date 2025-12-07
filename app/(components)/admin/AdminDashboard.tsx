@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UsernameRequestsTab } from './tabs/UsernameRequestsTab';
 import { TemplateRequestsTab } from './tabs/TemplateRequestsTab';
+import { BranchTrackingRequestsTab } from './tabs/BranchTrackingRequestsTab';
 import { UsersTab } from './tabs/UsersTab';
 import { VisitorsTab } from './tabs/VisitorsTab';
 
@@ -23,12 +24,15 @@ export function AdminDashboard({ locale }: AdminDashboardProps) {
 
       <Tabs defaultValue="username-requests" className="space-y-6">
         <div className="w-full">
-          <TabsList className="w-full min-w-max inline-flex md:w-auto md:grid md:grid-cols-4">
+          <TabsList className="w-full min-w-max inline-flex md:w-auto md:grid md:grid-cols-5">
             <TabsTrigger value="username-requests" className="whitespace-nowrap flex-shrink-0">
               {t('ADMIN3')}
             </TabsTrigger>
             <TabsTrigger value="template-requests" className="whitespace-nowrap flex-shrink-0">
               {t('TEMPLATE44')}
+            </TabsTrigger>
+            <TabsTrigger value="branch-tracking-requests" className="whitespace-nowrap flex-shrink-0">
+              {locale === 'ar' ? 'تتبع الفروع' : 'Branch Tracking'}
             </TabsTrigger>
             <TabsTrigger value="users" className="whitespace-nowrap flex-shrink-0">
               {t('ADMIN46')}
@@ -45,6 +49,10 @@ export function AdminDashboard({ locale }: AdminDashboardProps) {
 
         <TabsContent value="template-requests" className="space-y-4">
           <TemplateRequestsTab locale={locale} />
+        </TabsContent>
+
+        <TabsContent value="branch-tracking-requests" className="space-y-4">
+          <BranchTrackingRequestsTab locale={locale} />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">

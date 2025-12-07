@@ -1,9 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/check-expired-usernames",
-      "schedule": "0 0 * * *"
+      "path": "/api/google-business/sync-reviews",
+      "schedule": "0 * * * *"
     }
   ]
 }
-

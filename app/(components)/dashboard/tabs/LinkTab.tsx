@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/app/(components)/ui/button';
 import { Input } from '@/app/(components)/ui/input';
 import { Label } from '@/app/(components)/ui/label';
-import { Copy, ExternalLink, Calendar, AlertCircle, Loader2, Palette, Star, Upload, X, Image as ImageIcon, Eye } from 'lucide-react';
+import { Copy, ExternalLink, Calendar, AlertCircle, Loader2, Palette, Star, Upload, X, Image as ImageIcon, Eye, BarChart3, CheckCircle2, XCircle } from 'lucide-react';
 import { Textarea } from '@/app/(components)/ui/textarea';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
@@ -75,6 +75,12 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
   const [mounted, setMounted] = useState(false);
   const [customTemplate, setCustomTemplate] = useState<any>(null);
   const [loadingCustomTemplate, setLoadingCustomTemplate] = useState(false);
+  
+  // Branch Tracking Dashboard Request States
+  const [branchTrackingRequestLoading, setBranchTrackingRequestLoading] = useState(false);
+  const [branchTrackingRequestError, setBranchTrackingRequestError] = useState<string | null>(null);
+  const [branchTrackingRequestSuccess, setBranchTrackingRequestSuccess] = useState(false);
+  const [branchTrackingRequestStatus, setBranchTrackingRequestStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
 
   const randomUrl = `/${locale}/p/${profile.username_random}`;
   const customUrl = profile.username_custom 
@@ -145,10 +151,33 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
     }
   };
 
+  // Fetch branch tracking request status
+  const fetchBranchTrackingRequestStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('branch_tracking_requests')
+        .select('status')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setBranchTrackingRequestStatus(data.status);
+      }
+    } catch (err) {
+      console.error('Error fetching branch tracking request status:', err);
+    }
+  };
+
   // Load pending requests on mount and when profile changes
   useEffect(() => {
     fetchPendingRequests();
     fetchPendingTemplateRequests();
+    fetchBranchTrackingRequestStatus();
   }, [profile.id]); // Re-fetch when profile changes
 
   useEffect(() => {
@@ -169,6 +198,13 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
       setShowTemplateRequestForm(true);
       setTimeout(() => {
         const element = document.getElementById('custom-template-section');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } else if (activeSection === 'branch-tracking') {
+      setTimeout(() => {
+        const element = document.getElementById('branch-tracking-section');
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -435,6 +471,39 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
       setTemplateRequestError(t('TEMPLATE2'));
     } finally {
       setTemplateRequestLoading(false);
+    }
+  };
+
+  const handleBranchTrackingRequestSubmit = async () => {
+    setBranchTrackingRequestLoading(true);
+    setBranchTrackingRequestError(null);
+    setBranchTrackingRequestSuccess(false);
+
+    try {
+      const response = await fetch('/api/branch-tracking-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          profile_id: profile.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit request');
+      }
+
+      setBranchTrackingRequestSuccess(true);
+      setBranchTrackingRequestStatus('pending');
+      await fetchBranchTrackingRequestStatus();
+    } catch (err: any) {
+      console.error('Error submitting branch tracking request:', err);
+      setBranchTrackingRequestError(err.message || 'Failed to submit request');
+    } finally {
+      setBranchTrackingRequestLoading(false);
     }
   };
 
@@ -1027,6 +1096,96 @@ export function LinkTab({ profile, locale, activeSection }: LinkTabProps) {
                 </div>
               </CardContent>
             </Card>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Branch Tracking Dashboard Request */}
+      <Card id="branch-tracking-section">
+        <CardHeader className={isRTL ? 'text-right' : 'text-left'}>
+          <CardTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <BarChart3 className="h-5 w-5" />
+            {t('BRANCH_TRACKING_DASHBOARD')}
+          </CardTitle>
+          <CardDescription>
+            {t('BRANCH_TRACKING_DASHBOARD_DESC')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {branchTrackingRequestError && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {branchTrackingRequestError}
+            </div>
+          )}
+
+          {branchTrackingRequestSuccess && (
+            <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
+              {t('BRANCH_TRACKING_REQUEST_SUCCESS')}
+            </div>
+          )}
+
+          {branchTrackingRequestStatus === 'pending' && (
+            <div className="p-4 bg-yellow-500/10 rounded-lg">
+              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                  {t('BRANCH_TRACKING_REQUEST_PENDING')}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {branchTrackingRequestStatus === 'approved' && (
+            <div className="p-4 bg-green-500/10 rounded-lg">
+              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  {t('BRANCH_TRACKING_REQUEST_APPROVED')}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {branchTrackingRequestStatus === 'rejected' && (
+            <div className="p-4 bg-red-500/10 rounded-lg">
+              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {t('BRANCH_TRACKING_REQUEST_REJECTED')}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!branchTrackingRequestStatus && (
+            <div className="p-4 bg-muted rounded-lg">
+              <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </div>
+                <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
+                  <h3 className="font-semibold mb-1">
+                    {t('BRANCH_TRACKING_DASHBOARD')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t('BRANCH_TRACKING_DASHBOARD_DESC')}
+                  </p>
+                  <Button 
+                    onClick={handleBranchTrackingRequestSubmit}
+                    disabled={branchTrackingRequestLoading}
+                  >
+                    {branchTrackingRequestLoading ? (
+                      <>
+                        <Loader2 className={`h-4 w-4 animate-spin ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                        {t('BRANCH_TRACKING_SUBMITTING')}
+                      </>
+                    ) : (
+                      t('BRANCH_TRACKING_REQUEST_BUTTON')
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

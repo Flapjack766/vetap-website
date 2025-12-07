@@ -13,11 +13,21 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 31536000, // 1 year
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.in',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
-  experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
-    // ppr requires canary version, removed for stable Next.js 15
-  },
+  // Disable experimental optimizePackageImports (was causing vendor-chunks issues)
+  experimental: {},
   // Enable static optimization where possible
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   compiler: {

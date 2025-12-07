@@ -11,7 +11,7 @@ import { LinkTab } from './tabs/LinkTab';
 import { AnalyticsTab } from './tabs/AnalyticsTab';
 import { ReportsTab } from './tabs/ReportsTab';
 import { Button } from '@/app/(components)/ui/button';
-import { Shield } from 'lucide-react';
+import { Shield, BarChart3 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { ProfileSelector } from './ProfileSelector';
 import { getDirection } from '@/lib/utils/rtl';
@@ -29,6 +29,7 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState('profile');
   const [activeSection, setActiveSection] = useState<string | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
+  const [hasBranchTrackingAccess, setHasBranchTrackingAccess] = useState(false);
   const supabase = createClient();
   const tabsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +50,30 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
     };
 
     checkAdmin();
+    
+    // Check if user has approved branch tracking dashboard access
+    const checkBranchTrackingAccess = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('branch_tracking_requests')
+          .select('status')
+          .eq('user_id', user.id)
+          .eq('status', 'approved')
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && data) {
+          setHasBranchTrackingAccess(true);
+        }
+      } catch (error) {
+        console.error('Error checking branch tracking access:', error);
+      }
+    };
+
+    checkBranchTrackingAccess();
   }, []);
 
   // Scroll to top of tabs content when tab changes
@@ -94,16 +119,28 @@ export function DashboardContent({ profile, locale }: DashboardContentProps) {
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('DASH1')}</h1>
                 <p className="text-muted-foreground">{t('DASH2')}</p>
               </div>
-              {isAdmin && (
-                <Button
-                  variant="outline"
-                  onClick={() => router.push(`/${locale}/admin`)}
-                  className={`gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
-                >
-                  <Shield className="h-4 w-4" />
-                  {t('DASH53')}
-                </Button>
-              )}
+              <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                {hasBranchTrackingAccess && (
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push(`/${locale}/dashboard/tracking`)}
+                    className={`gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    {locale === 'ar' ? 'داشبورد تتبع الفروع' : 'Branch Tracking'}
+                  </Button>
+                )}
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push(`/${locale}/admin`)}
+                    className={`gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
+                  >
+                    <Shield className="h-4 w-4" />
+                    {t('DASH53')}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 

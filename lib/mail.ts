@@ -1,891 +1,216 @@
-type MailData = {
-  name: string;
-  email: string;
-  phone?: string;
-  message: string;
-  ticket: string;
-  locale?: 'ar' | 'en';
-  showcaseAnswers?: {
-    industry?: string;
-    industryOther?: string;
-    services?: string[];
-    budget?: string;
-    speed?: string;
-  };
+type Locale = 'ar' | 'en';
+
+type ShowcaseAnswers = {
+  industry?: string;
+  industryOther?: string;
+  services?: string[];
+  budget?: string;
+  speed?: string;
 };
 
-const baseStyles = `
-  body{margin:0;padding:0;background:#f5f5f5;color:#1a1a1a;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-  .wrap{max-width:640px;margin:auto;padding:32px}
-  .card{background:#ffffff;border:1px solid #e5e5e5;border-radius:16px;padding:24px;margin:16px 0;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
-  .brand{font-weight:700;font-size:24px;letter-spacing:.4px;margin-bottom:8px;color:#0a0a0a}
-  .muted{color:#666;font-size:14px}
-  .chip{display:inline-block;padding:8px 16px;border:1px solid #d4d4d4;border-radius:999px;background:#f5f5f5;font-weight:600;color:#0a0a0a}
-  .success{background:#22c55e;color:#fff;padding:12px;border-radius:8px;text-align:center;margin:16px 0}
-  h1{font-size:24px;margin:16px 0;color:#0a0a0a}
-  h2{font-size:18px;margin:12px 0;color:#262626}
-  p{margin:12px 0;line-height:1.6;color:#333}
-  pre{white-space:pre-wrap;word-wrap:break-word;background:#f9f9f9;padding:12px;border-radius:8px;border:1px solid #e5e5e5;color:#1a1a1a}
-  hr{border:0;border-top:1px solid #e5e5e5;margin:20px 0}
-  .info-row{display:flex;margin:8px 0;padding:8px;background:#f9f9f9;border-radius:6px}
-  .info-label{color:#666;min-width:100px;font-size:14px}
-  .info-value{color:#0a0a0a;font-weight:500}
-  .btn{display:inline-block;padding:12px 24px;background:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;margin:16px 0;text-align:center}
-  .btn:hover{background:#20BA5A}
-  .footer{text-align:center;padding:20px;color:#666;font-size:12px;border-top:1px solid #e5e5e5;margin-top:24px}
-  .alert{background:#f0f7ff;border-left:4px solid #3b82f6;padding:12px;border-radius:4px;margin:16px 0;color:#1a1a1a}
-  .whatsapp-icon{width:20px;height:20px;vertical-align:middle;margin-right:8px}
-`;
-
-export function renderClientEmailHTML(d: MailData): string {
-  const arabic = d.locale === 'ar';
-  const whatsappLink = `https://wa.me/966553198577?text=${encodeURIComponent(
-    arabic 
-      ? `مرحباً، رقم تذكرتي هو: ${d.ticket}` 
-      : `Hello, my ticket number is: ${d.ticket}`
-  )}`;
-  
-  return `
-  <!doctype html><html lang="${arabic ? 'ar' : 'en'}" dir="${arabic ? 'rtl' : 'ltr'}">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>${baseStyles}</style></head>
-  <body><div class="wrap">
-    
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:24px">
-      <div class="brand">VETAP</div>
-      <p class="muted">${arabic ? 'حلول رقمية متكاملة' : 'Integrated Digital Solutions'}</p>
-    </div>
-
-    <!-- Success Message -->
-    <div class="success">
-      <h1 style="margin:0;font-size:20px">✓ ${arabic ? 'تم استلام طلبك بنجاح!' : 'Request Received Successfully!'}</h1>
-    </div>
-
-    <!-- Ticket Info -->
-    <div class="card">
-      <p style="text-align:center;margin-bottom:16px">
-        ${arabic ? 'رقم التذكرة الخاص بك' : 'Your Ticket Number'}
-      </p>
-      <p style="text-align:center">
-        <span class="chip" style="font-size:18px">${d.ticket}</span>
-      </p>
-    </div>
-
-    <!-- Thank You Message -->
-    <div class="card">
-      <h2>${arabic ? '🙏 شكراً لتواصلك معنا!' : '🙏 Thank You for Contacting Us!'}</h2>
-      <p>${arabic 
-        ? 'نقدر اهتمامك بخدماتنا. تم استلام رسالتك وسيقوم فريقنا بمراجعتها والرد عليك في أقرب وقت ممكن.' 
-        : 'We appreciate your interest in our services. Your message has been received and our team will review it and respond to you as soon as possible.'
-      }</p>
-      
-      <div class="alert">
-        <p style="margin:0">
-          <strong>ℹ️ ${arabic ? 'ملاحظة:' : 'Note:'}</strong> 
-          ${arabic 
-            ? 'هذه رسالة آلية، يرجى عدم الرد عليها. سنتواصل معك عبر البريد الإلكتروني أو الهاتف.' 
-            : 'This is an automated message, please do not reply. We will contact you via email or phone.'
-          }
-        </p>
-      </div>
-    </div>
-
-    <!-- Client Information -->
-    <div class="card">
-      <h2>${arabic ? '📋 معلومات الطلب' : '📋 Request Information'}</h2>
-      
-      <div class="info-row">
-        <div class="info-label">${arabic ? 'الاسم:' : 'Name:'}</div>
-        <div class="info-value">${d.name}</div>
-      </div>
-      
-      <div class="info-row">
-        <div class="info-label">${arabic ? 'البريد الإلكتروني:' : 'Email:'}</div>
-        <div class="info-value">${d.email}</div>
-      </div>
-      
-      ${d.phone ? `
-      <div class="info-row">
-        <div class="info-label">${arabic ? 'رقم الهاتف:' : 'Phone Number:'}</div>
-        <div class="info-value">${d.phone}</div>
-      </div>
-      ` : ''}
-      
-      <div class="info-row">
-        <div class="info-label">${arabic ? 'التاريخ:' : 'Date:'}</div>
-        <div class="info-value">${new Date().toLocaleDateString(arabic ? 'ar-SA' : 'en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}</div>
-      </div>
-
-      <hr>
-      
-      <p><strong>${arabic ? '💬 رسالتك:' : '💬 Your Message:'}</strong></p>
-      <pre>${d.message}</pre>
-    </div>
-
-    <!-- WhatsApp Contact -->
-    <div class="card" style="text-align:center">
-      <h2>${arabic ? '💬 تواصل معنا عبر واتساب' : '💬 Contact Us on WhatsApp'}</h2>
-      <p class="muted">${arabic 
-        ? 'للحصول على رد سريع، يمكنك التواصل معنا مباشرة عبر واتساب' 
-        : 'For a quick response, you can contact us directly on WhatsApp'
-      }</p>
-      <a href="${whatsappLink}" class="btn" style="color:#fff">
-        <svg class="whatsapp-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-        </svg>
-        ${arabic ? 'تواصل عبر واتساب' : 'Chat on WhatsApp'}
-      </a>
-      <p class="muted" style="margin-top:8px">+966 553 198 577</p>
-    </div>
-
-    <!-- What's Next -->
-    <div class="card">
-      <h2>${arabic ? '📌 ماذا بعد؟' : '📌 What\'s Next?'}</h2>
-      <p>${arabic 
-        ? '1️⃣ سيقوم فريقنا بمراجعة طلبك خلال 24 ساعة<br>2️⃣ سنتواصل معك عبر البريد الإلكتروني أو الهاتف<br>3️⃣ يمكنك التواصل معنا مباشرة عبر واتساب للحصول على رد أسرع' 
-        : '1️⃣ Our team will review your request within 24 hours<br>2️⃣ We will contact you via email or phone<br>3️⃣ You can contact us directly on WhatsApp for a faster response'
-      }</p>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <p><strong>VETAP</strong> - ${arabic ? 'حلول رقمية متكاملة' : 'Integrated Digital Solutions'}</p>
-      <p class="muted">
-        📧 info@vetaps.com | 🌐 www.vetaps.com | 📱 +966 553 198 577
-      </p>
-      <p class="muted" style="margin-top:12px">
-        © ${new Date().getFullYear()} VETAP. ${arabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
-      </p>
-      <p class="muted" style="font-size:11px;margin-top:8px">
-        ${arabic 
-          ? 'هذه رسالة آلية من نظام VETAP. يرجى عدم الرد على هذا البريد الإلكتروني.' 
-          : 'This is an automated message from VETAP system. Please do not reply to this email.'
-        }
-      </p>
-    </div>
-
-  </div></body></html>`;
-}
-
-export function renderCompanyEmailHTML(d: MailData): string {
-  return `
-  <!doctype html><html lang="en">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>${baseStyles}</style></head>
-  <body><div class="wrap">
-    
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:24px">
-      <div class="brand">VETAP</div>
-      <p class="muted">Internal Notification System</p>
-    </div>
-
-    <!-- Alert Banner -->
-    <div style="background:#3b82f6;color:#fff;padding:16px;border-radius:8px;text-align:center;margin-bottom:16px">
-      <h1 style="margin:0;font-size:20px;color:#fff">🔔 New Contact Request</h1>
-    </div>
-
-    <!-- Ticket Info -->
-    <div class="card">
-      <p style="text-align:center;margin-bottom:16px;color:#666">
-        <strong>Ticket Number</strong>
-      </p>
-      <p style="text-align:center">
-        <span class="chip" style="font-size:18px">${d.ticket}</span>
-      </p>
-    </div>
-
-    <!-- Client Information -->
-    <div class="card">
-      <h2>📋 Client Information</h2>
-      
-      <div class="info-row">
-        <div class="info-label">Name:</div>
-        <div class="info-value">${d.name}</div>
-      </div>
-      
-      <div class="info-row">
-        <div class="info-label">Email:</div>
-        <div class="info-value"><a href="mailto:${d.email}" style="color:#3b82f6;text-decoration:none">${d.email}</a></div>
-      </div>
-      
-      ${d.phone ? `
-      <div class="info-row">
-        <div class="info-label">Phone:</div>
-        <div class="info-value"><a href="tel:${d.phone}" style="color:#3b82f6;text-decoration:none">${d.phone}</a></div>
-      </div>
-      ` : ''}
-      
-      <div class="info-row">
-        <div class="info-label">Language:</div>
-        <div class="info-value">${d.locale === 'ar' ? '🇸🇦 Arabic' : '🇬🇧 English'}</div>
-      </div>
-
-      <div class="info-row">
-        <div class="info-label">Date & Time:</div>
-        <div class="info-value">${new Date().toLocaleString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        })}</div>
-      </div>
-
-      <hr>
-      
-      <p><strong>💬 Message:</strong></p>
-      <pre>${d.message}</pre>
-    </div>
-
-    ${d.showcaseAnswers ? `
-    <!-- Showcase Answers -->
-    <div class="card">
-      <h2>📊 Interactive Showcase Answers</h2>
-      <p class="muted" style="margin-bottom:16px">Client selections from the interactive questionnaire:</p>
-      
-      ${d.showcaseAnswers.industry ? `
-      <div class="info-row">
-        <div class="info-label">Industry:</div>
-        <div class="info-value">${d.showcaseAnswers.industry === 'ecommerce' ? 'E-Commerce' : 
-          d.showcaseAnswers.industry === 'corporate' ? 'Corporate' : 
-          d.showcaseAnswers.industry === 'portfolio' ? 'Portfolio' : 
-          d.showcaseAnswers.industry === 'saas' ? 'SaaS' : 
-          d.showcaseAnswers.industry === 'other' ? `Other${d.showcaseAnswers.industryOther ? `: ${d.showcaseAnswers.industryOther}` : ''}` : 
-          d.showcaseAnswers.industry}</div>
-      </div>
-      ` : ''}
-      
-      ${d.showcaseAnswers.services && d.showcaseAnswers.services.length > 0 ? `
-      <div class="info-row">
-        <div class="info-label">Services:</div>
-        <div class="info-value">
-          ${d.showcaseAnswers.services.map((s: string) => 
-            s === 'websites' ? '• Websites & Pages' : 
-            s === 'nfc-business-card' ? '• NFC Business Card' : 
-            s === 'nfc-google-maps' ? '• NFC Google Maps Review Card' : 
-            s
-          ).join('<br>')}
-        </div>
-      </div>
-      ` : ''}
-      
-      ${d.showcaseAnswers.budget ? `
-      <div class="info-row">
-        <div class="info-label">Budget:</div>
-        <div class="info-value">${d.showcaseAnswers.budget === 'under-5k' ? 'Under $5,000' : 
-          d.showcaseAnswers.budget === '5k-15k' ? '$5,000 - $15,000' : 
-          d.showcaseAnswers.budget === '15k-50k' ? '$15,000 - $50,000' : 
-          d.showcaseAnswers.budget === '50k+' ? '$50,000+' : 
-          d.showcaseAnswers.budget}</div>
-      </div>
-      ` : ''}
-      
-      ${d.showcaseAnswers.speed ? `
-      <div class="info-row">
-        <div class="info-label">Speed Requirement:</div>
-        <div class="info-value">${d.showcaseAnswers.speed === 'standard' ? 'Standard (4-6 weeks)' : 
-          d.showcaseAnswers.speed === 'fast' ? 'Fast (2-3 weeks)' : 
-          d.showcaseAnswers.speed === 'express' ? 'Express (1 week)' : 
-          d.showcaseAnswers.speed}</div>
-      </div>
-      ` : ''}
-    </div>
-    ` : ''}
-
-    <!-- Quick Actions -->
-    <div class="card" style="text-align:center">
-      <h2>⚡ Quick Actions</h2>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <a href="mailto:${d.email}" style="display:inline-block;padding:10px 20px;background:#3b82f6;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">📧 Reply via Email</a>
-        ${d.phone ? `<a href="tel:${d.phone}" style="display:inline-block;padding:10px 20px;background:#22c55e;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">📞 Call Client</a>` : ''}
-        <a href="https://wa.me/${d.phone?.replace(/[^0-9]/g, '')}" style="display:inline-block;padding:10px 20px;background:#25D366;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">💬 WhatsApp</a>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <p><strong>VETAP Internal System</strong></p>
-      <p class="muted" style="margin-top:8px">
-        This is an automated notification from the contact form.
-      </p>
-      <p class="muted" style="margin-top:12px">
-        © ${new Date().getFullYear()} VETAP. All rights reserved.
-      </p>
-    </div>
-
-  </div></body></html>`;
-}
+export type MailData = {
+  name: string;
+  email: string;
+  phone?: string | null;
+  message: string;
+  ticket: string;
+  locale?: Locale;
+  showcaseAnswers?: ShowcaseAnswers | null;
+};
 
 type UsernameRequestData = {
   name: string;
   email: string;
   requested_username: string;
-  locale?: 'ar' | 'en';
+  locale?: Locale;
 };
 
-export function renderUsernameRequestEmailHTML(d: UsernameRequestData): string {
-  const arabic = d.locale === 'ar';
-  
-  return `
-<!doctype html>
-<html lang="${arabic ? 'ar' : 'en'}" dir="${arabic ? 'rtl' : 'ltr'}">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${arabic ? 'طلب اسم المستخدم المخصص' : 'Custom Username Request'}</title>
-    <style>
-      @media (max-width: 600px) {
-        .container {
-          width: 100% !important;
-          padding: 16px !important;
-        }
-        .card {
-          padding: 24px !important;
-        }
-        .title {
-          font-size: 24px !important;
-          line-height: 32px !important;
-        }
-      }
-    </style>
-  </head>
-  <body style="margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-      <tr>
-        <td align="center" style="padding:24px 16px;">
-          <table
-            role="presentation"
-            cellpadding="0"
-            cellspacing="0"
-            border="0"
-            width="100%"
-            class="container"
-            style="max-width:640px; width:640px;"
-          >
-            <!-- بطاقة المحتوى -->
-            <tr>
-              <td>
-                <table
-                  role="presentation"
-                  cellpadding="0"
-                  cellspacing="0"
-                  border="0"
-                  width="100%"
-                  class="card"
-                  style="
-                    border-radius:16px;
-                    padding:32px;
-                    border:1px solid #e5e7eb;
-                    box-shadow:0 10px 30px rgba(15,23,42,0.08);
-                  "
-                >
-                  <!-- الشعار داخل البطاقة -->
-                  <tr>
-                    <td align="left" style="padding-bottom:24px;">
-                      <img
-                        src="https://vetaps.com/supabase/supabaselogo.png"
-                        alt="VETAP"
-                        width="80"
-                        height="80"
-                        style="display:block;"
-                      />
-                    </td>
-                  </tr>
-
-                  <!-- النصوص والمحتوى -->
-                  <tr>
-                    <td>
-                      <h1
-                        class="title"
-                        style="
-                          margin:0 0 16px 0;
-                          font-size:30px;
-                          line-height:38px;
-                          font-weight:700;
-                          color:#111827;
-                        "
-                      >
-                        ${arabic ? 'طلبك قيد المراجعة' : 'Your Request is Under Review'}
-                      </h1>
-
-                      <p
-                        style="
-                          margin:0 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#111827;
-                        "
-                      >
-                        ${arabic ? 'مرحباً' : 'Hi'} ${d.name},
-                      </p>
-
-                      <p
-                        style="
-                          margin:0 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? `شكراً لك على طلب اسم المستخدم المخصص <strong style="color:#111827;">${d.requested_username}</strong> لحسابك في <strong style="color:#111827;">VETAP</strong>.`
-                          : `Thank you for requesting the custom username <strong style="color:#111827;">${d.requested_username}</strong> for your <strong style="color:#111827;">VETAP</strong> account.`
-                        }
-                      </p>
-
-                      <p
-                        style="
-                          margin:0 0 16px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'تم استلام طلبك بنجاح وهو الآن قيد المراجعة من قبل فريقنا. نعمل على معالجة طلبك بعناية لضمان تلبية جميع المتطلبات.'
-                          : 'Your request has been successfully received and is now under review by our team. We are processing your request carefully to ensure all requirements are met.'
-                        }
-                      </p>
-
-                      <!-- معلومات الطلب -->
-                      <div
-                        style="
-                          background-color:#f9fafb;
-                          border-radius:8px;
-                          padding:16px;
-                          margin:24px 0;
-                        "
-                      >
-                        <p
-                          style="
-                            margin:0 0 8px 0;
-                            font-size:12px;
-                            line-height:18px;
-                            color:#6b7280;
-                            font-weight:600;
-                            text-transform:uppercase;
-                          "
-                        >
-                          ${arabic ? 'معلومات الطلب' : 'Request Information'}
-                        </p>
-                        <p
-                          style="
-                            margin:0;
-                            font-size:16px;
-                            line-height:24px;
-                            color:#111827;
-                            font-weight:600;
-                          "
-                        >
-                          ${arabic ? 'اسم المستخدم المطلوب:' : 'Requested Username:'} <span style="color:#16a34a;">${d.requested_username}</span>
-                        </p>
-                      </div>
-
-                      <!-- معلومات الوقت -->
-                      <p
-                        style="
-                          margin:24px 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? '⏰ <strong style="color:#111827;">مدة المراجعة:</strong> قد تستغرق عملية مراجعة طلبك حتى <strong style="color:#111827;">72 ساعة</strong> (3 أيام عمل).'
-                          : '⏰ <strong style="color:#111827;">Review Time:</strong> The review process for your request may take up to <strong style="color:#111827;">72 hours</strong> (3 business days).'
-                        }
-                      </p>
-
-                      <p
-                        style="
-                          margin:0 0 16px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'سنقوم بإشعارك فوراً عند اكتمال المراجعة. ستصلك رسالة بريد إلكتروني أخرى تخبرك بنتيجة الطلب (القبول أو الرفض) مع أي تعليمات إضافية قد تكون مطلوبة.'
-                          : 'We will notify you immediately once the review is complete. You will receive another email informing you of the request outcome (approval or rejection) along with any additional instructions that may be required.'
-                        }
-                      </p>
-
-                      <!-- ملاحظة مهمة -->
-                      <div
-                        style="
-                          background-color:#fef3c7;
-                          border-left:4px solid #f59e0b;
-                          padding:12px 16px;
-                          border-radius:6px;
-                          margin:24px 0;
-                        "
-                      >
-                        <p
-                          style="
-                            margin:0;
-                            font-size:13px;
-                            line-height:20px;
-                            color:#92400e;
-                          "
-                        >
-                          <strong>ℹ️ ${arabic ? 'ملاحظة مهمة:' : 'Important Note:'}</strong><br>
-                          ${arabic 
-                            ? 'يرجى عدم إعادة إرسال الطلب خلال فترة المراجعة. إذا لم تتلق رداً خلال 72 ساعة، يرجى التواصل معنا عبر البريد الإلكتروني أو الهاتف.'
-                            : 'Please do not resubmit your request during the review period. If you do not receive a response within 72 hours, please contact us via email or phone.'
-                          }
-                        </p>
-                      </div>
-
-                      <p
-                        style="
-                          margin:24px 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'إذا كان لديك أي استفسارات أو تحتاج إلى مساعدة إضافية، لا تتردد في التواصل معنا.'
-                          : 'If you have any questions or need additional assistance, please feel free to contact us.'
-                        }
-                      </p>
-
-                      <p
-                        style="
-                          margin:0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'نشكرك على صبرك وتفهمك.'
-                          : 'Thank you for your patience and understanding.'
-                        }
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-
-            <!-- الفوتر -->
-            <tr>
-              <td align="center" style="padding-top:16px;">
-                <p
-                  style="
-                    margin:0;
-                    font-size:11px;
-                    line-height:16px;
-                    color:#6b7280;
-                  "
-                >
-                  © ${new Date().getFullYear()} VETAP. ${arabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
-                </p>
-                <p
-                  style="
-                    margin:8px 0 0 0;
-                    font-size:11px;
-                    line-height:16px;
-                    color:#6b7280;
-                  "
-                >
-                  ${arabic 
-                    ? 'هذه رسالة آلية، يرجى عدم الرد عليها. للاستفسارات، يرجى التواصل معنا عبر info@vetaps.com'
-                    : 'This is an automated message, please do not reply. For inquiries, please contact us at info@vetaps.com'
-                  }
-                </p>
-              </td>
-            </tr>
-
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
-}
-
-type UsernameApprovalData = {
-  name: string;
-  email: string;
-  requested_username: string;
+type UsernameApprovalData = UsernameRequestData & {
   expires_at: string;
-  locale?: 'ar' | 'en';
 };
 
-export function renderUsernameApprovalEmailHTML(d: UsernameApprovalData): string {
-  const arabic = d.locale === 'ar';
-  const expiresDate = new Date(d.expires_at).toLocaleDateString(
-    arabic ? 'ar-SA' : 'en-US',
-    { year: 'numeric', month: 'long', day: 'numeric' }
-  );
-  
-  return `
-<!doctype html>
-<html lang="${arabic ? 'ar' : 'en'}" dir="${arabic ? 'rtl' : 'ltr'}">
+type UsernameRejectionData = UsernameRequestData & {
+  rejection_reason?: string;
+};
+
+type BranchTrackingRequestData = {
+  name: string;
+  email: string;
+  locale?: Locale;
+};
+
+type BranchTrackingApprovalData = BranchTrackingRequestData;
+
+type BranchTrackingRejectionData = BranchTrackingRequestData & {
+  rejection_reason?: string;
+};
+
+const SITE_URL = process.env.SITE_URL || 'https://vetaps.com';
+const WHATSAPP_NUMBER = '+905346146038';
+const WHATSAPP_URL = 'https://wa.me/905346146038';
+
+const BRAND_TAGLINE: Record<Locale, string> = {
+  en: 'Integrated Digital Solutions',
+  ar: 'حلول رقمية متكاملة',
+};
+
+const baseStyles = `
+  :root {
+    color-scheme: light;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    padding: 32px 0;
+    background: #f4f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #0f172a;
+  }
+  table {
+    border-collapse: collapse;
+  }
+  .email-container {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.08);
+  }
+  .header {
+    padding: 32px;
+    text-align: center;
+    background: linear-gradient(135deg, #111827, #0f766e);
+    color: #ffffff;
+  }
+  .brand {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  .subtitle {
+    margin-top: 6px;
+    font-size: 14px;
+    opacity: 0.75;
+  }
+  .hero {
+    font-size: 28px;
+    line-height: 1.4;
+    margin: 16px 0 8px;
+  }
+  .hero-description {
+    font-size: 15px;
+    opacity: 0.85;
+    margin: 0;
+  }
+  .content {
+    padding: 32px;
+  }
+  .card {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .card h3 {
+    margin: 0 0 12px;
+    font-size: 18px;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .info-row:last-child {
+    border-bottom: none;
+  }
+  .info-label {
+    font-weight: 600;
+    color: #475569;
+  }
+  .info-value {
+    text-align: end;
+    color: #0f172a;
+    font-weight: 500;
+  }
+  .message-box {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-line;
+  }
+  .cta {
+    text-align: center;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: #0f766e;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    margin: 4px;
+  }
+  .muted {
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 32px;
+  }
+  @media (max-width: 480px) {
+    .content {
+      padding: 20px;
+    }
+    .info-row {
+      flex-direction: column;
+      text-align: start;
+    }
+    .info-value {
+      text-align: start;
+    }
+  }
+`;
+
+function resolveLocale(locale?: Locale | null): Locale {
+  return locale === 'ar' ? 'ar' : 'en';
+}
+
+function wrapEmail(locale: Locale, heading: string, description: string, body: string): string {
+  const dir = locale === 'ar' ? 'rtl' : 'ltr';
+
+  return `<!doctype html>
+<html lang="${locale}" dir="${dir}">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charSet="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${arabic ? 'تم قبول طلب اسم المستخدم المخصص' : 'Custom Username Request Approved'}</title>
-    <style>
-      @media (max-width: 600px) {
-        .container {
-          width: 100% !important;
-          padding: 16px !important;
-        }
-        .card {
-          padding: 24px !important;
-        }
-        .title {
-          font-size: 24px !important;
-          line-height: 32px !important;
-        }
-      }
-    </style>
+    <title>${heading}</title>
+    <style>${baseStyles}</style>
   </head>
-  <body style="margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+  <body>
+    <table class="email-container" role="presentation" width="100%">
       <tr>
-        <td align="center" style="padding:24px 16px;">
-          <table
-            role="presentation"
-            cellpadding="0"
-            cellspacing="0"
-            border="0"
-            width="100%"
-            class="container"
-            style="max-width:640px; width:640px;"
-          >
-            <!-- بطاقة المحتوى -->
-            <tr>
-              <td>
-                <table
-                  role="presentation"
-                  cellpadding="0"
-                  cellspacing="0"
-                  border="0"
-                  width="100%"
-                  class="card"
-                  style="
-                    border-radius:16px;
-                    padding:32px;
-                    border:1px solid #e5e7eb;
-                    box-shadow:0 10px 30px rgba(15,23,42,0.08);
-                  "
-                >
-                  <!-- الشعار داخل البطاقة -->
-                  <tr>
-                    <td align="left" style="padding-bottom:24px;">
-                      <img
-                        src="https://vetaps.com/supabase/supabaselogo.png"
-                        alt="VETAP"
-                        width="80"
-                        height="80"
-                        style="display:block;"
-                      />
-                    </td>
-                  </tr>
-
-                  <!-- النصوص والمحتوى -->
-                  <tr>
-                    <td>
-                      <h1
-                        class="title"
-                        style="
-                          margin:0 0 16px 0;
-                          font-size:30px;
-                          line-height:38px;
-                          font-weight:700;
-                          color:#16a34a;
-                        "
-                      >
-                        ${arabic ? '✓ تم قبول طلبك!' : '✓ Your Request Has Been Approved!'}
-                      </h1>
-
-                      <p
-                        style="
-                          margin:0 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#111827;
-                        "
-                      >
-                        ${arabic ? 'مرحباً' : 'Hi'} ${d.name},
-                      </p>
-
-                      <p
-                        style="
-                          margin:0 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? `يسعدنا إعلامك بأن طلب اسم المستخدم المخصص <strong style="color:#111827;">${d.requested_username}</strong> قد تم قبوله بنجاح.`
-                          : `We are pleased to inform you that your custom username request for <strong style="color:#111827;">${d.requested_username}</strong> has been approved.`
-                        }
-                      </p>
-
-                      <!-- معلومات القبول -->
-                      <div
-                        style="
-                          background-color:#f0fdf4;
-                          border-left:4px solid #16a34a;
-                          border-radius:8px;
-                          padding:16px;
-                          margin:24px 0;
-                        "
-                      >
-                        <p
-                          style="
-                            margin:0 0 8px 0;
-                            font-size:12px;
-                            line-height:18px;
-                            color:#166534;
-                            font-weight:600;
-                            text-transform:uppercase;
-                          "
-                        >
-                          ${arabic ? 'معلومات اسم المستخدم' : 'Username Information'}
-                        </p>
-                        <p
-                          style="
-                            margin:0 0 8px 0;
-                            font-size:16px;
-                            line-height:24px;
-                            color:#111827;
-                            font-weight:600;
-                          "
-                        >
-                          ${arabic ? 'اسم المستخدم المخصص:' : 'Custom Username:'} <span style="color:#16a34a;">${d.requested_username}</span>
-                        </p>
-                        <p
-                          style="
-                            margin:0;
-                            font-size:14px;
-                            line-height:22px;
-                            color:#166534;
-                          "
-                        >
-                          ${arabic 
-                            ? `⏰ <strong>تاريخ الانتهاء:</strong> ${expiresDate}`
-                            : `⏰ <strong>Expiration Date:</strong> ${expiresDate}`
-                          }
-                        </p>
-                      </div>
-
-                      <p
-                        style="
-                          margin:24px 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'يمكنك الآن استخدام اسم المستخدم المخصص الخاص بك للوصول إلى صفحة بروفايلك. رابط صفحتك هو:'
-                          : 'You can now use your custom username to access your profile page. Your profile link is:'
-                        }
-                      </p>
-
-                      <!-- رابط البروفايل -->
-                      <div
-                        style="
-                          background-color:#f9fafb;
-                          border-radius:8px;
-                          padding:16px;
-                          margin:24px 0;
-                          text-align:center;
-                        "
-                      >
-                        <p
-                          style="
-                            margin:0;
-                            font-size:14px;
-                            line-height:22px;
-                            color:#111827;
-                            font-weight:600;
-                            word-break:break-all;
-                          "
-                        >
-                          https://vetaps.com/p/${d.requested_username}
-                        </p>
-                      </div>
-
-                      <p
-                        style="
-                          margin:24px 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'نشكرك على اختيار VETAP. إذا كان لديك أي استفسارات أو تحتاج إلى مساعدة، لا تتردد في التواصل معنا.'
-                          : 'Thank you for choosing VETAP. If you have any questions or need assistance, please feel free to contact us.'
-                        }
-                      </p>
-
-                      <p
-                        style="
-                          margin:0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'نتمنى لك تجربة ممتعة معنا!'
-                          : 'We wish you a great experience with us!'
-                        }
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-
-            <!-- الفوتر -->
-            <tr>
-              <td align="center" style="padding-top:16px;">
-                <p
-                  style="
-                    margin:0;
-                    font-size:11px;
-                    line-height:16px;
-                    color:#6b7280;
-                  "
-                >
-                  © ${new Date().getFullYear()} VETAP. ${arabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
-                </p>
-                <p
-                  style="
-                    margin:8px 0 0 0;
-                    font-size:11px;
-                    line-height:16px;
-                    color:#6b7280;
-                  "
-                >
-                  ${arabic 
-                    ? 'هذه رسالة آلية، يرجى عدم الرد عليها. للاستفسارات، يرجى التواصل معنا عبر info@vetaps.com'
-                    : 'This is an automated message, please do not reply. For inquiries, please contact us at info@vetaps.com'
-                  }
-                </p>
-              </td>
-            </tr>
-
-          </table>
+        <td>
+          <div class="header">
+            <div class="brand">VETAP</div>
+            <div class="subtitle">${BRAND_TAGLINE[locale]}</div>
+            <p class="hero">${heading}</p>
+            <p class="hero-description">${description}</p>
+          </div>
+          <div class="content">
+            ${body}
+            <p class="muted">© ${new Date().getFullYear()} VETAP — ${BRAND_TAGLINE[locale]}</p>
+          </div>
         </td>
       </tr>
     </table>
@@ -893,284 +218,406 @@ export function renderUsernameApprovalEmailHTML(d: UsernameApprovalData): string
 </html>`;
 }
 
-type UsernameRejectionData = {
-  name: string;
-  email: string;
-  requested_username: string;
-  rejection_reason?: string;
-  locale?: 'ar' | 'en';
-};
+function escapeHtml(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-export function renderUsernameRejectionEmailHTML(d: UsernameRejectionData): string {
-  const arabic = d.locale === 'ar';
-  
-  return `
-<!doctype html>
-<html lang="${arabic ? 'ar' : 'en'}" dir="${arabic ? 'rtl' : 'ltr'}">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${arabic ? 'تم رفض طلب اسم المستخدم المخصص' : 'Custom Username Request Rejected'}</title>
-    <style>
-      @media (max-width: 600px) {
-        .container {
-          width: 100% !important;
-          padding: 16px !important;
-        }
-        .card {
-          padding: 24px !important;
-        }
-        .title {
-          font-size: 24px !important;
-          line-height: 32px !important;
-        }
-      }
-    </style>
-  </head>
-  <body style="margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-      <tr>
-        <td align="center" style="padding:24px 16px;">
-          <table
-            role="presentation"
-            cellpadding="0"
-            cellspacing="0"
-            border="0"
-            width="100%"
-            class="container"
-            style="max-width:640px; width:640px;"
-          >
-            <!-- بطاقة المحتوى -->
-            <tr>
-              <td>
-                <table
-                  role="presentation"
-                  cellpadding="0"
-                  cellspacing="0"
-                  border="0"
-                  width="100%"
-                  class="card"
-                  style="
-                    border-radius:16px;
-                    padding:32px;
-                    border:1px solid #e5e7eb;
-                    box-shadow:0 10px 30px rgba(15,23,42,0.08);
-                  "
-                >
-                  <!-- الشعار داخل البطاقة -->
-                  <tr>
-                    <td align="left" style="padding-bottom:24px;">
-                      <img
-                        src="https://vetaps.com/supabase/supabaselogo.png"
-                        alt="VETAP"
-                        width="80"
-                        height="80"
-                        style="display:block;"
-                      />
-                    </td>
-                  </tr>
+function formatInfoRow(label: string, value?: string | null): string {
+  if (!value) return '';
+  return `<div class="info-row"><span class="info-label">${label}</span><span class="info-value">${value}</span></div>`;
+}
 
-                  <!-- النصوص والمحتوى -->
-                  <tr>
-                    <td>
-                      <h1
-                        class="title"
-                        style="
-                          margin:0 0 16px 0;
-                          font-size:30px;
-                          line-height:38px;
-                          font-weight:700;
-                          color:#dc2626;
-                        "
-                      >
-                        ${arabic ? 'تم رفض طلبك' : 'Your Request Has Been Rejected'}
-                      </h1>
+function formatDateForLocale(date: Date, locale: Locale, includeTime = true): string {
+  const options: Intl.DateTimeFormatOptions = includeTime
+    ? { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+    : { year: 'numeric', month: 'long', day: 'numeric' };
 
-                      <p
-                        style="
-                          margin:0 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#111827;
-                        "
-                      >
-                        ${arabic ? 'مرحباً' : 'Hi'} ${d.name},
-                      </p>
+  return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-SA' : 'en-US', options).format(date);
+}
 
-                      <p
-                        style="
-                          margin:0 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? `نأسف لإعلامك بأن طلب اسم المستخدم المخصص <strong style="color:#111827;">${d.requested_username}</strong> قد تم رفضه.`
-                          : `We regret to inform you that your custom username request for <strong style="color:#111827;">${d.requested_username}</strong> has been rejected.`
-                        }
-                      </p>
+function renderShowcaseAnswers(answers: ShowcaseAnswers | null | undefined, locale: Locale): string {
+  if (!answers) return '';
 
-                      ${d.rejection_reason ? `
-                      <!-- سبب الرفض -->
-                      <div
-                        style="
-                          background-color:#fef2f2;
-                          border-left:4px solid #dc2626;
-                          border-radius:8px;
-                          padding:16px;
-                          margin:24px 0;
-                        "
-                      >
-                        <p
-                          style="
-                            margin:0 0 8px 0;
-                            font-size:12px;
-                            line-height:18px;
-                            color:#991b1b;
-                            font-weight:600;
-                            text-transform:uppercase;
-                          "
-                        >
-                          ${arabic ? 'سبب الرفض' : 'Rejection Reason'}
-                        </p>
-                        <p
-                          style="
-                            margin:0;
-                            font-size:14px;
-                            line-height:22px;
-                            color:#991b1b;
-                          "
-                        >
-                          ${d.rejection_reason}
-                        </p>
-                      </div>
-                      ` : ''}
+  const labels = {
+    title: locale === 'ar' ? 'تفاصيل الاستمارة التفاعلية' : 'Interactive Questionnaire Details',
+    industry: locale === 'ar' ? 'القطاع' : 'Industry',
+    services: locale === 'ar' ? 'الخدمات المطلوبة' : 'Requested Services',
+    budget: locale === 'ar' ? 'الميزانية المتوقعة' : 'Estimated Budget',
+    speed: locale === 'ar' ? 'السرعة المطلوبة' : 'Desired Timeline',
+  };
 
-                      <p
-                        style="
-                          margin:24px 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'قد يكون سبب الرفض أحد الأسباب التالية:'
-                          : 'The rejection may be due to one of the following reasons:'
-                        }
-                      </p>
+  const items: string[] = [];
 
-                      <ul
-                        style="
-                          margin:16px 0;
-                          padding-${arabic ? 'right' : 'left'}:24px;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        <li style="margin-bottom:8px;">
-                          ${arabic 
-                            ? 'اسم المستخدم محجوز أو غير متاح'
-                            : 'The username is reserved or unavailable'
-                          }
-                        </li>
-                        <li style="margin-bottom:8px;">
-                          ${arabic 
-                            ? 'اسم المستخدم لا يلتزم بسياساتنا'
-                            : 'The username does not comply with our policies'
-                          }
-                        </li>
-                        <li style="margin-bottom:8px;">
-                          ${arabic 
-                            ? 'اسم المستخدم مستخدم بالفعل من قبل مستخدم آخر'
-                            : 'The username is already in use by another user'
-                          }
-                        </li>
-                      </ul>
+  if (answers.industry) {
+    const other = answers.industry === 'other' && answers.industryOther ? ` — ${escapeHtml(answers.industryOther)}` : '';
+    items.push(formatInfoRow(labels.industry, `${escapeHtml(answers.industry)}${other}`));
+  }
 
-                      <p
-                        style="
-                          margin:24px 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'يمكنك تقديم طلب جديد باسم مستخدم مختلف من خلال لوحة التحكم الخاصة بك. ننصحك باختيار اسم مستخدم فريد ومتوافق مع سياساتنا.'
-                          : 'You can submit a new request with a different username through your dashboard. We recommend choosing a unique username that complies with our policies.'
-                        }
-                      </p>
+  if (answers.services?.length) {
+    const servicesList = answers.services.map((service) => escapeHtml(service)).join('<br />');
+    items.push(formatInfoRow(labels.services, servicesList));
+  }
 
-                      <p
-                        style="
-                          margin:24px 0 8px 0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'إذا كان لديك أي استفسارات حول سبب الرفض أو تحتاج إلى مساعدة في اختيار اسم مستخدم مناسب، لا تتردد في التواصل معنا.'
-                          : 'If you have any questions about the rejection reason or need help choosing an appropriate username, please feel free to contact us.'
-                        }
-                      </p>
+  if (answers.budget) {
+    items.push(formatInfoRow(labels.budget, escapeHtml(answers.budget)));
+  }
 
-                      <p
-                        style="
-                          margin:0;
-                          font-size:14px;
-                          line-height:22px;
-                          color:#4b5563;
-                        "
-                      >
-                        ${arabic 
-                          ? 'نشكرك على تفهمك.'
-                          : 'Thank you for your understanding.'
-                        }
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
+  if (answers.speed) {
+    items.push(formatInfoRow(labels.speed, escapeHtml(answers.speed)));
+  }
 
-            <!-- الفوتر -->
-            <tr>
-              <td align="center" style="padding-top:16px;">
-                <p
-                  style="
-                    margin:0;
-                    font-size:11px;
-                    line-height:16px;
-                    color:#6b7280;
-                  "
-                >
-                  © ${new Date().getFullYear()} VETAP. ${arabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
-                </p>
-                <p
-                  style="
-                    margin:8px 0 0 0;
-                    font-size:11px;
-                    line-height:16px;
-                    color:#6b7280;
-                  "
-                >
-                  ${arabic 
-                    ? 'هذه رسالة آلية، يرجى عدم الرد عليها. للاستفسارات، يرجى التواصل معنا عبر info@vetaps.com'
-                    : 'This is an automated message, please do not reply. For inquiries, please contact us at info@vetaps.com'
-                  }
-                </p>
-              </td>
-            </tr>
+  if (!items.length) return '';
 
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
+  return `<div class="card">
+    <h3>${labels.title}</h3>
+    ${items.join('')}
+  </div>`;
+}
+
+export function renderClientEmailHTML(data: MailData): string {
+  const locale = resolveLocale(data.locale);
+
+  const labels = {
+    heading: locale === 'ar' ? 'تم استلام طلبك بنجاح' : 'We Received Your Request',
+    description:
+      locale === 'ar'
+        ? `رقم التذكرة الخاص بك هو ${escapeHtml(data.ticket)}؛ سنعود إليك خلال أقل من 24 ساعة.`
+        : `Your ticket number is ${escapeHtml(data.ticket)} and we will get back to you within 24 hours.`,
+    summaryTitle: locale === 'ar' ? 'تفاصيل الطلب' : 'Request Details',
+    name: locale === 'ar' ? 'الاسم' : 'Name',
+    email: locale === 'ar' ? 'البريد الإلكتروني' : 'Email',
+    phone: locale === 'ar' ? 'رقم الهاتف' : 'Phone',
+    ticket: locale === 'ar' ? 'رقم التذكرة' : 'Ticket',
+    message: locale === 'ar' ? 'رسالتك' : 'Your Message',
+    thanks: locale === 'ar' ? 'فريق VETAP جاهز دائماً لمساعدتك.' : 'The VETAP team is always ready to help.',
+    followUp: locale === 'ar'
+      ? 'لأي استفسار عاجل يمكنك التواصل معنا عبر واتساب أو زيارة موقعنا.'
+      : 'For urgent questions feel free to contact us on WhatsApp or visit our website.',
+    messageLabel: locale === 'ar' ? '💬 رسالتك' : '💬 Message',
+  };
+
+  const details = [
+    formatInfoRow(labels.ticket, escapeHtml(data.ticket)),
+    formatInfoRow(labels.name, escapeHtml(data.name)),
+    formatInfoRow(labels.email, escapeHtml(data.email)),
+    formatInfoRow(labels.phone, escapeHtml(data.phone)),
+  ].join('');
+
+  const body = `
+    <div class="card">
+      <h3>${labels.summaryTitle}</h3>
+      ${details}
+      <div class="message-box">
+        <strong>${labels.messageLabel}</strong><br />
+        ${escapeHtml(data.message)}
+      </div>
+    </div>
+    ${renderShowcaseAnswers(data.showcaseAnswers, locale)}
+    <div class="card cta">
+      <p>${labels.followUp}</p>
+      <a class="btn" href="${WHATSAPP_URL}">WhatsApp ${WHATSAPP_NUMBER}</a>
+      <a class="btn" href="${SITE_URL}">${locale === 'ar' ? 'زيارة الموقع' : 'Visit Website'}</a>
+      <p style="margin-top:16px;font-size:13px;color:#64748b;">${labels.thanks}</p>
+    </div>
+  `;
+
+  return wrapEmail(locale, labels.heading, labels.description, body);
+}
+
+export function renderCompanyEmailHTML(data: MailData): string {
+  const locale = resolveLocale(data.locale);
+
+  const labels = {
+    heading: locale === 'ar' ? 'طلب تواصل جديد' : 'New Contact Submission',
+    description:
+      locale === 'ar'
+        ? `يرجى مراجعة الطلب رقم ${escapeHtml(data.ticket)} والتواصل مع العميل.`
+        : `Please review ticket ${escapeHtml(data.ticket)} and follow up with the client.`,
+    summaryTitle: locale === 'ar' ? 'بيانات العميل' : 'Client Information',
+    messageTitle: locale === 'ar' ? 'الرسالة' : 'Message',
+  };
+
+  const body = `
+    <div class="card">
+      <h3>${labels.summaryTitle}</h3>
+      ${formatInfoRow('Ticket', escapeHtml(data.ticket))}
+      ${formatInfoRow('Name', escapeHtml(data.name))}
+      ${formatInfoRow('Email', escapeHtml(data.email))}
+      ${formatInfoRow('Phone', escapeHtml(data.phone))}
+    </div>
+    <div class="card">
+      <h3>${labels.messageTitle}</h3>
+      <div class="message-box">${escapeHtml(data.message)}</div>
+    </div>
+    ${renderShowcaseAnswers(data.showcaseAnswers, locale)}
+  `;
+
+  return wrapEmail(locale, labels.heading, labels.description, body);
+}
+
+export function renderUsernameRequestEmailHTML(data: UsernameRequestData): string {
+  const locale = resolveLocale(data.locale);
+
+  const labels = {
+    heading: locale === 'ar' ? 'طلب اسم مستخدم مخصص' : 'Custom Username Request',
+    description:
+      locale === 'ar'
+        ? 'طلبك قيد المراجعة وسيتم الرد خلال 24-72 ساعة.'
+        : 'Your request is being reviewed and we will reply within 24-72 hours.',
+    summaryTitle: locale === 'ar' ? 'ملخص الطلب' : 'Request Summary',
+    username: locale === 'ar' ? 'الاسم المطلوب' : 'Requested Username',
+    status: locale === 'ar' ? 'الحالة' : 'Status',
+    statusValue: locale === 'ar' ? 'قيد المراجعة' : 'Pending Review',
+    note: locale === 'ar'
+      ? 'سيتواصل معك فريقنا عبر البريد الإلكتروني فور اتخاذ القرار.'
+      : 'Our team will contact you by email as soon as a decision is made.',
+  };
+
+  const body = `
+    <div class="card">
+      <h3>${labels.summaryTitle}</h3>
+      ${formatInfoRow(labels.username, `@${escapeHtml(data.requested_username)}`)}
+      ${formatInfoRow(labels.status, labels.statusValue)}
+    </div>
+    <div class="card">
+      <p style="margin:0;">${labels.note}</p>
+    </div>
+  `;
+
+  return wrapEmail(locale, labels.heading, labels.description, body);
+}
+
+export function renderUsernameApprovalEmailHTML(data: UsernameApprovalData): string {
+  const locale = resolveLocale(data.locale);
+  const expiry = formatDateForLocale(new Date(data.expires_at), locale);
+
+  const labels = {
+    heading: locale === 'ar' ? 'تمت الموافقة على اسم المستخدم' : 'Username Approved',
+    description:
+      locale === 'ar'
+        ? `يمكنك الآن استخدام @${escapeHtml(data.requested_username)} حتى ${expiry}.`
+        : `You can now use @${escapeHtml(data.requested_username)} until ${expiry}.`,
+    summaryTitle: locale === 'ar' ? 'تفاصيل الاشتراك' : 'Subscription Details',
+    username: locale === 'ar' ? 'الاسم المعتمد' : 'Approved Username',
+    expires: locale === 'ar' ? 'تاريخ انتهاء الصلاحية' : 'Expiration Date',
+    stepsTitle: locale === 'ar' ? 'الخطوات التالية' : 'Next Steps',
+    steps: locale === 'ar'
+      ? [
+          'قم بتحديث صفحة البروفايل من الداشبورد.',
+          'تابع تنبيهات انتهاء الاشتراك قبل التاريخ المحدد.',
+          'يمكنك طلب التمديد قبل 3 أيام من الانتهاء.',
+        ]
+      : [
+          'Update your profile link inside the dashboard.',
+          'Monitor the expiry date to keep the username active.',
+          'Request an extension at least 3 days before expiry.',
+        ],
+  };
+
+  const stepsList = labels.steps.map((step) => `<li>${step}</li>`).join('');
+
+  const body = `
+    <div class="card">
+      <h3>${labels.summaryTitle}</h3>
+      ${formatInfoRow(labels.username, `@${escapeHtml(data.requested_username)}`)}
+      ${formatInfoRow(labels.expires, expiry)}
+    </div>
+    <div class="card">
+      <h3>${labels.stepsTitle}</h3>
+      <ul style="padding-${locale === 'ar' ? 'right' : 'left'}:20px;margin:0;">
+        ${stepsList}
+      </ul>
+    </div>
+  `;
+
+  return wrapEmail(locale, labels.heading, labels.description, body);
+}
+
+export function renderUsernameRejectionEmailHTML(data: UsernameRejectionData): string {
+  const locale = resolveLocale(data.locale);
+
+  const labels = {
+    heading: locale === 'ar' ? 'تعذر الموافقة على اسم المستخدم' : 'Username Request Declined',
+    description:
+      locale === 'ar'
+        ? 'يمكنك تحديث الطلب واختيار اسم بديل في أي وقت.'
+        : 'You can update the request and choose an alternative username at any time.',
+    summaryTitle: locale === 'ar' ? 'تفاصيل المراجعة' : 'Review Details',
+    username: locale === 'ar' ? 'الاسم المطلوب' : 'Requested Username',
+    reasonTitle: locale === 'ar' ? 'سبب الرفض' : 'Reason',
+    defaultReason: locale === 'ar'
+      ? 'الاسم غير متاح أو لا يتوافق مع سياسات التسمية لدينا.'
+      : 'The username is unavailable or does not comply with our naming policies.',
+    actionsTitle: locale === 'ar' ? 'ماذا يمكنك أن تفعل؟' : 'What can you do next?',
+    actions: locale === 'ar'
+      ? [
+          'جرّب صيغة أخرى للاسم المطلوب.',
+          'تأكد من خلو الاسم من الرموز والمسافات.',
+          'اطلب مساعدة فريق الدعم في حال احتجت لتوصيات.',
+        ]
+      : [
+          'Try an alternative spelling of the desired username.',
+          'Ensure the username contains only lowercase letters, numbers, or hyphens.',
+          'Reach out to support if you need recommendations.',
+        ],
+  };
+
+  const reason = escapeHtml(data.rejection_reason) || labels.defaultReason;
+  const actionsList = labels.actions.map((action) => `<li>${action}</li>`).join('');
+
+  const body = `
+    <div class="card">
+      <h3>${labels.summaryTitle}</h3>
+      ${formatInfoRow(labels.username, `@${escapeHtml(data.requested_username)}`)}
+      <div class="message-box">
+        <strong>${labels.reasonTitle}</strong><br />
+        ${reason}
+      </div>
+    </div>
+    <div class="card">
+      <h3>${labels.actionsTitle}</h3>
+      <ul style="padding-${locale === 'ar' ? 'right' : 'left'}:20px;margin:0;">
+        ${actionsList}
+      </ul>
+    </div>
+  `;
+
+  return wrapEmail(locale, labels.heading, labels.description, body);
+}
+
+export function renderBranchTrackingRequestEmailHTML(data: BranchTrackingRequestData): string {
+  const locale = resolveLocale(data.locale);
+
+  const labels = {
+    heading: locale === 'ar' ? 'تم استلام طلب داشبورد تتبع الفروع' : 'Branch Tracking Request Received',
+    description:
+      locale === 'ar'
+        ? 'يقوم فريقنا بمراجعة طلبك وسيتم التواصل معك خلال 48 ساعة.'
+        : 'Our team is reviewing your request and will contact you within 48 hours.',
+    summaryTitle: locale === 'ar' ? 'ماذا يحدث بعد ذلك؟' : 'What happens next?',
+    steps: locale === 'ar'
+      ? [
+          'التحقق من نوع النشاط التجاري والفروع المرتبطة.',
+          'تفعيل الوصول إذا تم استيفاء المتطلبات.',
+          'استلام رسالة أخرى بنتيجة المراجعة.',
+        ]
+      : [
+          'We verify your business type and branch data.',
+          'Access is granted if all requirements are met.',
+          'You will receive another email with the final decision.',
+        ],
+  };
+
+  const stepsList = labels.steps.map((step) => `<li>${step}</li>`).join('');
+
+  const body = `
+    <div class="card">
+      <h3>${labels.summaryTitle}</h3>
+      <ul style="padding-${locale === 'ar' ? 'right' : 'left'}:20px;margin:0;">
+        ${stepsList}
+      </ul>
+    </div>
+    <div class="card cta">
+      <p>${locale === 'ar' ? 'يمكنك متابعة الطلب من خلال الداشبورد في تبويب "رابطك".' : 'You can monitor the request inside the dashboard under “Your Link”.'}</p>
+    </div>
+  `;
+
+  return wrapEmail(locale, labels.heading, labels.description, body);
+}
+
+export function renderBranchTrackingApprovalEmailHTML(data: BranchTrackingApprovalData): string {
+  const locale = resolveLocale(data.locale);
+
+  const labels = {
+    heading: locale === 'ar' ? 'تمت الموافقة على طلب داشبورد تتبع الفروع' : 'Branch Tracking Access Approved',
+    description:
+      locale === 'ar'
+        ? 'يمكنك الآن الوصول إلى لوحة تتبع الفروع والكروت من الداشبورد.'
+        : 'You can now access the Branch & Card Tracking dashboard from within your account.',
+    summaryTitle: locale === 'ar' ? 'كيف تبدأ؟' : 'Getting Started',
+    steps: locale === 'ar'
+      ? [
+          'سجّل الدخول إلى VETAP وافتح الداشبورد.',
+          'ستجد زر "Branch Tracking Dashboard" بجوار زر لوحة التحكم.',
+          'ابدأ بإضافة المنشآت والفروع ثم اربط كروت NFC بالرابط المناسب.',
+        ]
+      : [
+          'Log in to VETAP and open your dashboard.',
+          'You will see the “Branch Tracking Dashboard” button next to the main dashboard entry.',
+          'Add businesses, branches, and link NFC cards with the new link builder.',
+        ],
+  };
+
+  const stepsList = labels.steps.map((step) => `<li>${step}</li>`).join('');
+
+  const body = `
+    <div class="card">
+      <h3>${labels.summaryTitle}</h3>
+      <ul style="padding-${locale === 'ar' ? 'right' : 'left'}:20px;margin:0;">
+        ${stepsList}
+      </ul>
+    </div>
+    <div class="card cta">
+      <a class="btn" href="${SITE_URL}/dashboard">${locale === 'ar' ? 'تسجيل الدخول إلى الداشبورد' : 'Open Dashboard'}</a>
+    </div>
+  `;
+
+  return wrapEmail(locale, labels.heading, labels.description, body);
+}
+
+export function renderBranchTrackingRejectionEmailHTML(data: BranchTrackingRejectionData): string {
+  const locale = resolveLocale(data.locale);
+
+  const labels = {
+    heading: locale === 'ar' ? 'طلب تتبع الفروع يحتاج تحديثاً' : 'Branch Tracking Request Needs Updates',
+    description:
+      locale === 'ar'
+        ? 'لم يتم تفعيل الوصول حالياً، ويمكنك تحديث الطلب وإعادة الإرسال.'
+        : 'Access was not granted at this stage. You can update the request and resubmit.',
+    summaryTitle: locale === 'ar' ? 'تفاصيل المراجعة' : 'Review Notes',
+    reasonTitle: locale === 'ar' ? 'الملاحظات' : 'Notes',
+    defaultReason: locale === 'ar'
+      ? 'نرجو تزويدنا بمعلومات إضافية عن النشاط التجاري أو الفروع المرتبطة.'
+      : 'Please share additional details about your business or associated branches.',
+    nextStepsTitle: locale === 'ar' ? 'خطوات مقترحة' : 'Suggested Actions',
+    steps: locale === 'ar'
+      ? [
+          'تأكد من اكتمال بيانات المنشأة والفروع داخل الداشبورد.',
+          'أرسل مستندات داعمة (مثل السجل التجاري) إن لزم الأمر.',
+          'أعد إرسال الطلب بعد تحديث البيانات.',
+        ]
+      : [
+          'Verify that your business and branch profiles are complete.',
+          'Provide supporting documents (e.g., commercial registration) if needed.',
+          'Resubmit the request after updating your information.',
+        ],
+  };
+
+  const reason = escapeHtml(data.rejection_reason) || labels.defaultReason;
+  const stepsList = labels.steps.map((step) => `<li>${step}</li>`).join('');
+
+  const body = `
+    <div class="card">
+      <h3>${labels.summaryTitle}</h3>
+      <div class="message-box">
+        <strong>${labels.reasonTitle}</strong><br />
+        ${reason}
+      </div>
+    </div>
+    <div class="card">
+      <h3>${labels.nextStepsTitle}</h3>
+      <ul style="padding-${locale === 'ar' ? 'right' : 'left'}:20px;margin:0;">
+        ${stepsList}
+      </ul>
+    </div>
+  `;
+
+  return wrapEmail(locale, labels.heading, labels.description, body);
 }
 
