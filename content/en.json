@@ -2021,6 +2021,10 @@
   "CHECKIN_ENTER_GATE_CODE": "Please enter the gate code",
   "CHECKIN_INVALID_GATE_CODE": "Invalid gate code",
   "CHECKIN_MOBILE_HINT": "Best experience on mobile",
+  "CHECKIN_FEATURE_FAST": "Fast Scanning",
+  "CHECKIN_FEATURE_FAST_DESC": "Quick QR detection",
+  "CHECKIN_FEATURE_SECURE": "Secure",
+  "CHECKIN_FEATURE_SECURE_DESC": "Verified check-ins",
 
   "CHECKIN_SELECT_EVENT": "Select Event",
   "CHECKIN_SELECT_GATE": "Select Gate",

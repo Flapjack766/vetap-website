@@ -2021,6 +2021,10 @@
   "CHECKIN_ENTER_GATE_CODE": "يرجى إدخال كود البوابة",
   "CHECKIN_INVALID_GATE_CODE": "كود البوابة غير صالح",
   "CHECKIN_MOBILE_HINT": "أفضل تجربة على الجوال",
+  "CHECKIN_FEATURE_FAST": "مسح سريع",
+  "CHECKIN_FEATURE_FAST_DESC": "كشف QR فوري",
+  "CHECKIN_FEATURE_SECURE": "آمن",
+  "CHECKIN_FEATURE_SECURE_DESC": "تسجيل دخول موثق",
 
   "CHECKIN_SELECT_EVENT": "اختر الحدث",
   "CHECKIN_SELECT_GATE": "اختر البوابة",
