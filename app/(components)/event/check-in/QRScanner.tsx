@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -118,6 +118,24 @@ export function QRScanner({ locale }: QRScannerProps) {
   // Audio context ref for Web Audio API
   const audioContextRef = useRef<AudioContext | null>(null);
 
+  // Local storage key for per-event/gate history persistence
+  const historyKey = useMemo(() => {
+    if (!session?.event_id) return null;
+    return `scan_history_${session.event_id}_${session.gate_id || 'all'}`;
+  }, [session?.event_id, session?.gate_id]);
+
+  const computeStats = (history: CheckInResult[]): ScanStats => ({
+    total: history.length,
+    valid: history.filter(h => h.result === 'valid').length,
+    already_used: history.filter(h => h.result === 'already_used').length,
+    invalid: history.filter(h => ['invalid', 'expired', 'revoked', 'not_allowed_zone'].includes(h.result)).length,
+  });
+
+  const persistHistory = (history: CheckInResult[]) => {
+    if (!historyKey || typeof window === 'undefined') return;
+    localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 50)));
+  };
+
   // Load session and scan history on mount
   useEffect(() => {
     const storedSession = sessionStorage.getItem('check_in_session') || sessionStorage.getItem('gate_session');
@@ -146,6 +164,24 @@ export function QRScanner({ locale }: QRScannerProps) {
       }
     };
   }, [locale, router]);
+
+  // Load cached history when session changes (before API)
+  useEffect(() => {
+    if (!historyKey || typeof window === 'undefined') return;
+    const cached = localStorage.getItem(historyKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached) as CheckInResult[];
+        setScanHistory(parsed);
+        setStats(computeStats(parsed));
+      } catch {
+        // ignore parse errors
+      }
+    } else {
+      setScanHistory([]);
+      setStats({ total: 0, valid: 0, already_used: 0, invalid: 0 });
+    }
+  }, [historyKey]);
 
   // Load scan history from API
   const loadScanHistory = async (eventId: string, gateId?: string | null) => {
@@ -191,13 +227,9 @@ export function QRScanner({ locale }: QRScannerProps) {
         setScanHistory(history);
 
         // Calculate stats from history
-        const calculatedStats: ScanStats = {
-          total: history.length,
-          valid: history.filter(h => h.result === 'valid').length,
-          already_used: history.filter(h => h.result === 'already_used').length,
-          invalid: history.filter(h => ['invalid', 'expired', 'revoked', 'not_allowed_zone'].includes(h.result)).length,
-        };
+        const calculatedStats: ScanStats = computeStats(history);
         setStats(calculatedStats);
+        persistHistory(history);
       }
     } catch (err) {
       console.error('Error loading scan history:', err);
@@ -546,15 +578,15 @@ export function QRScanner({ locale }: QRScannerProps) {
       }
 
       // Add to scan history (persistent)
-      setScanHistory(prev => [data, ...prev.slice(0, 49)]); // Keep last 50
+      setScanHistory(prev => {
+        const next = [data, ...prev.slice(0, 49)];
+        setStats(computeStats(next));
+        persistHistory(next);
+        return next;
+      }); // Keep last 50
 
       // Update stats
-      setStats((prev) => ({
-        total: prev.total + 1,
-        valid: prev.valid + (data.result === 'valid' ? 1 : 0),
-        already_used: prev.already_used + (data.result === 'already_used' ? 1 : 0),
-        invalid: prev.invalid + (['invalid', 'expired', 'revoked', 'not_allowed_zone'].includes(data.result) ? 1 : 0),
-      }));
+      // Stats already recalculated above
 
       // Play sound & vibrate
       playSound(data.result);
@@ -590,7 +622,7 @@ export function QRScanner({ locale }: QRScannerProps) {
         processingRef.current = false;
       }, 2500);
     }
-  }, [session, t]);
+  }, [session, t, computeStats]);
 
   // ==========================================
   // SOUND & VIBRATION

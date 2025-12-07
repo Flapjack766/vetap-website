@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -97,6 +97,24 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
     invalid: 0,
   });
 
+  // Local storage key for per-event/gate history persistence
+  const historyKey = useMemo(() => {
+    if (!selectedEventId) return null;
+    return `scan_history_${selectedEventId}_${selectedGateId || 'all'}`;
+  }, [selectedEventId, selectedGateId]);
+
+  const computeStats = (history: ScanResultData[]) => ({
+    total: history.length,
+    valid: history.filter(h => h.result === 'valid').length,
+    already_used: history.filter(h => h.result === 'already_used').length,
+    invalid: history.filter(h => !['valid', 'already_used'].includes(h.result)).length,
+  });
+
+  const persistHistory = (history: ScanResultData[]) => {
+    if (!historyKey || typeof window === 'undefined') return;
+    localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 50)));
+  };
+
   // Initialize audio context
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -110,6 +128,24 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  // Load cached history when event/gate changes (before API)
+  useEffect(() => {
+    if (!historyKey || typeof window === 'undefined') return;
+    const cached = localStorage.getItem(historyKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached) as ScanResultData[];
+        setScanHistory(parsed);
+        setStats(computeStats(parsed));
+      } catch {
+        // ignore parse errors
+      }
+    } else {
+      setScanHistory([]);
+      setStats({ total: 0, valid: 0, already_used: 0, invalid: 0 });
+    }
+  }, [historyKey]);
 
   useEffect(() => {
     if (selectedEventId) {
@@ -158,13 +194,9 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
         setScanHistory(history);
 
         // Calculate stats from history
-        const calculatedStats = {
-          total: history.length,
-          valid: history.filter(h => h.result === 'valid').length,
-          already_used: history.filter(h => h.result === 'already_used').length,
-          invalid: history.filter(h => !['valid', 'already_used'].includes(h.result)).length,
-        };
+        const calculatedStats = computeStats(history);
         setStats(calculatedStats);
+        persistHistory(history);
       }
     } catch (err) {
       console.error('Error loading scan history:', err);
@@ -492,16 +524,13 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
       };
 
       setLastScanResult(scanResultData);
-      // Add to history (keep last 50)
-      setScanHistory(prev => [scanResultData, ...prev.slice(0, 49)]);
-
-      // Update stats
-      setStats(prev => ({
-        total: prev.total + 1,
-        valid: prev.valid + (data.result === 'valid' ? 1 : 0),
-        already_used: prev.already_used + (data.result === 'already_used' ? 1 : 0),
-        invalid: prev.invalid + (!['valid', 'already_used'].includes(data.result) ? 1 : 0),
-      }));
+      // Add to history (keep last 50) and persist
+      setScanHistory(prev => {
+        const next = [scanResultData, ...prev.slice(0, 49)];
+        setStats(computeStats(next));
+        persistHistory(next);
+        return next;
+      });
 
       // Play sound and vibrate
       playSound(data.result);
@@ -521,8 +550,12 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
         scanned_at: new Date().toISOString(),
       };
       setLastScanResult(errorResult);
-      setScanHistory(prev => [errorResult, ...prev.slice(0, 19)]);
-      setStats(prev => ({ ...prev, total: prev.total + 1, invalid: prev.invalid + 1 }));
+      setScanHistory(prev => {
+        const next = [errorResult, ...prev.slice(0, 49)];
+        setStats(computeStats(next));
+        persistHistory(next);
+        return next;
+      });
       playSound('invalid');
       vibrate('invalid');
       

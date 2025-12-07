@@ -89,27 +89,17 @@ export function EventStatistics({ locale, eventId }: EventStatisticsProps) {
         setPasses(passesData.passes);
       }
 
-      const { data: logs, error: logsError } = await supabase
-        .from('event_scan_logs')
-        .select(`
-          id,
-          event_id,
-          pass_id,
-          gate_id,
-          result,
-          scanned_at,
-          pass:event_passes(
-            id,
-            guest:event_guests(id, full_name)
-          ),
-          gate:event_gates(id, name)
-        `)
-        .eq('event_id', eventId)
-        .order('scanned_at', { ascending: false })
-        .limit(50);
-
-      if (!logsError && logs) {
-        setScanLogs(logs as any);
+      // Fetch scan logs via API (bypasses RLS issues and keeps consistent with scanners)
+      const logsResponse = await fetch(
+        `/api/event/events/${eventId}/scan-logs?limit=200`,
+        { headers: { 'Authorization': `Bearer ${session.access_token}` } }
+      );
+      const logsData = await logsResponse.json();
+      if (!logsResponse.ok) {
+        throw new Error(logsData.message || t('EVENT_STATS_ERROR'));
+      }
+      if (logsData.logs) {
+        setScanLogs(logsData.logs as any);
       }
 
       setLastUpdated(new Date());
