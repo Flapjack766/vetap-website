@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
-import Link from 'next/link';
-import { QrCode, Mail, Key, Loader2, AlertCircle, Smartphone, Shield, Scan } from 'lucide-react';
+import { Mail, Key, Loader2, AlertCircle, Smartphone, Shield, Scan } from 'lucide-react';
 import { Button } from '@/app/(components)/ui/button';
 import { createEventClient } from '@/lib/supabase/event-client';
 
@@ -121,30 +119,15 @@ export function GateStaffLogin({ locale }: GateStaffLoginProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-background flex flex-col overflow-auto z-50" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="min-h-[calc(100vh-8rem)] flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Background Pattern */}
-      <div className="fixed inset-0 -z-10">
+      <div className="absolute inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-20" />
       </div>
 
-      {/* Header with Logo */}
-      <header className="p-4 sm:p-6">
-        <Link href={`/${locale}`} className="inline-flex items-center gap-2 transition-opacity hover:opacity-80">
-          <Image
-            src="/images/logo.svg"
-            alt="VETAP Logo"
-            width={40}
-            height={40}
-            className="h-10 w-10"
-            priority
-          />
-          <span className="text-xl font-bold text-foreground">VETAP</span>
-        </Link>
-      </header>
-
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8">
+      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
         <div className="w-full max-w-md">
           {/* Hero Section */}
           <div className="text-center mb-8">
@@ -302,6 +285,7 @@ export function GateStaffLogin({ locale }: GateStaffLoginProps) {
           </div>
 
           {/* Mobile hint */}
+          {/* Mobile hint */}
           <div className="mt-8 text-center">
             <div className="inline-flex items-center gap-2 text-muted-foreground text-sm">
               <Smartphone className="h-4 w-4" />
@@ -309,14 +293,7 @@ export function GateStaffLogin({ locale }: GateStaffLoginProps) {
             </div>
           </div>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="p-4 text-center">
-        <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} VETAP. {t('A36')}
-        </p>
-      </footer>
+      </div>
     </div>
   );
 }

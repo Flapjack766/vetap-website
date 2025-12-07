@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
-import Link from 'next/link';
 import {
   Calendar,
   DoorOpen,
@@ -154,11 +152,7 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-background flex items-center justify-center overflow-auto z-50" dir={isRTL ? 'rtl' : 'ltr'}>
-        {/* Background Pattern */}
-        <div className="fixed inset-0 -z-10">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]" />
-        </div>
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="text-center">
           <Loader2 className="h-10 w-10 animate-spin text-emerald-500 mx-auto mb-4" />
           <p className="text-muted-foreground">{t('CHECKIN_LOADING')}</p>
@@ -168,44 +162,31 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-background flex flex-col overflow-auto z-50" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="min-h-[calc(100vh-8rem)] flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Background Pattern */}
-      <div className="fixed inset-0 -z-10">
+      <div className="absolute inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-20" />
       </div>
 
-      {/* Header */}
-      <header className="p-4 flex items-center justify-between border-b border-border/50">
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}`} className="flex items-center gap-2 transition-opacity hover:opacity-80">
-            <Image
-              src="/images/logo.svg"
-              alt="VETAP Logo"
-              width={36}
-              height={36}
-              className="h-9 w-9"
-              priority
-            />
-            <span className="text-lg font-bold text-foreground hidden sm:inline">VETAP</span>
-          </Link>
-          <div className="h-6 w-px bg-border mx-2" />
-          <div>
-            <h1 className="text-foreground font-semibold text-sm sm:text-base">{t('CHECKIN_TITLE')}</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm">
-              {step === 'event' ? t('CHECKIN_SELECT_EVENT') : t('CHECKIN_SELECT_GATE')}
-            </p>
-          </div>
+      {/* Page Header */}
+      <div className="p-4 sm:p-6 flex items-center justify-between border-b border-border/50">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('CHECKIN_TITLE')}</h1>
+          <p className="text-muted-foreground text-sm">
+            {step === 'event' ? t('CHECKIN_SELECT_EVENT') : t('CHECKIN_SELECT_GATE')}
+          </p>
         </div>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={handleLogout}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted"
+          className="text-muted-foreground hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />
+          <span className={`hidden sm:inline ${isRTL ? 'mr-2' : 'ml-2'}`}>{t('CHECKIN_LOGOUT')}</span>
         </Button>
-      </header>
+      </div>
 
       {/* Content */}
       <main className="flex-1 p-4 sm:p-6 overflow-auto">
@@ -358,13 +339,6 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
           )}
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="p-4 text-center border-t border-border/50">
-        <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} VETAP. {t('A36')}
-        </p>
-      </footer>
     </div>
   );
 }
