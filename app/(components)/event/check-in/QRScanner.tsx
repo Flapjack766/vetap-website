@@ -660,7 +660,7 @@ export function QRScanner({ locale }: QRScannerProps) {
   // RENDER
   // ==========================================
   return (
-    <div className="fixed inset-0 bg-background flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="fixed top-16 inset-x-0 bottom-0 bg-background flex flex-col z-40" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hidden file input for fallback */}
       <input
         ref={fileInputRef}
