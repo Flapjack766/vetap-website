@@ -2033,6 +2033,7 @@
   "CHECKIN_LOADING": "Loading...",
   "CHECKIN_ERROR": "An error occurred",
   "CHECKIN_SCANNING": "Scanning...",
+  "CHECKIN_SELECT_CAMERA": "Select Camera",
   "CHECKIN_LOGOUT": "Logout",
 
   "CHECKIN_STARTING_CAMERA": "Starting camera...",

@@ -2033,6 +2033,7 @@
   "CHECKIN_LOADING": "جاري التحميل...",
   "CHECKIN_ERROR": "حدث خطأ",
   "CHECKIN_SCANNING": "جاري المسح...",
+  "CHECKIN_SELECT_CAMERA": "اختر الكاميرا",
   "CHECKIN_LOGOUT": "تسجيل الخروج",
 
   "CHECKIN_STARTING_CAMERA": "جاري تشغيل الكاميرا...",
