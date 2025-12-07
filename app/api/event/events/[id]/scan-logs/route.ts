@@ -22,6 +22,8 @@ export async function GET(
       return authResult.error;
     }
 
+    const user = authResult.user;
+
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50', 10);

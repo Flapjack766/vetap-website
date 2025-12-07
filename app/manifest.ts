@@ -12,9 +12,9 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: 'portrait-primary',
     icons: [
       {
-        src: '/favicon.ico',
-        sizes: 'any',
-        type: 'image/x-icon',
+        src: '/icons/logo.png',
+        sizes: '192x192',
+        type: 'image/png',
       },
       {
         src: '/icons/icons.png',
@@ -24,7 +24,7 @@ export default function manifest(): MetadataRoute.Manifest {
       },
       {
         src: '/icons/logo.png',
-        sizes: '192x192',
+        sizes: '512x512',
         type: 'image/png',
       },
     ],

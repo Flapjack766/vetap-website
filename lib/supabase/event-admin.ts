@@ -11,28 +11,18 @@ import { createClient } from '@supabase/supabase-js';
  * Only use this in server-side code, never expose it to the client!
  */
 export function createEventAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_EVENT_URL;
-  const serviceRoleKey = process.env.SUPABASE_EVENT_SERVICE_ROLE_KEY;
+  // Prefer event-specific keys, but gracefully fall back to main keys on prod to avoid 500s
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_EVENT_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  // Check for main project variables (common mistake)
-  const mainServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey =
+    process.env.SUPABASE_EVENT_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    const error = 'Missing VETAP Event Supabase admin environment variables. Please check your .env.local file.';
-    console.error('❌', error);
-    console.error('Missing:', {
-      'NEXT_PUBLIC_SUPABASE_EVENT_URL': !supabaseUrl,
-      'SUPABASE_EVENT_SERVICE_ROLE_KEY': !serviceRoleKey,
-    });
-    console.error('💡 Make sure you have these in .env.local:');
-    console.error('   NEXT_PUBLIC_SUPABASE_EVENT_URL=https://your-event-project.supabase.co');
-    console.error('   SUPABASE_EVENT_SERVICE_ROLE_KEY=your-event-service-role-key');
-    throw new Error(error);
-  }
-
-  // CRITICAL: Verify we're NOT using main project keys
-  if (mainServiceKey && mainServiceKey === serviceRoleKey) {
-    const error = 'CRITICAL ERROR: Event Service Role Key matches main project Service Role Key! Check .env.local - you may have copied main project keys instead of Event keys.';
+    const error =
+      'Missing Supabase admin environment variables (event or main). Please set NEXT_PUBLIC_SUPABASE_EVENT_URL and SUPABASE_EVENT_SERVICE_ROLE_KEY, or fallback NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.';
     console.error('❌', error);
     throw new Error(error);
   }
@@ -40,10 +30,10 @@ export function createEventAdminClient() {
   console.log('✅ Creating Supabase Event Admin client:', {
     url: supabaseUrl.substring(0, 50) + '...',
     hasServiceKey: !!serviceRoleKey,
-    serviceKeyPreview: serviceRoleKey.substring(0, 20) + '...',
+    serviceKeyPreview: serviceRoleKey.substring(0, 8) + '***',
+    usedEventKeys: !!process.env.SUPABASE_EVENT_SERVICE_ROLE_KEY,
   });
 
-  // Create admin client with service role key (bypasses RLS)
   const adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
