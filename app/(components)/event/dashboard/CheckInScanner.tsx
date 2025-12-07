@@ -168,8 +168,15 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null);
-      console.log('📷 Starting camera...');
+      console.log('📷 [1/5] Starting camera via user interaction...');
 
+      // ✅ Stop any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+
+      // ✅ High resolution for better QR detection
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode: { ideal: facingMode },
@@ -179,24 +186,59 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
         audio: false,
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('📷 [2/5] Requesting camera with constraints:', constraints);
+
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (constraintErr: any) {
+        // ✅ Retry with basic constraints on OverconstrainedError
+        if (constraintErr.name === 'OverconstrainedError') {
+          console.log('⚠️ OverconstrainedError, retrying with basic constraints...');
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facingMode },
+            audio: false,
+          });
+        } else {
+          throw constraintErr;
+        }
+      }
+      
       streamRef.current = stream;
+
+      const videoTrack = stream.getVideoTracks()[0];
+      const settings = videoTrack.getSettings();
+      console.log('📷 [3/5] Camera acquired:', {
+        width: settings.width,
+        height: settings.height,
+        facingMode: settings.facingMode,
+      });
 
       if (videoRef.current) {
         const video = videoRef.current;
         video.srcObject = stream;
+        
+        // ✅ Required attributes for iPhone/Safari
         video.playsInline = true;
-        (video as any)['webkit-playsinline'] = true;
+        video.muted = true;
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
 
+        // ✅ Wait for loadedmetadata before starting
         await new Promise<void>((resolve, reject) => {
           const onLoadedMetadata = () => {
-            console.log('📷 Video dimensions:', video.videoWidth, video.videoHeight);
+            console.log('📷 [4/5] Video metadata loaded:', {
+              videoWidth: video.videoWidth,
+              videoHeight: video.videoHeight,
+              readyState: video.readyState,
+            });
             video.removeEventListener('loadedmetadata', onLoadedMetadata);
             video.removeEventListener('error', onError);
             resolve();
           };
           
-          const onError = () => {
+          const onError = (e: Event) => {
+            console.error('❌ Video error event:', e);
             video.removeEventListener('loadedmetadata', onLoadedMetadata);
             video.removeEventListener('error', onError);
             reject(new Error('Video error'));
@@ -205,6 +247,7 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
           video.addEventListener('loadedmetadata', onLoadedMetadata);
           video.addEventListener('error', onError);
           
+          // Timeout after 10 seconds
           setTimeout(() => {
             video.removeEventListener('loadedmetadata', onLoadedMetadata);
             video.removeEventListener('error', onError);
@@ -212,12 +255,14 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
           }, 10000);
         });
 
+        // ✅ Verify video dimensions are not 0
         if (video.videoWidth === 0 || video.videoHeight === 0) {
-          throw new Error('Video dimensions are 0');
+          console.error('❌ Video dimensions are 0:', { width: video.videoWidth, height: video.videoHeight });
+          throw new Error('Video dimensions are 0 - camera may not be working properly');
         }
 
         await video.play();
-        console.log('📷 Camera ready, starting scan loop...');
+        console.log('📷 [5/5] Video playing, starting scan loop...');
         
         setCameraReady(true);
         setScanning(true);
@@ -225,16 +270,20 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
         startScanLoop();
       }
     } catch (err: any) {
-      console.error('❌ Camera error:', err);
+      console.error('❌ Camera error:', err.name, err.message);
       
       let errorMessage = t('EVENT_CAMERA_ERROR') || 'Camera error';
       
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        errorMessage = t('EVENT_CAMERA_PERMISSION') || 'Camera permission denied';
+        errorMessage = t('EVENT_CAMERA_PERMISSION') || 'Camera permission denied. Please allow camera access.';
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        errorMessage = t('EVENT_NO_CAMERA') || 'No camera found';
+        errorMessage = t('EVENT_NO_CAMERA') || 'No camera found on this device.';
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        errorMessage = t('EVENT_CAMERA_IN_USE') || 'Camera is in use';
+        errorMessage = t('EVENT_CAMERA_IN_USE') || 'Camera is being used by another application.';
+      } else if (err.name === 'OverconstrainedError') {
+        errorMessage = t('EVENT_CAMERA_UNSUPPORTED') || 'Camera does not support required settings.';
+      } else if (err.message?.includes('dimensions')) {
+        errorMessage = t('EVENT_CAMERA_NOT_READY') || 'Camera is not ready. Please try again.';
       }
       
       setCameraError(errorMessage);
@@ -293,43 +342,68 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      return;
-    }
+    if (!video || !canvas) return;
+    
+    // ✅ Check video is ready and has valid dimensions
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+    if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
+    // ✅ Get context with willReadFrequently for performance
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
+    // ✅ Set canvas dimensions from actual video values
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
 
-    // Crop center 70%
+    // ✅ Crop center region only (reduces noise, increases speed)
+    // Use 70% of the center for scanning
     const cropRatio = 0.7;
     const cropWidth = Math.floor(videoWidth * cropRatio);
     const cropHeight = Math.floor(videoHeight * cropRatio);
     const cropX = Math.floor((videoWidth - cropWidth) / 2);
     const cropY = Math.floor((videoHeight - cropHeight) / 2);
 
+    // Set canvas to crop size
     canvas.width = cropWidth;
     canvas.height = cropHeight;
-    ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
+    // Draw only the center region
+    ctx.drawImage(
+      video,
+      cropX, cropY, cropWidth, cropHeight,  // Source (center crop)
+      0, 0, cropWidth, cropHeight            // Destination (full canvas)
+    );
+
+    // Get image data
     const imageData = ctx.getImageData(0, 0, cropWidth, cropHeight);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: 'attemptBoth',
-    });
 
+    // Update scan count for debugging
     setScanCount(prev => prev + 1);
+
+    // ✅ Decode QR with jsQR - enable inversionAttempts for better detection
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'attemptBoth', // ✅ Try both normal and inverted colors
+    });
 
     if (code && code.data) {
       const now = Date.now();
-      // Cooldown: 3 seconds for same QR
-      if (code.data !== lastScanRef.current || now - lastScanTimeRef.current > 3000) {
-        console.log('✅ QR found:', code.data.substring(0, 50) + '...');
-        lastScanRef.current = code.data;
-        lastScanTimeRef.current = now;
-        processQRCode(code.data);
+      
+      // Prevent duplicate scans within 3 seconds
+      if (code.data === lastScanRef.current && now - lastScanTimeRef.current < 3000) {
+        return;
       }
+
+      console.log('✅ QR Code detected!', {
+        data: code.data.substring(0, 50) + '...',
+        location: code.location,
+      });
+      
+      lastScanRef.current = code.data;
+      lastScanTimeRef.current = now;
+      
+      // Process the QR code
+      processQRCode(code.data);
     }
   }, []);
 
@@ -352,9 +426,10 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          qr_payload: qrPayload,
+          qr_raw_value: qrPayload, // ✅ Fixed: API expects qr_raw_value not qr_payload
           event_id: selectedEventId,
           gate_id: selectedGateId || undefined,
+          user_id: session.user?.id,
         }),
       });
 
@@ -717,11 +792,14 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
           </div>
         ) : null}
 
+        {/* ✅ Video Element with playsInline for iPhone */}
         <video
           ref={videoRef}
           className={`w-full h-full object-cover ${!scanning ? 'hidden' : ''}`}
-          playsInline
+          playsInline  // ✅ Required for iPhone
           muted
+          autoPlay
+          webkit-playsinline="true"  // ✅ Legacy Safari support
         />
 
         {/* Scan Frame Overlay */}
