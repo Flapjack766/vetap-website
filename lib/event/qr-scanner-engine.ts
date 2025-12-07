@@ -93,7 +93,7 @@ export class QRScannerEngine {
     const quality = this.analyzeImageQuality(imageData);
     
     // Try to decode QR
-    const qrResult = jsQR(imageData.data, imageData.width, imageData.height, {
+    let qrResult = jsQR(imageData.data, imageData.width, imageData.height, {
       inversionAttempts: 'attemptBoth',
     });
 
@@ -139,6 +139,50 @@ export class QRScannerEngine {
         feedback: this.createFeedback(feedbackStatus, confidence, qrSize, qrPosition),
         processingTime,
       };
+    }
+
+    // ==================== Fallback attempts (multi-scale) ====================
+    // 1) Downscale very large images (e.g., 4K photos from iPhone)
+    // Many devices produce very large frames that hurt jsQR performance/accuracy.
+    if (!qrResult) {
+      const maxDim = 1024;
+      const maxSourceDim = Math.max(imageData.width, imageData.height);
+      if (maxSourceDim > maxDim) {
+        const scale = maxDim / maxSourceDim;
+        const downscaled = this.downscaleImageData(imageData, Math.floor(imageData.width * scale), Math.floor(imageData.height * scale));
+        qrResult = jsQR(downscaled.data, downscaled.width, downscaled.height, { inversionAttempts: 'attemptBoth' });
+        if (qrResult && qrResult.data) {
+          const qrSize = this.calculateQRSize(qrResult, downscaled.width, downscaled.height);
+          const qrPosition = this.calculateQRPosition(qrResult, downscaled.width, downscaled.height);
+          return {
+            success: true,
+            data: qrResult.data,
+            feedback: this.createFeedback('detected', 95, qrSize, qrPosition),
+            processingTime,
+          };
+        }
+      }
+    }
+
+    // 2) Center crop (80%) to reduce noise around borders and improve contrast
+    if (!qrResult) {
+      const cropRatio = 0.8;
+      const cropWidth = Math.floor(imageData.width * cropRatio);
+      const cropHeight = Math.floor(imageData.height * cropRatio);
+      const cropX = Math.floor((imageData.width - cropWidth) / 2);
+      const cropY = Math.floor((imageData.height - cropHeight) / 2);
+      const cropped = this.cropImageData(imageData, cropX, cropY, cropWidth, cropHeight);
+      qrResult = jsQR(cropped.data, cropped.width, cropped.height, { inversionAttempts: 'attemptBoth' });
+      if (qrResult && qrResult.data) {
+        const qrSize = this.calculateQRSize(qrResult, cropped.width, cropped.height);
+        const qrPosition = this.calculateQRPosition(qrResult, cropped.width, cropped.height);
+        return {
+          success: true,
+          data: qrResult.data,
+          feedback: this.createFeedback('detected', 95, qrSize, qrPosition),
+          processingTime,
+        };
+      }
     }
 
     // QR not decoded - analyze why
@@ -299,6 +343,56 @@ export class QRScannerEngine {
       brightness: mean,
       contrast: contrast,
     };
+  }
+
+  /**
+   * Create a 2D context with image smoothing disabled
+   */
+  private create2dContext(width: number, height: number): { canvas: any; ctx: CanvasRenderingContext2D } {
+    let canvas: any;
+    // Prefer OffscreenCanvas when available for performance
+    try {
+      const Offscreen: any = (globalThis as any).OffscreenCanvas;
+      if (Offscreen) {
+        canvas = new Offscreen(width, height);
+      } else {
+        canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+      }
+    } catch {
+      canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+    }
+    const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+    // Disable smoothing to avoid blurring QR modules on Safari/iOS
+    (ctx as any).imageSmoothingEnabled = false;
+    return { canvas, ctx };
+  }
+
+  /**
+   * Downscale ImageData to target width/height using nearest-neighbor style draw to preserve edges
+   */
+  private downscaleImageData(src: ImageData, targetWidth: number, targetHeight: number): ImageData {
+    const { canvas: srcCanvas, ctx: srcCtx } = this.create2dContext(src.width, src.height);
+    srcCtx.putImageData(src, 0, 0);
+
+    const { canvas: dstCanvas, ctx: dstCtx } = this.create2dContext(targetWidth, targetHeight);
+    dstCtx.drawImage(srcCanvas as any, 0, 0, src.width, src.height, 0, 0, targetWidth, targetHeight);
+    return dstCtx.getImageData(0, 0, targetWidth, targetHeight);
+  }
+
+  /**
+   * Crop a region from ImageData
+   */
+  private cropImageData(src: ImageData, x: number, y: number, width: number, height: number): ImageData {
+    const { canvas: srcCanvas, ctx: srcCtx } = this.create2dContext(src.width, src.height);
+    srcCtx.putImageData(src, 0, 0);
+
+    const { canvas: dstCanvas, ctx: dstCtx } = this.create2dContext(width, height);
+    dstCtx.drawImage(srcCanvas as any, x, y, width, height, 0, 0, width, height);
+    return dstCtx.getImageData(0, 0, width, height);
   }
 
   /**

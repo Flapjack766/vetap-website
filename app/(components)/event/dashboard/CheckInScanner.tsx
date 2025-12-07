@@ -364,6 +364,7 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
+    (ctx as any).imageSmoothingEnabled = false;
 
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
@@ -481,6 +482,7 @@ export function CheckInScanner({ locale }: CheckInScannerProps) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
+        (ctx as any).imageSmoothingEnabled = false;
 
         canvas.width = img.width;
         canvas.height = img.height;

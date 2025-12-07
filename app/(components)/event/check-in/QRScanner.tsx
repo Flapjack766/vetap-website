@@ -338,6 +338,8 @@ export function QRScanner({ locale }: QRScannerProps) {
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
+    // Avoid blurring on Safari/iOS when downscaling
+    (ctx as any).imageSmoothingEnabled = false;
 
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
@@ -394,6 +396,7 @@ export function QRScanner({ locale }: QRScannerProps) {
       
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) throw new Error('Cannot get canvas context');
+    (ctx as any).imageSmoothingEnabled = false;
 
       ctx.drawImage(image, 0, 0);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
