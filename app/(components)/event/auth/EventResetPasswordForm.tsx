@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createEventClient } from '@/lib/supabase/event-client';
 import { Button } from '@/app/(components)/ui/button';
 import { Input } from '@/app/(components)/ui/input';

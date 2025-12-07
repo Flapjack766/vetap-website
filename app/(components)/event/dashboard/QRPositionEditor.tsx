@@ -228,7 +228,7 @@ export function QRPositionEditor({
       const deltaY = ((e.clientY - dragStart.y) / containerRect.height) * 100;
 
       setPosition(prev => {
-        let newPos = { ...prev };
+        const newPos = { ...prev };
 
         switch (resizeCorner) {
           case 'se':
