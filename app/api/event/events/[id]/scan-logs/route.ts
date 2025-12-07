@@ -19,10 +19,7 @@ export async function GET(
     // Authenticate user
     const authResult = await authenticateRequest(request);
     if ('error' in authResult) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: authResult.status || 401 }
-      );
+      return authResult.error;
     }
 
     // Get query parameters
