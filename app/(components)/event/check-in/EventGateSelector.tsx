@@ -14,6 +14,8 @@ import {
   Scan,
   MapPin,
   Clock,
+  QrCode,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/app/(components)/ui/button';
 import { createEventClient, clearEventClient } from '@/lib/supabase/event-client';
@@ -152,7 +154,7 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="fixed top-16 inset-x-0 bottom-0 bg-background flex items-center justify-center z-40" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="text-center">
           <Loader2 className="h-10 w-10 animate-spin text-emerald-500 mx-auto mb-4" />
           <p className="text-muted-foreground">{t('CHECKIN_LOADING')}</p>
@@ -162,34 +164,50 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Background Pattern */}
-      <div className="absolute inset-0 -z-10 pointer-events-none">
+    <div className="fixed top-16 inset-x-0 bottom-0 bg-background flex flex-col z-40" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Background Pattern - Same as QRScanner */}
+      <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-20" />
       </div>
 
-      {/* Page Header */}
-      <div className="p-4 sm:p-6 flex items-center justify-between border-b border-border/50">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('CHECKIN_TITLE')}</h1>
-          <p className="text-muted-foreground text-sm">
-            {step === 'event' ? t('CHECKIN_SELECT_EVENT') : t('CHECKIN_SELECT_GATE')}
-          </p>
+      {/* Header Bar - Same style as QRScanner stats bar */}
+      <div className="bg-card/95 backdrop-blur-xl p-3 flex items-center justify-between z-20 border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+            <QrCode className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-foreground font-semibold">{t('CHECKIN_TITLE')}</h1>
+            <p className="text-muted-foreground text-xs">
+              {step === 'event' ? t('CHECKIN_SELECT_EVENT') : t('CHECKIN_SELECT_GATE')}
+            </p>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
+        <button
           onClick={handleLogout}
-          className="text-muted-foreground hover:text-foreground"
+          className="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors"
         >
-          <LogOut className="h-4 w-4" />
-          <span className={`hidden sm:inline ${isRTL ? 'mr-2' : 'ml-2'}`}>{t('CHECKIN_LOGOUT')}</span>
-        </Button>
+          <LogOut className="h-5 w-5" />
+        </button>
       </div>
 
+      {/* Selected Event Info Bar - Same style as QRScanner event bar */}
+      {selectedEvent && step === 'gate' && (
+        <div className="bg-card/80 backdrop-blur px-4 py-2 flex items-center justify-between border-b border-border/30">
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="h-4 w-4 text-emerald-500" />
+            <span className="text-foreground font-medium truncate max-w-[200px]">{selectedEvent.name}</span>
+            <span className="text-border">•</span>
+            <span className="text-muted-foreground text-xs">
+              {new Date(selectedEvent.starts_at).toLocaleDateString(locale)}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
-      <main className="flex-1 p-4 sm:p-6 overflow-auto">
+      <div className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="max-w-2xl mx-auto">
           {error && (
             <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-start gap-3 text-destructive">
@@ -201,15 +219,17 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
           {step === 'event' ? (
             <>
               <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <Calendar className="h-5 w-5 text-emerald-500" />
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                  <Calendar className="h-5 w-5 text-emerald-400" />
                 </div>
                 {t('CHECKIN_ACTIVE_EVENTS')}
               </h2>
 
               {events.length === 0 ? (
                 <div className="text-center py-16 bg-card/50 backdrop-blur rounded-2xl border border-border/50">
-                  <Calendar className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+                  <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="h-10 w-10 text-muted-foreground" />
+                  </div>
                   <p className="text-muted-foreground">{t('CHECKIN_NO_ACTIVE_EVENTS')}</p>
                 </div>
               ) : (
@@ -218,7 +238,7 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
                     <button
                       key={event.id}
                       onClick={() => handleSelectEvent(event)}
-                      className="w-full bg-card/50 hover:bg-card border border-border/50 hover:border-emerald-500/50 rounded-xl p-4 sm:p-5 text-start transition-all group"
+                      className="w-full bg-card/50 hover:bg-card/80 backdrop-blur border border-border/50 hover:border-emerald-500/50 rounded-xl p-4 sm:p-5 text-start transition-all group"
                     >
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
@@ -227,22 +247,24 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
                           </h3>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
                             <span className="text-muted-foreground text-sm flex items-center gap-1.5">
-                              <Calendar className="h-3.5 w-3.5" />
+                              <Calendar className="h-3.5 w-3.5 text-emerald-500/70" />
                               {new Date(event.starts_at).toLocaleDateString(locale)}
                             </span>
                             <span className="text-muted-foreground text-sm flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5" />
+                              <Clock className="h-3.5 w-3.5 text-emerald-500/70" />
                               {new Date(event.starts_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             {event.venue && (
                               <span className="text-muted-foreground text-sm flex items-center gap-1.5">
-                                <MapPin className="h-3.5 w-3.5" />
+                                <MapPin className="h-3.5 w-3.5 text-emerald-500/70" />
                                 {event.venue}
                               </span>
                             )}
                           </div>
                         </div>
-                        <ChevronRight className={`h-5 w-5 text-muted-foreground group-hover:text-emerald-500 transition-colors ${isRTL ? 'rotate-180' : ''}`} />
+                        <div className="w-10 h-10 rounded-lg bg-muted group-hover:bg-emerald-500/20 flex items-center justify-center transition-colors">
+                          <ChevronRight className={`h-5 w-5 text-muted-foreground group-hover:text-emerald-400 transition-colors ${isRTL ? 'rotate-180' : ''}`} />
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -254,39 +276,31 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
               {/* Back button */}
               <button
                 onClick={goBackToEvents}
-                className="text-muted-foreground hover:text-foreground text-sm mb-6 flex items-center gap-1.5 transition-colors"
+                className="text-muted-foreground hover:text-emerald-400 text-sm mb-6 flex items-center gap-1.5 transition-colors"
               >
                 <ChevronLeft className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
                 {t('CHECKIN_BACK')}
               </button>
 
-              {/* Selected event info */}
-              {selectedEvent && (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-6">
-                  <h3 className="text-emerald-400 font-semibold">{selectedEvent.name}</h3>
-                  <p className="text-emerald-400/70 text-sm mt-1">
-                    {new Date(selectedEvent.starts_at).toLocaleDateString(locale)}
-                  </p>
-                </div>
-              )}
-
               <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-teal-500/10">
-                  <DoorOpen className="h-5 w-5 text-teal-500" />
+                <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20">
+                  <DoorOpen className="h-5 w-5 text-teal-400" />
                 </div>
                 {t('CHECKIN_SELECT_GATE')}
               </h2>
 
               {gates.length === 0 ? (
                 <div className="text-center py-16 bg-card/50 backdrop-blur rounded-2xl border border-border/50">
-                  <DoorOpen className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+                  <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                    <DoorOpen className="h-10 w-10 text-muted-foreground" />
+                  </div>
                   <p className="text-muted-foreground mb-6">{t('CHECKIN_NO_GATES')}</p>
                   <Button
                     onClick={() => startScanning(selectedEvent!.id, null)}
-                    className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                    className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 h-12 px-6 shadow-lg shadow-emerald-500/20"
                   >
-                    <Scan className="h-4 w-4" />
-                    <span className={isRTL ? 'mr-2' : 'ml-2'}>{t('CHECKIN_START_WITHOUT_GATE')}</span>
+                    <Scan className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                    {t('CHECKIN_START_WITHOUT_GATE')}
                   </Button>
                 </div>
               ) : (
@@ -295,12 +309,12 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
                     <button
                       key={gate.id}
                       onClick={() => handleSelectGate(gate)}
-                      className="w-full bg-card/50 hover:bg-card border border-border/50 hover:border-emerald-500/50 rounded-xl p-4 sm:p-5 text-start transition-all group"
+                      className="w-full bg-card/50 hover:bg-card/80 backdrop-blur border border-border/50 hover:border-emerald-500/50 rounded-xl p-4 sm:p-5 text-start transition-all group"
                     >
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <h3 className="text-foreground font-semibold group-hover:text-emerald-400 transition-colors flex items-center gap-2">
-                            <DoorOpen className="h-4 w-4 text-muted-foreground" />
+                            <DoorOpen className="h-4 w-4 text-teal-500/70" />
                             {gate.name}
                           </h3>
                           {gate.description && (
@@ -311,7 +325,7 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
                               {gate.allowed_guest_types.map((type) => (
                                 <span
                                   key={type}
-                                  className="px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground"
+                                  className="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                 >
                                   {type}
                                 </span>
@@ -319,27 +333,33 @@ export function EventGateSelector({ locale }: EventGateSelectorProps) {
                             </div>
                           )}
                         </div>
-                        <ChevronRight className={`h-5 w-5 text-muted-foreground group-hover:text-emerald-500 transition-colors ${isRTL ? 'rotate-180' : ''}`} />
+                        <div className="w-10 h-10 rounded-lg bg-muted group-hover:bg-emerald-500/20 flex items-center justify-center transition-colors">
+                          <ChevronRight className={`h-5 w-5 text-muted-foreground group-hover:text-emerald-400 transition-colors ${isRTL ? 'rotate-180' : ''}`} />
+                        </div>
                       </div>
                     </button>
                   ))}
 
-                  <div className="pt-6 border-t border-border/50">
-                    <Button
-                      variant="outline"
-                      onClick={() => startScanning(selectedEvent!.id, null)}
-                      className="w-full border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
-                    >
-                      {t('CHECKIN_SKIP_GATE_SELECTION')}
-                    </Button>
+                  {/* Divider */}
+                  <div className="flex items-center gap-3 py-4">
+                    <div className="flex-1 h-px bg-border/50" />
+                    <span className="text-muted-foreground text-xs uppercase">{t('CHECKIN_OR') || 'OR'}</span>
+                    <div className="flex-1 h-px bg-border/50" />
                   </div>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => startScanning(selectedEvent!.id, null)}
+                    className="w-full h-12 border-border/50 text-muted-foreground hover:text-foreground hover:border-muted-foreground hover:bg-muted/50"
+                  >
+                    {t('CHECKIN_SKIP_GATE_SELECTION')}
+                  </Button>
                 </div>
               )}
             </>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
-

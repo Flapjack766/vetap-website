@@ -119,15 +119,15 @@ export function GateStaffLogin({ locale }: GateStaffLoginProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="fixed top-16 inset-x-0 bottom-0 bg-background flex flex-col z-40 overflow-auto" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Background Pattern */}
-      <div className="absolute inset-0 -z-10 pointer-events-none">
+      <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-20" />
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
+      <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-10">
         <div className="w-full max-w-md">
           {/* Hero Section */}
           <div className="text-center mb-8">
