@@ -101,20 +101,21 @@ async function getBusinessProfileData(accessToken: string, placeId: string) {
  * Main sync function - shared between GET and POST
  */
 async function syncReviews(req: NextRequest) {
-  // Optional: Add authentication check for cron job
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
+  try {
+    // Optional: Add authentication check for cron job
+    const authHeader = req.headers.get('authorization');
+    const cronSecret = process.env.CRON_SECRET;
 
-  // Allow requests without auth if no CRON_SECRET is set (for Vercel Cron)
-  // Vercel Cron adds a special header that we can check
-  const isVercelCron = req.headers.get('x-vercel-cron') === '1';
-  
-  if (cronSecret && !isVercelCron && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
-  }
+    // Allow requests without auth if no CRON_SECRET is set (for Vercel Cron)
+    // Vercel Cron adds a special header that we can check
+    const isVercelCron = req.headers.get('x-vercel-cron') === '1';
+    
+    if (cronSecret && !isVercelCron && authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const adminClient = createAdminClient();
 
