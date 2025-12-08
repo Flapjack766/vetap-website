@@ -93,10 +93,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
     // ==================== 1. Parse Request ====================
     const body: CheckInRequest = await request.json();
     rawPayload = body.qr_raw_value;
-    eventId = body.event_id;
+    eventId = body.event_id ?? null;
     gateId = body.gate_id || null;
     
-    if (!rawPayload || !eventId) {
+    // نحتاج دائمًا لقيمة QR، لكن event_id أصبح اختياري (يمكن استنتاجه من الـ QR أو من التذكرة)
+    if (!rawPayload) {
       await logScan(adminClient, {
         event_id: eventId || 'unknown',
         gate_id: gateId,
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       return NextResponse.json(
         { 
           result: 'invalid', 
-          message: 'Missing required fields: qr_raw_value and event_id are required',
+          message: 'Missing required field: qr_raw_value is required',
           errorKey: 'CHECKIN_ERROR_MISSING_FIELDS'
         },
         { status: 400 }
@@ -290,7 +291,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
     guestId = pass.guest_id;
 
     // ==================== 6. Verify Event Ownership ====================
-    if (pass.event_id !== eventId) {
+    // إذا أرسل العميل event_id نقارنه لأغراض الأمان، وإلا نستخدم قيمة التذكرة نفسها
+    if (eventId && pass.event_id !== eventId) {
       await logScan(adminClient, {
         event_id: eventId,
         gate_id: gateId,
@@ -312,11 +314,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       });
     }
 
+    // من هذه النقطة نضمن أن eventId يساوي event_id الخاص بالتذكرة
+    eventId = pass.event_id;
+
     // ==================== 7. Get Event Info ====================
     const { data: event } = await adminClient
       .from('event_events')
       .select('id, name, partner_id, starts_at, ends_at')
-      .eq('id', eventId)
+      .eq('id', eventId!)
       .single();
 
     // ==================== 8. Get Guest Info ====================
