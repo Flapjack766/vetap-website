@@ -31,7 +31,16 @@ export async function GET(
     const gateId = searchParams.get('gate_id') || null;
     const result = searchParams.get('result') || null;
 
-    const adminClient = createEventAdminClient();
+    let adminClient;
+    try {
+      adminClient = createEventAdminClient();
+    } catch (err: any) {
+      console.error('❌ Failed to create Supabase admin client:', err?.message || err);
+      return NextResponse.json(
+        { error: 'Supabase configuration missing on server' },
+        { status: 500 }
+      );
+    }
 
     // Build query
     let query = adminClient

@@ -52,7 +52,8 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            // Allow camera for the app (required for QR scanner). Keep mic/geo blocked.
+            value: 'camera=(self), microphone=(), geolocation=()',
           },
           {
             key: 'Strict-Transport-Security',
