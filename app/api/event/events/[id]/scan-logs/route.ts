@@ -9,6 +9,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createEventAdminClient } from '@/lib/supabase/event-admin';
 import { authenticateRequest } from '@/lib/event/api-auth';
 
+// Force Node runtime (Supabase admin client needs Node APIs)
+export const runtime = 'nodejs';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
