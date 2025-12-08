@@ -88,9 +88,11 @@ export async function GET(
           id,
           name
         ),
-        scanner:auth.users!event_scan_logs_scanner_user_id_fkey(
+        scanner:event_users(
           id,
-          email
+          email,
+          name,
+          role
         )
       `)
       .eq('event_id', eventId)
