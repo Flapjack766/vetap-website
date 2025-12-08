@@ -20,6 +20,7 @@ import { createEventAdminClient } from '@/lib/supabase/event-admin';
 import { authenticateRequest } from '@/lib/event/api-auth';
 import crypto from 'crypto';
 import type { ScanResult, PassStatus, WebhookEventType } from '@/lib/event/types';
+import { verifyQRPayload } from '@/lib/event/qr-payload';
 
 // ==================== Types ====================
 
@@ -59,7 +60,7 @@ interface CheckInResponse {
 
 interface DecodedPayload {
   pass_id?: string;
-  token: string;
+  token?: string;
   event_id?: string;
   signature?: string;
   timestamp?: number;
@@ -126,35 +127,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
     }
 
     // ==================== 3. Decode & Verify Payload ====================
-    const decodeResult = decodeQRPayload(rawPayload);
-    
-    if (!decodeResult.success || !decodeResult.payload) {
-      await logScan(adminClient, {
-        event_id: eventId,
-        gate_id: gateId,
-        scanned_by: userId,
-        result: 'invalid',
-        raw_payload: rawPayload,
-        device_info: deviceInfo,
-        error_message: decodeResult.error || 'Failed to decode QR payload',
-        processing_time_ms: Date.now() - startTime,
-      });
+    // نحاول أولاً QR الموقَّع الجديد (qr-payload)، وإذا فشل نرجع للتنسيقات القديمة
+    let decodedPayload: DecodedPayload | null = null;
+    let lookupBy: 'id' | 'token' = 'token';
 
-      return NextResponse.json({
-        result: 'invalid',
-        message: decodeResult.error || 'Invalid QR code format',
-        errorKey: 'CHECKIN_ERROR_INVALID_QR_FORMAT',
-        scanned_at: new Date().toISOString(),
-      });
-    }
+    const signedPayload = verifyQRPayload(rawPayload);
 
-    const decodedPayload = decodeResult.payload;
-
-    // ==================== 4. Verify Digital Signature ====================
-    if (decodedPayload.signature) {
-      const isValidSignature = verifySignature(decodedPayload);
+    if (signedPayload) {
+      decodedPayload = {
+        pass_id: signedPayload.pid,
+        event_id: signedPayload.eid,
+        version: 'signed_v1',
+      };
+      lookupBy = 'id';
+    } else {
+      const decodeResult = decodeQRPayload(rawPayload);
       
-      if (!isValidSignature) {
+      if (!decodeResult.success || !decodeResult.payload) {
         await logScan(adminClient, {
           event_id: eventId,
           gate_id: gateId,
@@ -162,21 +151,71 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
           result: 'invalid',
           raw_payload: rawPayload,
           device_info: deviceInfo,
-          error_message: 'Invalid signature',
+          error_message: decodeResult.error || 'Failed to decode QR payload',
           processing_time_ms: Date.now() - startTime,
         });
-
+        
         return NextResponse.json({
           result: 'invalid',
-          message: 'QR code signature verification failed',
-          errorKey: 'CHECKIN_ERROR_SIGNATURE_FAILED',
+          message: decodeResult.error || 'Invalid QR code format',
+          errorKey: 'CHECKIN_ERROR_INVALID_QR_FORMAT',
           scanned_at: new Date().toISOString(),
         });
       }
+
+      decodedPayload = decodeResult.payload;
+      lookupBy = 'token';
+
+      // ==================== 4. Verify Digital Signature (legacy only) ====================
+      if (decodedPayload.signature) {
+        const isValidSignature = verifySignature(decodedPayload);
+        
+        if (!isValidSignature) {
+          await logScan(adminClient, {
+            event_id: eventId,
+            gate_id: gateId,
+            scanned_by: userId,
+            result: 'invalid',
+            raw_payload: rawPayload,
+            device_info: deviceInfo,
+            error_message: 'Invalid signature',
+            processing_time_ms: Date.now() - startTime,
+          });
+
+          return NextResponse.json({
+            result: 'invalid',
+            message: 'QR code signature verification failed',
+            errorKey: 'CHECKIN_ERROR_SIGNATURE_FAILED',
+            scanned_at: new Date().toISOString(),
+          });
+        }
+      }
+    }
+
+    // تأكد أن لدينا قيمة نستخدمها في البحث عن التذكرة
+    const lookupToken = lookupBy === 'token' ? decodedPayload?.token : decodedPayload?.pass_id;
+    if (!lookupToken) {
+      await logScan(adminClient, {
+        event_id: eventId,
+        gate_id: gateId,
+        scanned_by: userId,
+        result: 'invalid',
+        raw_payload: rawPayload,
+        device_info: deviceInfo,
+        error_message: 'Decoded QR payload missing token or pass_id',
+        processing_time_ms: Date.now() - startTime,
+      });
+
+      return NextResponse.json({
+        result: 'invalid',
+        message: 'Invalid QR code payload (no token)',
+        errorKey: 'CHECKIN_ERROR_INVALID_QR_FORMAT',
+        scanned_at: new Date().toISOString(),
+      });
     }
 
     // ==================== 5. Find Pass in Database ====================
-    const { data: pass, error: passError } = await adminClient
+    let passQuery = adminClient
       .from('event_passes')
       .select(`
         id,
@@ -185,17 +224,24 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
         status,
         token,
         qr_payload,
-        first_used_at,
+        first_scanned_at,
+        last_scanned_at,
         valid_from,
         valid_to,
-        expires_at,
         revoked_at,
         max_uses,
         use_count,
-        created_at
-      `)
-      .eq('token', decodedPayload.token)
-      .maybeSingle();
+        last_used_at,
+        generated_at
+      `);
+
+    if (lookupBy === 'id') {
+      passQuery = passQuery.eq('id', lookupToken);
+    } else {
+      passQuery = passQuery.eq('token', lookupToken);
+    }
+
+    const { data: pass, error: passError } = await passQuery.maybeSingle();
 
     if (passError) {
       console.error('Pass lookup error:', passError);
@@ -397,39 +443,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       });
     }
 
-    // Check expires_at as well
-    if (pass.expires_at && new Date(pass.expires_at) < now) {
-      await logScan(adminClient, {
-        event_id: eventId,
-        gate_id: gateId,
-        pass_id: passId,
-        guest_id: guestId,
-        scanned_by: userId,
-        result: 'expired',
-        raw_payload: rawPayload,
-        device_info: deviceInfo,
-        error_message: `Pass expired at: ${pass.expires_at}`,
-        processing_time_ms: Date.now() - startTime,
-      });
-
-      await sendWebhook(adminClient, event?.partner_id, 'on_check_in_invalid', {
-        event_id: eventId,
-        pass_id: passId,
-        guest: guest,
-        result: 'expired',
-        scanned_at: now.toISOString(),
-      });
-
-      return NextResponse.json({
-        result: 'expired',
-        message: 'Pass has expired',
-        errorKey: 'CHECKIN_ERROR_EXPIRED',
-        guest: guest ? { id: guest.id, full_name: guest.full_name, type: guest.type } : undefined,
-        pass: { id: pass.id, status: pass.status },
-        scanned_at: now.toISOString(),
-      });
-    }
-
     // ==================== 11. Check Pass Status ====================
     
     // Check if revoked
@@ -466,7 +479,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
     }
 
     // Check if already used (for single-use passes)
-    if (pass.status === 'used' && pass.first_used_at) {
+    if (pass.status === 'used' && pass.first_scanned_at) {
       // Check if multi-use pass
       const maxUses = pass.max_uses || 1;
       const currentUses = pass.use_count || 1;
@@ -481,7 +494,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
           result: 'already_used',
           raw_payload: rawPayload,
           device_info: deviceInfo,
-          error_message: `Pass already used. First used at: ${pass.first_used_at}`,
+          error_message: `Pass already used. First used at: ${pass.first_scanned_at}`,
           processing_time_ms: Date.now() - startTime,
         });
 
@@ -490,7 +503,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
           pass_id: passId,
           guest: guest,
           result: 'already_used',
-          first_used_at: pass.first_used_at,
+          first_used_at: pass.first_scanned_at,
           scanned_at: now.toISOString(),
         });
 
@@ -502,7 +515,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
           pass: { 
             id: pass.id, 
             status: pass.status,
-            first_used_at: pass.first_used_at,
+            first_used_at: pass.first_scanned_at,
           },
           scanned_at: now.toISOString(),
         });
@@ -516,13 +529,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       .from('event_passes')
       .update({
         status: 'used',
-        first_used_at: pass.first_used_at || now.toISOString(),
+        first_scanned_at: pass.first_scanned_at || now.toISOString(),
         use_count: (pass.use_count || 0) + 1,
+        last_scanned_at: now.toISOString(),
         last_used_at: now.toISOString(),
       })
       .eq('id', pass.id)
       .eq('status', pass.status)  // Optimistic lock - only update if status hasn't changed
-      .select('id, status, first_used_at')
+      .select('id, status, first_scanned_at, last_scanned_at, use_count')
       .maybeSingle();
 
     // Check if update was successful (optimistic lock check)
@@ -530,7 +544,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       // Status might have changed - re-fetch and check
       const { data: recheckPass } = await adminClient
         .from('event_passes')
-        .select('status, first_used_at')
+        .select('status, first_scanned_at')
         .eq('id', pass.id)
         .single();
 
@@ -556,7 +570,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
           pass: { 
             id: pass.id, 
             status: 'used',
-            first_used_at: recheckPass.first_used_at,
+            first_used_at: recheckPass.first_scanned_at,
           },
           scanned_at: now.toISOString(),
         });
@@ -613,7 +627,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
       pass: {
         id: pass.id,
         status: 'used',
-        first_used_at: updatedPass.first_used_at,
+        first_used_at: updatedPass.first_scanned_at,
       },
       event: event ? { id: event.id, name: event.name } : undefined,
       scan_log_id: scanLog?.id,
