@@ -82,7 +82,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
   const userAgent = request.headers.get('user-agent') || 'unknown';
   const deviceInfo = extractDeviceInfo(userAgent);
   
-  let eventId: string | null = null;
+  let eventId: string = 'unknown';
+  let requestedEventId: string | null = null;
   let gateId: string | null = null;
   let userId: string | null = null;
   let rawPayload: string = '';
@@ -93,7 +94,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
     // ==================== 1. Parse Request ====================
     const body: CheckInRequest = await request.json();
     rawPayload = body.qr_raw_value;
-    eventId = body.event_id ?? null;
+    requestedEventId = body.event_id ?? null;
+    eventId = requestedEventId ?? 'unknown';
     gateId = body.gate_id || null;
     
     // نحتاج دائمًا لقيمة QR، لكن event_id أصبح اختياري (يمكن استنتاجه من الـ QR أو من التذكرة)
@@ -292,9 +294,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
 
     // ==================== 6. Verify Event Ownership ====================
     // إذا أرسل العميل event_id نقارنه لأغراض الأمان، وإلا نستخدم قيمة التذكرة نفسها
-    if (eventId && pass.event_id !== eventId) {
+    if (requestedEventId && pass.event_id !== requestedEventId) {
       await logScan(adminClient, {
-        event_id: eventId,
+        event_id: requestedEventId,
         gate_id: gateId,
         pass_id: passId,
         guest_id: guestId,
@@ -321,7 +323,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
     const { data: event } = await adminClient
       .from('event_events')
       .select('id, name, partner_id, starts_at, ends_at')
-      .eq('id', eventId!)
+      .eq('id', eventId)
       .single();
 
     // ==================== 8. Get Guest Info ====================
@@ -644,7 +646,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckInRe
     
     // Log error scan
     await logScan(adminClient, {
-      event_id: eventId || 'unknown',
+      event_id: eventId,
       gate_id: gateId,
       pass_id: passId,
       guest_id: guestId,
