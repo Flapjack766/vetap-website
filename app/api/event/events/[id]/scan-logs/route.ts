@@ -39,8 +39,17 @@ export async function GET(
       adminClient = createEventAdminClient();
     } catch (err: any) {
       console.error('❌ Failed to create Supabase admin client:', err?.message || err);
+      // Return diagnostic (no secrets) to help ops understand missing config
       return NextResponse.json(
-        { error: 'Supabase configuration missing on server' },
+        {
+          error: 'Supabase configuration missing on server',
+          missing: {
+            NEXT_PUBLIC_SUPABASE_EVENT_URL: !process.env.NEXT_PUBLIC_SUPABASE_EVENT_URL,
+            SUPABASE_EVENT_SERVICE_ROLE_KEY: !process.env.SUPABASE_EVENT_SERVICE_ROLE_KEY,
+            NEXT_PUBLIC_SUPABASE_URL: !process.env.NEXT_PUBLIC_SUPABASE_URL,
+            SUPABASE_SERVICE_ROLE_KEY: !process.env.SUPABASE_SERVICE_ROLE_KEY,
+          },
+        },
         { status: 500 }
       );
     }
