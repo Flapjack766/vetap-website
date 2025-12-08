@@ -76,7 +76,8 @@ export async function GET(
           id,
           token,
           status,
-          first_used_at,
+          first_scanned_at,
+          last_scanned_at,
           guest:event_guests(
             id,
             full_name,
