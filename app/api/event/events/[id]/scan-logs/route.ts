@@ -49,6 +49,7 @@ export async function GET(
             NEXT_PUBLIC_SUPABASE_EVENT_ANON_KEY: !process.env.NEXT_PUBLIC_SUPABASE_EVENT_ANON_KEY,
             SUPABASE_EVENT_SIGNING_SECRET: !process.env.SUPABASE_EVENT_SIGNING_SECRET,
           },
+          hint: 'SUPABASE_EVENT_SERVICE_ROLE_KEY must be the service role key (not anon).',
         },
         { status: 500 }
       );
@@ -109,7 +110,12 @@ export async function GET(
     if (error) {
       console.error('Error fetching scan logs:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch scan logs', details: error.message },
+        {
+          error: 'Failed to fetch scan logs',
+          details: error.message,
+          code: (error as any)?.code,
+          hint: (error as any)?.hint,
+        },
         { status: 500 }
       );
     }
@@ -140,7 +146,11 @@ export async function GET(
   } catch (error: any) {
     console.error('Scan logs API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      {
+        error: 'Internal server error',
+        details: error?.message || 'Unknown error',
+        hint: 'Check Supabase event env keys and service role validity.',
+      },
       { status: 500 }
     );
   }
