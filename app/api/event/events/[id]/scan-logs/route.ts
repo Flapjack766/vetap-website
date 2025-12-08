@@ -55,41 +55,16 @@ export async function GET(
       );
     }
 
-    // Build query
-    // Keep select minimal to avoid Supabase errors
+    // Build query - use the same shape that analytics route uses (proven to work)
     let query = adminClient
       .from('event_scan_logs')
       .select(`
         id,
-        event_id,
-        pass_id,
-        guest_id,
-        gate_id,
-        scanner_user_id,
         result,
         scanned_at,
-        raw_payload,
-        device_info,
-        error_message,
-        processing_time_ms,
-        pass:event_passes(
-          id,
-          token,
-          status,
-          first_scanned_at,
-          last_scanned_at,
-          guest:event_guests(
-            id,
-            full_name,
-            type,
-            email,
-            phone
-          )
-        ),
-        gate:event_gates(
-          id,
-          name
-        )
+        guest_id,
+        gate_id,
+        pass_id
       `)
       .eq('event_id', eventId)
       .order('scanned_at', { ascending: false })

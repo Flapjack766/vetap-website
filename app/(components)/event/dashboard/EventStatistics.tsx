@@ -442,13 +442,18 @@ export function EventStatistics({ locale, eventId }: EventStatisticsProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {scanLogs.slice(0, 20).map((log: any) => (
+                {scanLogs.slice(0, 20).map((log: any) => {
+                  const pass = passes.find(p => p.id === log.pass_id);
+                  const guest = pass?.guest || guests.find(g => g.id === log.guest_id);
+                  const guestName = guest?.full_name || '-';
+                  const gateName = '-'; // Gates not loaded here yet
+                  return (
                   <tr key={log.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 font-medium">
-                      {log.pass?.guest?.full_name || '-'}
+                      {guestName}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {log.gate?.name || '-'}
+                      {gateName}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 text-xs rounded ${getScanResultColor(log.result)}`}>
@@ -459,7 +464,7 @@ export function EventStatistics({ locale, eventId }: EventStatisticsProps) {
                       {formatTime(log.scanned_at)}
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
