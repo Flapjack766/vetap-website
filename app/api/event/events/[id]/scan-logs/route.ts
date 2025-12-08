@@ -56,6 +56,7 @@ export async function GET(
     }
 
     // Build query
+    // Keep select minimal to avoid Supabase errors
     let query = adminClient
       .from('event_scan_logs')
       .select(`
@@ -87,12 +88,6 @@ export async function GET(
         gate:event_gates(
           id,
           name
-        ),
-        scanner:event_users(
-          id,
-          email,
-          name,
-          role
         )
       `)
       .eq('event_id', eventId)
