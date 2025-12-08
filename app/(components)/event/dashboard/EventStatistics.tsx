@@ -96,7 +96,9 @@ export function EventStatistics({ locale, eventId }: EventStatisticsProps) {
       );
       const logsData = await logsResponse.json();
       if (!logsResponse.ok) {
-        throw new Error(logsData.message || t('EVENT_STATS_ERROR'));
+        const apiMessage = logsData.error || logsData.message || logsData.details || t('EVENT_STATS_ERROR');
+        const apiCode = logsData.code ? ` (code: ${logsData.code})` : '';
+        throw new Error(`${apiMessage}${apiCode}`);
       }
       if (logsData.logs) {
         setScanLogs(logsData.logs as any);

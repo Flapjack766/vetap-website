@@ -117,6 +117,8 @@ export async function GET(
           details: error.message,
           code: (error as any)?.code,
           hint: (error as any)?.hint,
+          status: (error as any)?.status,
+          context: { eventId, gateId, result },
         },
         { status: 500 }
       );
