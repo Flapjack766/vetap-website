@@ -59,7 +59,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   // Use maybeSingle() to avoid errors when no rows are found
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('id, user_id, email, username_random, username_custom, username_type, profile_name, avatar_url, template_id, links, is_primary, is_deleted, created_at, updated_at')
+    .select('id, user_id, email, username_random, username_custom, username_type, profile_name, avatar_url, template_id, links, is_primary, is_deleted, created_at, updated_at, display_name, headline, bio, phone, location')
     .eq('user_id', user.id)
     .eq('is_deleted', false)
     .order('is_primary', { ascending: false })

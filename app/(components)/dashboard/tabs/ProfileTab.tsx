@@ -60,8 +60,46 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
     setMounted(true);
   }, []);
 
-  // Update form data when profile changes (when switching between profiles)
+  // Fetch fresh profile data when component mounts or profile.id changes
   useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!profile?.id) return;
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: freshProfile, error: fetchError } = await supabase
+          .from('profiles')
+          .select('id, display_name, headline, bio, phone, email, location, avatar_url')
+          .eq('id', profile.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!fetchError && freshProfile) {
+          setFormData({
+            display_name: freshProfile.display_name || '',
+            headline: freshProfile.headline || '',
+            bio: freshProfile.bio || '',
+            phone: freshProfile.phone || '',
+            email: freshProfile.email || '',
+            location: freshProfile.location || '',
+            avatar_url: freshProfile.avatar_url || '',
+          });
+          setPreviewUrl(freshProfile.avatar_url || null);
+        }
+      } catch (err) {
+        console.error('Error fetching profile data:', err);
+      }
+    };
+
+    fetchProfileData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]); // Only depend on profile.id to avoid infinite loops
+
+  // Update form data when profile changes (when switching between profiles or tabs)
+  useEffect(() => {
+    if (profile && profile.id) {
     setFormData({
       display_name: profile.display_name || '',
       headline: profile.headline || '',
@@ -74,7 +112,8 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
     setPreviewUrl(profile.avatar_url || null);
     setError(null);
     setSuccess(false);
-  }, [profile.id, profile.display_name, profile.headline, profile.bio, profile.phone, profile.email, profile.location, profile.avatar_url]);
+    }
+  }, [profile?.id, profile?.display_name, profile?.headline, profile?.bio, profile?.phone, profile?.email, profile?.location, profile?.avatar_url]);
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
@@ -231,6 +270,17 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
         
         if (checkProfile) {
           // Update worked, just couldn't return data - use fetched profile
+          // Update formData with the saved values to keep them visible
+          setFormData({
+            display_name: checkProfile.display_name || '',
+            headline: checkProfile.headline || '',
+            bio: checkProfile.bio || '',
+            phone: checkProfile.phone || '',
+            email: checkProfile.email || '',
+            location: checkProfile.location || '',
+            avatar_url: checkProfile.avatar_url || '',
+          });
+          setPreviewUrl(checkProfile.avatar_url || null);
           setSuccess(true);
           onUpdate(checkProfile);
           setTimeout(() => setSuccess(false), 3000);
@@ -245,6 +295,17 @@ export function ProfileTab({ profile, locale, onUpdate, onNext }: ProfileTabProp
         return false;
       }
 
+      // Update formData with the saved values to keep them visible
+      setFormData({
+        display_name: updatedProfile.display_name || '',
+        headline: updatedProfile.headline || '',
+        bio: updatedProfile.bio || '',
+        phone: updatedProfile.phone || '',
+        email: updatedProfile.email || '',
+        location: updatedProfile.location || '',
+        avatar_url: updatedProfile.avatar_url || '',
+      });
+      setPreviewUrl(updatedProfile.avatar_url || null);
       setSuccess(true);
       showSuccess(t('DASH10'));
       onUpdate(updatedProfile);
