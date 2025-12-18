@@ -76,7 +76,10 @@ export async function GET(req: NextRequest) {
     // Get OAuth credentials
     const clientId = process.env.GOOGLE_BUSINESS_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_BUSINESS_CLIENT_SECRET;
-    const redirectUri = `${process.env.SITE_URL || 'https://vetaps.com'}/api/google-business/oauth/callback`;
+    // IMPORTANT: This redirect_uri MUST match exactly what was used in the OAuth start request
+    const siteUrl = process.env.SITE_URL || 'https://vetaps.com';
+    const baseUrl = siteUrl.replace(/\/$/, '');
+    const redirectUri = `${baseUrl}/api/google-business/oauth/callback`;
 
     if (!clientId || !clientSecret) {
       console.error('Google Business OAuth credentials not configured');

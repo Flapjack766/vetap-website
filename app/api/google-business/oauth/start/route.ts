@@ -74,7 +74,15 @@ export async function GET(req: NextRequest) {
     const stateWithBusinessId = `${state}.${businessId}`;
 
     // Build OAuth URL
-    const redirectUri = `${process.env.SITE_URL || 'https://vetaps.com'}/api/google-business/oauth/callback`;
+    // IMPORTANT: This redirect_uri MUST match exactly what's registered in Google Cloud Console
+    // - No trailing slashes
+    // - Must use https:// in production (http:// for localhost only)
+    // - Must match the exact path: /api/google-business/oauth/callback
+    const siteUrl = process.env.SITE_URL || 'https://vetaps.com';
+    // Remove trailing slash if present
+    const baseUrl = siteUrl.replace(/\/$/, '');
+    const redirectUri = `${baseUrl}/api/google-business/oauth/callback`;
+    
     const scope = 'https://www.googleapis.com/auth/business.manage';
     
     const oauthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
@@ -85,6 +93,9 @@ export async function GET(req: NextRequest) {
     oauthUrl.searchParams.set('access_type', 'offline'); // Required for refresh_token
     oauthUrl.searchParams.set('prompt', 'consent'); // Force consent to get refresh_token
     oauthUrl.searchParams.set('state', stateWithBusinessId);
+    
+    // Log redirect_uri for debugging (remove in production if needed)
+    console.log('OAuth redirect_uri:', redirectUri);
 
     // Redirect to Google OAuth
     return NextResponse.redirect(oauthUrl.toString(), {
