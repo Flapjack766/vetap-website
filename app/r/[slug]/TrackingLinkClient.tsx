@@ -55,6 +55,7 @@ export default function TrackingLinkClient({
   const [hasMounted, setHasMounted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackFormData>({
     rating: null,
     comment: '',
@@ -99,7 +100,14 @@ export default function TrackingLinkClient({
         throw new Error('Failed to submit feedback');
       }
 
-      window.location.href = destinationUrl;
+      // If there's an intermediate page (template) to show, display it instead of redirecting
+      if (showTemplate) {
+        setFeedbackSubmitted(true);
+        setSubmitting(false);
+      } else {
+        // No template to show, redirect to destination URL
+        window.location.href = destinationUrl;
+      }
     } catch (err) {
       console.error('Error submitting feedback:', err);
       const message = err instanceof Error ? err.message : 'Failed to submit feedback';
@@ -109,7 +117,13 @@ export default function TrackingLinkClient({
   };
 
   const handleSkipFeedback = () => {
-    window.location.href = destinationUrl;
+    // If there's an intermediate page (template) to show, display it instead of redirecting
+    if (showTemplate) {
+      setFeedbackSubmitted(true);
+    } else {
+      // No template to show, redirect to destination URL
+      window.location.href = destinationUrl;
+    }
   };
 
   // Ensure first render on the client matches the server markup
@@ -126,7 +140,8 @@ export default function TrackingLinkClient({
     );
   }
 
-  if (requireFeedback) {
+  // Show feedback form only if feedback is required AND not yet submitted
+  if (requireFeedback && !feedbackSubmitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
@@ -217,8 +232,40 @@ export default function TrackingLinkClient({
 
   if (showTemplate && linkData && destinationUrl) {
     const templateName = linkData.trackingLink.selected_template || '';
+    
+    // Determine the final destination URL
+    // If destination_url points to the same page (for restaurant_page/menu_page),
+    // use google_maps_url from branch instead
+    const getFinalDestinationUrl = () => {
+      const currentUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
+      const destinationUrlFull = destinationUrl.startsWith('http') 
+        ? destinationUrl 
+        : `${typeof window !== 'undefined' ? window.location.origin : 'https://vetaps.com'}${destinationUrl}`;
+      
+      // Check if destination_url is the same as current page
+      if (destinationUrlFull === currentUrl || destinationUrl.includes(`/r/${slug}`)) {
+        // For restaurant_page, use google_maps_url from branch as final destination
+        if (linkData.trackingLink.destination_type === 'restaurant_page' || 
+            linkData.trackingLink.destination_type === 'menu_page') {
+          if (linkData.branch?.google_maps_url) {
+            return linkData.branch.google_maps_url;
+          }
+          // Fallback: if no google_maps_url, stay on the same page (show template only)
+          return null;
+        }
+      }
+      return destinationUrl;
+    };
+    
+    const finalDestinationUrl = getFinalDestinationUrl();
+    
     const handleContinue = () => {
-      window.location.href = destinationUrl;
+      if (finalDestinationUrl) {
+        window.location.href = finalDestinationUrl;
+      } else {
+        // If no final destination, just reload to show template (for menu pages that don't need redirect)
+        window.location.reload();
+      }
     };
 
     // Restaurant templates (1-5) - currently all use the same base layout component
