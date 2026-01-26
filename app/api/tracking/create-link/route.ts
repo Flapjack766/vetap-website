@@ -155,6 +155,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Prepare template_data - only include if it has content
+    const templateData = data.template_data && Object.keys(data.template_data).length > 0
+      ? data.template_data
+      : null;
+
     // Create tracking link using admin client (bypasses RLS)
     const { data: trackingLink, error: linkError } = await adminClient
       .from('tracking_links')
@@ -167,6 +172,7 @@ export async function POST(req: NextRequest) {
         selected_template: data.selected_template || null,
         show_intermediate_page: data.show_intermediate_page,
         collect_feedback_first: data.collect_feedback_first,
+        template_data: templateData || {},
         is_active: true,
       })
       .select()
@@ -179,10 +185,6 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-
-    // Store template data in a separate table or in meta field
-    // For now, we'll store it in a JSONB field if available, or skip it
-    // The template data can be fetched from the branch/business when rendering
 
     return NextResponse.json(
       {

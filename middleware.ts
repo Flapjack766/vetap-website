@@ -14,6 +14,15 @@ export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isEventRoute = pathname.includes('/event/');
   
+  // Exclude /r/ routes from locale prefixing (tracking links should work without locale)
+  if (pathname.startsWith('/r/')) {
+    // Still update Supabase session but skip i18n middleware
+    const supabaseResponse = isEventRoute 
+      ? await updateEventSession(request)
+      : await updateSession(request);
+    return supabaseResponse;
+  }
+  
   // Update appropriate Supabase session
   const supabaseResponse = isEventRoute 
     ? await updateEventSession(request)
@@ -31,6 +40,6 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/(ar|en|tr)/:path*', '/p/:path*', '/((?!api|_next|_vercel|.*\\..*).*)'],
+  matcher: ['/', '/(ar|en|tr)/:path*', '/p/:path*', '/r/:path*', '/((?!api|_next|_vercel|.*\\..*).*)'],
 };
 

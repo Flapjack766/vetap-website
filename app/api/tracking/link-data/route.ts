@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
         show_intermediate_page: trackingLink.show_intermediate_page,
         collect_feedback_first: trackingLink.collect_feedback_first,
         selected_template: trackingLink.selected_template,
+        template_data: trackingLink.template_data ?? null,
       },
       branch: trackingLink.branch ? {
         id: trackingLink.branch.id,
